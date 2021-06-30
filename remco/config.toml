@@ -1,0 +1,28 @@
+################################################################
+# Global configuration
+################################################################
+log_format = "json"
+log_level = "debug"
+log_file = "/var/log/remco.log"
+
+
+################################################################
+# Resource configuration
+################################################################
+[[resource]]
+  name = "dhis2"
+
+  [[resource.template]]
+    src = "/etc/remco/templates/dhis.conf.tmpl"
+    dst = "/opt/dhis2/dhis.conf"
+
+  [resource.backend]
+    [resource.backend.env]
+      onetime = false
+      interval = 60
+      keys = ["/database/","/dhis2/","/redis/","/service/","/system/"]
+
+  [resource.exec]
+    command = "catalina.sh run"
+    kill_timeout = 30
+    splay = 30

@@ -1,0 +1,133 @@
+---
+
+volumes:
+  dhis2_files:
+  dhis2_init_progress:
+  pass_pg_dhis:
+  pass_pg_postgres:
+  pg_data:
+
+services:
+
+  pass_init:
+    image: "docker.io/debian:buster-20210511"
+    volumes:
+      - type: volume
+        source: pass_pg_dhis
+        target: /pass_pg_dhis
+      - type: volume
+        source: pass_pg_postgres
+        target: /pass_pg_postgres
+    command: >
+      bash -c "
+      if [[ ! -f /pass_pg_dhis/pass_pg_dhis.txt ]] ; then
+        echo '[INFO]: Generating random string for /pass_pg_dhis/pass_pg_dhis.txt'
+        cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 > /pass_pg_dhis/pass_pg_dhis.txt
+      fi ;
+      if [[ ! -f /pass_pg_postgres/pass_pg_postgres.txt ]] ; then
+        echo '[INFO]: Generating random string for /pass_pg_postgres/pass_pg_postgres.txt'
+        cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 > /pass_pg_postgres/pass_pg_postgres.txt
+      fi
+      "
+
+  database:
+    ## We will revert to the official image when ARM64 build is provided
+    ## See https://github.com/postgis/docker-postgis/issues/216
+    # image: "docker.io/postgis/postgis:${POSTGIS_TAG:-13-3.1}"
+    image: "ghcr.io/baosystems/postgis:${POSTGIS_TAG:-13-3.1}"
+    depends_on:
+      pass_init:
+        condition: service_completed_successfully
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: pass_pg_postgres
+        target: /pass_pg_postgres
+        read_only: true
+      - type: volume
+        source: pg_data
+        target: /var/lib/postgresql/data
+        volume:
+          nocopy: true
+    environment:
+      POSTGRES_PASSWORD_FILE: /pass_pg_postgres/pass_pg_postgres.txt  # referenced by the postgres image
+    shm_size: 256mb  # https://github.com/docker-library/postgres/issues/416
+    # Options "synchronous_commit" through "max_locks_per_transaction" are some of the DHIS2 recommendations (https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#install_postgresql_installation)
+    command: >
+      postgres
+        -c "listen_addresses=*"
+        -c "synchronous_commit=off"
+        -c "checkpoint_completion_target=0.8"
+        -c "wal_writer_delay=10000ms"
+        -c "random_page_cost=1.1"
+        -c "max_locks_per_transaction=96"
+
+  dhis2_init:
+    # Using the same image as dhis2, but with a different command
+    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-2.36.2}"
+    depends_on:
+      - database
+    working_dir: /opt/dhis2/logs  # DHIS2 attempts to create an empty "${WORKDIR}/dhis.log" file on startup
+    volumes:
+      - type: volume
+        source: dhis2_init_progress
+        target: /dhis2-init.progress
+      - type: volume
+        source: pass_pg_dhis
+        target: /pass_pg_dhis
+        read_only: true
+      - type: volume
+        source: pass_pg_postgres
+        target: /pass_pg_postgres
+        read_only: true
+    environment:
+      DATABASE_HOST: database
+      DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
+      DHIS2_INIT_SKIP: 20_dhis2-initwar.sh  # String like "item1.sh,item2.sh"; NOTE: Only skip 20_dhis2-initwar.sh on stacks with a single Tomcat node
+      PGPASSWORD_FILE: /pass_pg_postgres/pass_pg_postgres.txt
+      WAIT_BEFORE: 10  # Allow time for postgres to initialize itself. Also, 10_dhis2-database.sh will set WAIT_HOSTS to the database host if not specified.
+    command:
+      - dhis2-init.sh  # Override the image default
+
+  #
+  # NOTE: This Compose file cannot run multiple Tomcat nodes without additional configuration and a Redis service.
+  #
+
+  dhis2:
+    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-2.36.2}"
+    depends_on:
+      dhis2_init:
+        condition: service_completed_successfully
+    restart: unless-stopped  # Don't use "on-failure" b/c a Tomcat "SHUTDOWN" might "exit 0" even if a listener failed to start
+    working_dir: /opt/dhis2/logs
+    volumes:
+      - type: volume
+        source: dhis2_init_progress
+        target: /dhis2-init.progress
+        read_only: true
+      - type: volume
+        source: dhis2_files
+        target: /opt/dhis2/files
+        volume:
+          nocopy: true
+      - type: volume
+        source: pass_pg_dhis
+        target: /pass_pg_dhis
+        read_only: true
+    environment:
+      DATABASE_HOST: database
+      DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
+      WAIT_PATHS: /dhis2-init.progress/dhis2-init_status.txt  # Allow for dhis2_init to complete (necessary in some cases where dhis2_init may not run again)
+      WAIT_TIMEOUT: 300  # Allow for dhis2_init to complete (default is 30)
+    command:
+      - remco  # Override the image default
+    healthcheck:  # NOTE: Compose will not re-create containers marked as unhealthy unless they exit.
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/dhis-web-commons/security/login.action"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 3
+      start_period: 60s
+    ports:
+      - target: 8080
+        published: 8080  # Accessible on port 8080 on the host machine
+        protocol: tcp

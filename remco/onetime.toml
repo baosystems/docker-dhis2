@@ -1,0 +1,23 @@
+################################################################
+# Global configuration
+################################################################
+log_format = "text"
+log_level = "debug"
+
+
+
+################################################################
+# Resource configuration
+################################################################
+[[resource]]
+  name = "dhis2"
+
+  [[resource.template]]
+    src = "/etc/remco/templates/dhis.conf.tmpl"
+    dst = "/opt/dhis2/dhis.conf"
+
+  [resource.backend]
+    [resource.backend.env]
+      onetime = true
+      interval = 1
+      keys = ["/database/","/dhis2/","/redis/","/service/","/system/"]
