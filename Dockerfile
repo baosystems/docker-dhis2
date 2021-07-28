@@ -8,14 +8,14 @@
 # Ensure docker-compose.yml:services.dhis2.image matches the value of DHIS2_VERSION.
 
 ARG DHIS2_MAJOR=2.36
-ARG DHIS2_VERSION=2.36.1
+ARG DHIS2_VERSION=2.36.3
 
 ARG JAVA_MAJOR=11
 
 ARG TOMCAT_MAJOR=9.0
-ARG TOMCAT_VERSION=9.0.48
+ARG TOMCAT_VERSION=9.0.50
 
-ARG GOSU_VERSION=1.12
+ARG GOSU_VERSION=1.13
 ARG REMCO_VERSION=0.12.1
 ARG WAIT_VERSION=2.9.0
 
@@ -24,7 +24,7 @@ ARG WAIT_VERSION=2.9.0
 
 
 # DHIS2 downloaded as a separate stage to improve build caches
-FROM docker.io/debian:buster-20210511 as dhis2-downloader
+FROM docker.io/debian:buster-20210721 as dhis2-downloader
 RUN set -eux; \
   apt-get update; \
   apt-get install -y --no-install-recommends ca-certificates wget unzip; \
@@ -42,7 +42,7 @@ RUN set -eux; \
 
 
 # gosu for easy step-down from root - https://github.com/tianon/gosu/releases
-FROM docker.io/debian:buster-20210511 as gosu-downloader
+FROM docker.io/debian:buster-20210721 as gosu-downloader
 RUN set -eux; \
   apt-get update; \
   apt-get install -y --no-install-recommends ca-certificates gnupg wget; \
@@ -101,7 +101,7 @@ RUN set -eux; \
 
 # wait pauses until remote hosts are available - https://github.com/ufoscout/docker-compose-wait
 # Tests are excluded due to the time taken building arm64 images in emulation; see https://github.com/ufoscout/docker-compose-wait/issues/54
-FROM docker.io/rust:1.52.1-buster as wait-builder
+FROM docker.io/rust:1.53.0-buster as wait-builder
 ARG WAIT_VERSION
 WORKDIR /work
 RUN set -eux; \

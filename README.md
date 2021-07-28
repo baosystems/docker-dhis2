@@ -305,18 +305,18 @@ docker compose start dhis2
 If the container tag changes in an updated copy of the Compose file, or if the .env file is changed, run `docker compose up` again to remove the containers with old images in favor of the new ones. Because two versions of DHIS2 should not be running at the same time, stop the dhis2 containers first.
 
 ```bash
-# Let's say you started with 2.36.1:
+# Let's say you started with 2.36.2:
 
 cat >> .env <<'EOF'
-DHIS2_TAG=2.36.1
+DHIS2_TAG=2.36.2
 EOF
 
 docker compose up --detach
 
-# Later, upgrade to 2.36.2:
+# Later, upgrade to 2.36.3:
 
 cat >> .env <<'EOF'
-DHIS2_TAG=2.36.2
+DHIS2_TAG=2.36.3
 EOF
 
 docker compose stop dhis2

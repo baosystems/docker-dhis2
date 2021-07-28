@@ -10,7 +10,7 @@ volumes:
 services:
 
   pass_init:
-    image: "docker.io/debian:buster-20210511"
+    image: "docker.io/debian:buster-20210721"
     volumes:
       - type: volume
         source: pass_pg_dhis
@@ -64,7 +64,7 @@ services:
 
   dhis2_init:
     # Using the same image as dhis2, but with a different command
-    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-2.36.2}"
+    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-2.36.3}"
     depends_on:
       - database
     working_dir: /opt/dhis2/logs  # DHIS2 attempts to create an empty "${WORKDIR}/dhis.log" file on startup
@@ -94,7 +94,7 @@ services:
   #
 
   dhis2:
-    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-2.36.2}"
+    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-2.36.3}"
     depends_on:
       dhis2_init:
         condition: service_completed_successfully
