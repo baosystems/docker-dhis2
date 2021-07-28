@@ -1,0 +1,232 @@
+name: build
+
+on:
+  push:
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        dhis2_version:
+          - "2.36.3"
+          - "2.36.2"
+          - "2.36.1"
+          - "2.35.6"
+          - "2.35.5"
+          - "2.35.4"
+          - "2.35.3"
+          - "2.35.2"
+          - "2.35.1"
+          - "2.35.0"
+        java_major: ["11"]  # 11 should always be the default; Bugs specific to Java 8 are unlikely to be fixed for DHIS2 2.35 and up
+        tomcat_version: ["9.0.50"]
+        include:
+          # Use Tomcat 8.5 and Java 8 for DHIS2 versions incompatible with Java 11
+          - { dhis2_version: "2.34.6", java_major: "8", tomcat_version: "8.5.69" }
+          - { dhis2_version: "2.34.5", java_major: "8", tomcat_version: "8.5.69" }
+          - { dhis2_version: "2.34.3", java_major: "8", tomcat_version: "8.5.69" }
+          - { dhis2_version: "2.34.2", java_major: "8", tomcat_version: "8.5.69" }
+          - { dhis2_version: "2.34.1", java_major: "8", tomcat_version: "8.5.69" }
+          - { dhis2_version: "2.34.0", java_major: "8", tomcat_version: "8.5.69" }
+          # Build the latest version for each unsupported major release.
+          # (only the 3 latest major releases are actively supported)
+          - { dhis2_version: "2.33.9", java_major: "8", tomcat_version: "8.5.69" }
+
+    steps:
+
+      - name: Set up QEMU for amd64 and arm64
+        id: setup-qemu
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: amd64,arm64
+
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Export DHIS2_MAJOR, TOMCAT_MAJOR, and IMAGE_TAGS
+        id: shell-exports
+        env:
+          DHIS2_VERSION: ${{ matrix.dhis2_version }}
+          JAVA_MAJOR: ${{ matrix.java_major }}
+          TOMCAT_VERSION: ${{ matrix.tomcat_version }}
+        run: |
+          # Define latest versions (static until determined automatically)
+
+          LATEST_TOMCAT_10='10.0.8'
+          LATEST_TOMCAT_9='9.0.50'
+          LATEST_TOMCAT_8='8.5.69'
+
+          LATEST_DHIS2_236='2.36.3'
+          LATEST_DHIS2_235='2.35.6'
+          LATEST_DHIS2_234='2.34.6'
+          LATEST_DHIS2_233='2.33.9'
+          LATEST_DHIS2_232='2.32.7'
+          LATEST_DHIS2_231='2.31.9'
+
+          LATEST_DHIS2_VERSION="$LATEST_DHIS2_236"
+
+          ########
+
+          export DHIS2_MAJOR="$( sed -e 's/\.[0-9]$//' <<<"${DHIS2_VERSION}" )"
+          # https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
+          echo "DHIS2_MAJOR=$DHIS2_MAJOR" | tee -a $GITHUB_ENV
+
+          ########
+
+          export TOMCAT_MAJOR="$( sed -r -e 's/^([0-9]+)\..*/\1/' <<<"${TOMCAT_VERSION}" )"
+          echo "TOMCAT_MAJOR=$TOMCAT_MAJOR" | tee -a $GITHUB_ENV
+
+          ########
+
+          # Create an array of image tags
+          unset IMAGE_TAGS
+          declare -a IMAGE_TAGS
+
+          # Tag as full DHIS2 version, Tomcat version, and JDK
+          echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_VERSION}-jdk${JAVA_MAJOR}-openjdk"
+          IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_VERSION}-jdk${JAVA_MAJOR}-openjdk")
+
+          # If latest Tomcat version within Tomcat major...
+          if [[ $TOMCAT_VERSION == $LATEST_TOMCAT_10 ]] \
+          || [[ $TOMCAT_VERSION == $LATEST_TOMCAT_9 ]] \
+          || [[ $TOMCAT_VERSION == $LATEST_TOMCAT_8 ]]
+          then
+            # Then, tag as: ${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}
+            echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}"
+            IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}")
+          fi
+
+          # If $DHIS2_MAJOR is 2.35 or higher...
+          if [[ ${DHIS2_MAJOR//./} -ge 235 ]]; then
+
+            # And, if latest Tomcat 9...
+            if [[ $TOMCAT_VERSION == $LATEST_TOMCAT_9 ]]; then
+              # Then, tag as: $DHIS2_VERSION
+              echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_VERSION"
+              IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_VERSION")
+
+              # And, if latest $DHIS2_VERSION within $DHIS2_MAJOR...
+              if [[ $DHIS2_VERSION == $LATEST_DHIS2_236 ]] \
+              || [[ $DHIS2_VERSION == $LATEST_DHIS2_235 ]]
+              then
+                # Then, tag as: $DHIS2_MAJOR
+                echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_MAJOR"
+                IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_MAJOR")
+              fi
+            fi
+
+          # Or, if $DHIS2_MAJOR is lower than 2.35.0...
+          else
+
+            # And, if latest Tomcat 8.5...
+            if [[ $TOMCAT_VERSION == $LATEST_TOMCAT_8 ]]; then
+              # Then, tag as: $DHIS2_VERSION
+              echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_VERSION"
+              IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_VERSION")
+
+              # And, if latest $DHIS2_VERSION within $DHIS2_MAJOR...
+              if [[ $DHIS2_VERSION == $LATEST_DHIS2_234 ]] \
+              || [[ $DHIS2_VERSION == $LATEST_DHIS2_233 ]] \
+              || [[ $DHIS2_VERSION == $LATEST_DHIS2_232 ]] \
+              || [[ $DHIS2_VERSION == $LATEST_DHIS2_231 ]]
+              then
+                # Then, tag as: $DHIS2_MAJOR
+                echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_MAJOR"
+                IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_MAJOR")
+              fi
+            fi
+
+          fi
+
+          # Finally, if latest $DHIS2_VERSION of all releases...
+          if [[ $DHIS2_VERSION == $LATEST_DHIS2_VERSION ]]; then
+            # Then, tag as: latest
+            echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:latest"
+            IMAGE_TAGS+=('ghcr.io/baosystems/dhis2:latest')
+          fi
+
+          # Export IMAGE_TAGS as comma-separated string
+          export IMAGE_TAGS="$(IFS=,; echo "${IMAGE_TAGS[*]}")"
+          echo "IMAGE_TAGS=$IMAGE_TAGS" | tee -a $GITHUB_ENV
+
+      # [1/5] GitHub Actions cache workaround
+      #       https://github.com/docker/build-push-action/blob/master/docs/advanced/cache.md#github-cache
+      #       https://github.com/docker/build-push-action/issues/252
+      #       https://github.com/moby/buildkit/issues/1896
+      #       Also, added env.DHIS2_MAJOR to increase likelihood of cache hits
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ env.DHIS2_MAJOR }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ env.DHIS2_MAJOR }}-
+
+      - name: Build ${{ matrix.dhis2_version }}-${{ matrix.tomcat_version }}-jdk${{ matrix.java_major }}
+        id: build
+        uses: docker/build-push-action@v2
+        with:
+          # DHIS2_MAJOR, TOMCAT_MAJOR, and IMAGE_TAGS were exported to the environment in the previous step
+          build-args: |
+            DHIS2_MAJOR=${{ env.DHIS2_MAJOR }}
+            DHIS2_VERSION=${{ matrix.dhis2_version }}
+            JAVA_MAJOR=${{ matrix.java_major }}
+            TOMCAT_MAJOR=${{ env.TOMCAT_MAJOR }}
+            TOMCAT_VERSION=${{ matrix.tomcat_version }}
+          tags: ghcr.io/baosystems/dhis2:${{ matrix.dhis2_version }}-tomcat${{ matrix.tomcat_version }}-jdk${{ matrix.java_major }}-openjdk
+          pull: true
+          load: true
+          # [2/5] GHA cache workaround
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      # [3/5] GHA cache workaround
+      - name: Move cache
+        run: |
+          rm -v -rf /tmp/.buildx-cache
+          mv -v /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      ##########################################################################
+
+      # The remaining steps are to be run when the branch is 'main' and it is not a pull request.
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') }}
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Multi-platform build and push
+        id: build-and-push
+        uses: docker/build-push-action@v2
+        if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') }}
+        with:
+          platforms: |
+            linux/amd64
+            linux/arm64
+          build-args: |
+            DHIS2_MAJOR=${{ env.DHIS2_MAJOR }}
+            DHIS2_VERSION=${{ matrix.dhis2_version }}
+            JAVA_MAJOR=${{ matrix.java_major }}
+            TOMCAT_MAJOR=${{ env.TOMCAT_MAJOR }}
+            TOMCAT_VERSION=${{ matrix.tomcat_version }}
+          tags: ${{ env.IMAGE_TAGS }}
+          pull: true
+          push: true
+          # [4/5] GHA cache workaround
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      # [5/5] GHA cache workaround
+      - name: Move cache again after push
+        if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') }}
+        run: |
+          rm -v -rf /tmp/.buildx-cache
+          mv -v /tmp/.buildx-cache-new /tmp/.buildx-cache
