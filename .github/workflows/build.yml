@@ -23,7 +23,7 @@ jobs:
           - "2.35.1"
           - "2.35.0"
         java_major: ["11"]  # 11 should always be the default; Bugs specific to Java 8 are unlikely to be fixed for DHIS2 2.35 and up
-        tomcat_version: ["9.0.50"]
+        tomcat_version: ["9.0.52"]
         include:
           # Use Tomcat 8.5 and Java 8 for DHIS2 versions incompatible with Java 11
           - { dhis2_version: "2.34.6", java_major: "8", tomcat_version: "8.5.69" }
@@ -57,8 +57,8 @@ jobs:
         run: |
           # Define latest versions (static until determined automatically)
 
-          LATEST_TOMCAT_10='10.0.8'
-          LATEST_TOMCAT_9='9.0.50'
+          LATEST_TOMCAT_10='10.0.10'
+          LATEST_TOMCAT_9='9.0.52'
           LATEST_TOMCAT_8='8.5.69'
 
           LATEST_DHIS2_236='2.36.3'
