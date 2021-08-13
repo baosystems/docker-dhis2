@@ -221,10 +221,10 @@ until docker volume ls -q | grep -E "^${COMPOSE_PROJECT_NAME:-$(basename "$(pwd)
 
 ## Passwords
 
-In this example, passwords are generated for the PostgreSQL superuser (postgres), DHIS2 database user (dhis), and default Redis user. The passwords should not be needed for common operations, but they can be accessed later via:
+In this example, passwords are generated for the PostgreSQL database superuser (postgres) and the DHIS2 database user (dhis). The passwords should not be needed for common operations, but they can be accessed later via:
 
 ```bash
-docker compose run --rm pass_init bash -c 'for i in pg_dhis pg_postgres redis ; do echo -n "pass_${i}.txt: "; cat "/pass_${i}/pass_${i}.txt"; done'
+docker compose run --rm pass_init bash -c 'for i in pg_dhis pg_postgres ; do echo -n "pass_${i}.txt: "; cat "/pass_${i}/pass_${i}.txt"; done'
 ```
 
 ## Advanced
