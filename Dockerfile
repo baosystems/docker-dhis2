@@ -33,7 +33,12 @@ ARG DHIS2_MAJOR
 ARG DHIS2_VERSION
 WORKDIR /work
 RUN set -eux; \
-  wget --quiet -O dhis.war "https://releases.dhis2.org/${DHIS2_MAJOR}/dhis2-stable-${DHIS2_VERSION}.war"; \
+  if [ "$DHIS2_MAJOR" = "dev" ] || [ "$DHIS2_VERSION" = "dev" ]; \
+  then \
+    wget --quiet -O dhis.war "https://releases.dhis2.org/dev/dhis.war"; \
+  else \
+    wget --quiet -O dhis.war "https://releases.dhis2.org/${DHIS2_MAJOR}/dhis2-stable-${DHIS2_VERSION}.war"; \
+  fi; \
   unzip -qq dhis.war -d ROOT; \
   rm -v -f dhis.war
 
