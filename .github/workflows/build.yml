@@ -22,6 +22,7 @@ jobs:
           - "2.35.2"
           - "2.35.1"
           - "2.35.0"
+          - "dev"
         java_major: ["11"]  # 11 should always be the default; Bugs specific to Java 8 are unlikely to be fixed for DHIS2 2.35 and up
         tomcat_version: ["9.0.52"]
         include:
@@ -87,67 +88,73 @@ jobs:
           unset IMAGE_TAGS
           declare -a IMAGE_TAGS
 
-          # Tag as full DHIS2 version, Tomcat version, and JDK
-          echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_VERSION}-jdk${JAVA_MAJOR}-openjdk"
-          IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_VERSION}-jdk${JAVA_MAJOR}-openjdk")
+          if [[ $DHIS2_MAJOR == 'dev' ]] || [[ $DHIS2_VERSION == 'dev' ]]; then
+            # If dev, use single tag
+            IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:dev")
 
-          # If latest Tomcat version within Tomcat major...
-          if [[ $TOMCAT_VERSION == $LATEST_TOMCAT_10 ]] \
-          || [[ $TOMCAT_VERSION == $LATEST_TOMCAT_9 ]] \
-          || [[ $TOMCAT_VERSION == $LATEST_TOMCAT_8 ]]
-          then
-            # Then, tag as: ${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}
-            echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}"
-            IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}")
-          fi
-
-          # If $DHIS2_MAJOR is 2.35 or higher...
-          if [[ ${DHIS2_MAJOR//./} -ge 235 ]]; then
-
-            # And, if latest Tomcat 9...
-            if [[ $TOMCAT_VERSION == $LATEST_TOMCAT_9 ]]; then
-              # Then, tag as: $DHIS2_VERSION
-              echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_VERSION"
-              IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_VERSION")
-
-              # And, if latest $DHIS2_VERSION within $DHIS2_MAJOR...
-              if [[ $DHIS2_VERSION == $LATEST_DHIS2_236 ]] \
-              || [[ $DHIS2_VERSION == $LATEST_DHIS2_235 ]]
-              then
-                # Then, tag as: $DHIS2_MAJOR
-                echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_MAJOR"
-                IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_MAJOR")
-              fi
-            fi
-
-          # Or, if $DHIS2_MAJOR is lower than 2.35...
           else
+            # Tag as full DHIS2 version, Tomcat version, and JDK
+            echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_VERSION}-jdk${JAVA_MAJOR}-openjdk"
+            IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_VERSION}-jdk${JAVA_MAJOR}-openjdk")
 
-            # And, if latest Tomcat 8.5...
-            if [[ $TOMCAT_VERSION == $LATEST_TOMCAT_8 ]]; then
-              # Then, tag as: $DHIS2_VERSION
-              echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_VERSION"
-              IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_VERSION")
-
-              # And, if latest $DHIS2_VERSION within $DHIS2_MAJOR...
-              if [[ $DHIS2_VERSION == $LATEST_DHIS2_234 ]] \
-              || [[ $DHIS2_VERSION == $LATEST_DHIS2_233 ]] \
-              || [[ $DHIS2_VERSION == $LATEST_DHIS2_232 ]] \
-              || [[ $DHIS2_VERSION == $LATEST_DHIS2_231 ]]
-              then
-                # Then, tag as: $DHIS2_MAJOR
-                echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_MAJOR"
-                IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_MAJOR")
-              fi
+            # If latest Tomcat version within Tomcat major...
+            if [[ $TOMCAT_VERSION == $LATEST_TOMCAT_10 ]] \
+            || [[ $TOMCAT_VERSION == $LATEST_TOMCAT_9 ]] \
+            || [[ $TOMCAT_VERSION == $LATEST_TOMCAT_8 ]]
+            then
+              # Then, tag as: ${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}
+              echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}"
+              IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}")
             fi
 
-          fi
+            # If $DHIS2_MAJOR is 2.35 or higher...
+            if [[ ${DHIS2_MAJOR//./} -ge 235 ]]; then
 
-          # Finally, if latest $DHIS2_VERSION of all releases...
-          if [[ $DHIS2_VERSION == $LATEST_DHIS2_VERSION ]]; then
-            # Then, tag as: latest
-            echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:latest"
-            IMAGE_TAGS+=('ghcr.io/baosystems/dhis2:latest')
+              # And, if latest Tomcat 9...
+              if [[ $TOMCAT_VERSION == $LATEST_TOMCAT_9 ]]; then
+                # Then, tag as: $DHIS2_VERSION
+                echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_VERSION"
+                IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_VERSION")
+
+                # And, if latest $DHIS2_VERSION within $DHIS2_MAJOR...
+                if [[ $DHIS2_VERSION == $LATEST_DHIS2_236 ]] \
+                || [[ $DHIS2_VERSION == $LATEST_DHIS2_235 ]]
+                then
+                  # Then, tag as: $DHIS2_MAJOR
+                  echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_MAJOR"
+                  IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_MAJOR")
+                fi
+              fi
+
+            # Or, if $DHIS2_MAJOR is lower than 2.35...
+            else
+
+              # And, if latest Tomcat 8.5...
+              if [[ $TOMCAT_VERSION == $LATEST_TOMCAT_8 ]]; then
+                # Then, tag as: $DHIS2_VERSION
+                echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_VERSION"
+                IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_VERSION")
+
+                # And, if latest $DHIS2_VERSION within $DHIS2_MAJOR...
+                if [[ $DHIS2_VERSION == $LATEST_DHIS2_234 ]] \
+                || [[ $DHIS2_VERSION == $LATEST_DHIS2_233 ]] \
+                || [[ $DHIS2_VERSION == $LATEST_DHIS2_232 ]] \
+                || [[ $DHIS2_VERSION == $LATEST_DHIS2_231 ]]
+                then
+                  # Then, tag as: $DHIS2_MAJOR
+                  echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_MAJOR"
+                  IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_MAJOR")
+                fi
+              fi
+
+            fi
+
+            # Finally, if latest $DHIS2_VERSION of all releases...
+            if [[ $DHIS2_VERSION == $LATEST_DHIS2_VERSION ]]; then
+              # Then, tag as: latest
+              echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:latest"
+              IMAGE_TAGS+=('ghcr.io/baosystems/dhis2:latest')
+            fi
           fi
 
           # Export IMAGE_TAGS as comma-separated string
