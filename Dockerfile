@@ -225,4 +225,4 @@ EXPOSE 8080
 CMD ["catalina.sh", "run"]
 
 # Link to repository
-LABEL org.opencontainers.image.source=https://github.com/baosystems/dhis2-container
+LABEL org.opencontainers.image.source=https://github.com/baosystems/docker-dhis2
