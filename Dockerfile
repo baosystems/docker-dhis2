@@ -27,7 +27,7 @@ ARG WAIT_VERSION=2.9.0
 FROM docker.io/debian:buster-20210902 as dhis2-downloader
 RUN set -eux; \
   apt-get update; \
-  apt-get install -y --no-install-recommends ca-certificates wget unzip; \
+  apt-get install -y --no-install-recommends bsdtar ca-certificates wget unzip; \
   rm -r -f /var/lib/apt/lists/*
 ARG DHIS2_MAJOR
 ARG DHIS2_VERSION
@@ -41,7 +41,9 @@ RUN set -eux; \
     wget --quiet -O dhis.war "https://releases.dhis2.org/${DHIS2_MAJOR}/dhis2-stable-${DHIS2_VERSION}.war"; \
   fi; \
   unzip -qq dhis.war -d ROOT; \
-  rm -v -f dhis.war
+  rm -v -f dhis.war; \
+  bsdtar -x -f "$( find ROOT -regextype posix-egrep -regex '.*/dhis-service-core-2\.[0-9]+(-(EMBARGOED|SNAPSHOT))?.*\.jar$' )" build.properties; \
+  cat build.properties
 
 
 ################################################################################
@@ -196,6 +198,9 @@ RUN set -eux; \
 
 # Add contents of the extracted dhis.war
 COPY --chown=root:root --from=dhis2-downloader /work/ROOT/ /usr/local/tomcat/webapps/ROOT/
+
+# Add extracted build.properties to DHIS2_HOME
+COPY --chown=root:root --from=dhis2-downloader /work/build.properties /opt/dhis2/build.properties
 
 # Add DHIS2 version to the environment
 ARG DHIS2_MAJOR
