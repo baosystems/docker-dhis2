@@ -33,11 +33,9 @@ ARG DHIS2_MAJOR
 ARG DHIS2_VERSION
 WORKDIR /work
 RUN set -eux; \
-  if [ "$DHIS2_MAJOR" = "dev" ] || [ "$DHIS2_VERSION" = "dev" ]; \
-  then \
+  if [ "$DHIS2_MAJOR" = "dev" ] || [ "$DHIS2_VERSION" = "dev" ]; then \
     wget --quiet -O dhis.war "https://releases.dhis2.org/dev/dhis.war"; \
-  elif [ "$DHIS2_VERSION" = "2.35.7" ]; \
-  then \
+  elif [ "$DHIS2_VERSION" = "2.35.7" ]; then \
     wget --quiet -O dhis.war "https://releases.dhis2.org/${DHIS2_MAJOR}/dhis2-stable-${DHIS2_VERSION}-EMBARGOED.war"; \
   else \
     wget --quiet -O dhis.war "https://releases.dhis2.org/${DHIS2_MAJOR}/dhis2-stable-${DHIS2_VERSION}.war"; \
@@ -83,8 +81,7 @@ ARG REMCO_VERSION
 WORKDIR /work
 RUN set -eux; \
   dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"; \
-  if [ "$dpkgArch" = "amd64" ]; \
-  then \
+  if [ "$dpkgArch" = "amd64" ]; then \
     wget --quiet -O remco_linux.zip "https://github.com/HeavyHorst/remco/releases/download/v${REMCO_VERSION}/remco_${REMCO_VERSION}_linux_${dpkgArch}.zip"; \
     unzip remco_linux.zip; \
     mv --verbose remco_linux remco; \
@@ -114,14 +111,13 @@ ARG WAIT_VERSION
 WORKDIR /work
 RUN set -eux; \
   dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"; \
-  if [ "$dpkgArch" = "amd64" ]; \
-  then \
+  if [ "$dpkgArch" = "amd64" ]; then \
     wget "https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait"; \
     chmod --changes 0755 wait; \
   else \
     git clone https://github.com/ufoscout/docker-compose-wait.git source; \
     cd source; \
-    git checkout "${WAIT_VERSION}"; \
+    git checkout "$WAIT_VERSION"; \
     R_TARGET="$( rustup target list --installed | grep -- '-gnu' | tail -1 | awk '{print $1}'| sed 's/gnu/musl/' )"; \
     rustup target add "$R_TARGET"; \
     cargo build --release --target="$R_TARGET"; \
@@ -140,7 +136,7 @@ FROM "docker.io/tomcat:${TOMCAT_VERSION}-jdk${JAVA_MAJOR}-openjdk" as dhis2
 
 # Add Java major version to the environment (JAVA_VERSION is provided by the FROM image)
 ARG JAVA_MAJOR
-ENV JAVA_MAJOR=${JAVA_MAJOR}
+ENV JAVA_MAJOR=$JAVA_MAJOR
 
 # Install dig and netcat for use in docker-entrypoint.sh and debugging
 RUN set -eux; \
@@ -159,13 +155,13 @@ RUN set -eux; \
 # Add tools from other build stages and add versions to the environment
 COPY --chown=root:root --from=gosu-downloader /work/gosu /usr/local/bin/
 ARG GOSU_VERSION
-ENV GOSU_VERSION=${GOSU_VERSION}
+ENV GOSU_VERSION=$GOSU_VERSION
 COPY --chown=root:root --from=remco-builder /work/remco /usr/local/bin/
 ARG REMCO_VERSION
-ENV REMCO_VERSION=${REMCO_VERSION}
+ENV REMCO_VERSION=$REMCO_VERSION
 COPY --chown=root:root --from=wait-builder /work/wait /usr/local/bin/
 ARG WAIT_VERSION
-ENV WAIT_VERSION=${WAIT_VERSION}
+ENV WAIT_VERSION=$WAIT_VERSION
 
 # Create tomcat system user, disable crons, and clean up
 RUN set -eux; \
@@ -203,9 +199,9 @@ COPY --chown=root:root --from=dhis2-downloader /work/ROOT/ /usr/local/tomcat/web
 
 # Add DHIS2 version to the environment
 ARG DHIS2_MAJOR
-ENV DHIS2_MAJOR=${DHIS2_MAJOR}
+ENV DHIS2_MAJOR=$DHIS2_MAJOR
 ARG DHIS2_VERSION
-ENV DHIS2_VERSION=${DHIS2_VERSION}
+ENV DHIS2_VERSION=$DHIS2_VERSION
 
 # Add dhis2-init.sh and bundled scripts
 COPY ./dhis2-init.sh /usr/local/bin/
