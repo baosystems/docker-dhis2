@@ -36,6 +36,9 @@ RUN set -eux; \
   if [ "$DHIS2_MAJOR" = "dev" ] || [ "$DHIS2_VERSION" = "dev" ]; \
   then \
     wget --quiet -O dhis.war "https://releases.dhis2.org/dev/dhis.war"; \
+  elif [ "$DHIS2_VERSION" = "2.35.7" ]; \
+  then \
+    wget --quiet -O dhis.war "https://releases.dhis2.org/${DHIS2_MAJOR}/dhis2-stable-${DHIS2_VERSION}-EMBARGOED.war"; \
   else \
     wget --quiet -O dhis.war "https://releases.dhis2.org/${DHIS2_MAJOR}/dhis2-stable-${DHIS2_VERSION}.war"; \
   fi; \
