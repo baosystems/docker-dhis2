@@ -10,7 +10,7 @@ volumes:
 services:
 
   pass_init:
-    image: "docker.io/debian:buster-20210721"
+    image: "docker.io/debian:buster-20210902"
     volumes:
       - type: volume
         source: pass_pg_dhis
