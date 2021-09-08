@@ -109,7 +109,7 @@ RUN set -eux; \
 
 # wait pauses until remote hosts are available - https://github.com/ufoscout/docker-compose-wait
 # Tests are excluded due to the time taken building arm64 images in emulation; see https://github.com/ufoscout/docker-compose-wait/issues/54
-FROM docker.io/rust:1.53.0-buster as wait-builder
+FROM docker.io/rust:1.54.0-buster as wait-builder
 ARG WAIT_VERSION
 WORKDIR /work
 RUN set -eux; \
