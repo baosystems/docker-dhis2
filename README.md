@@ -38,15 +38,23 @@ The default command is `catalina.sh run`, but you can use `remco` instead. [Remc
 
 If the container command is set to `dhis2_init.sh`, each script in _dhis2-init.d_ will be run. Unless specified to not be used, the _docker-entrypoint.sh_ script will perform the actions listed above as it pertains to other commands. If _/dhis2-init.progress/_ is shared with other instances of dhis2-init, only one instance of a script will be performed at a time. Environment variable `DHIS2_INIT_SKIP` can be set as a comma-seperated value for files in _dhis2-init.d_ to skip. If `dhis2_init.sh` is not run, it is the responsibility of the operator to ensure the database is initiated and ready to be used by DHIS2.
 
-* `10_dhis2-database.sh`: Create and initialize a PostgreSQL database with PostGIS. If `WAIT_HOSTS` is empty or null, it will be set to `PGHOST`/`DATABASE_HOST`:`PGPORT`/"5432" and the script will proceed once the database service is ready. The following section requires the following environment variables set:
+* `10_dhis2-database.sh`: Create and initialize a PostgreSQL database with PostGIS. If `WAIT_HOSTS` is empty or null, it will be set to `PGHOST`/`DATABASE_HOST`:`PGPORT`/"5432" and the script will proceed once the database service is ready. The script requires the following environment variables set:
 
     * `DATABASE_DBNAME` (default: "dhis2")
     * `DATABASE_USERNAME` (default: "dhis")
-    * `DATABASE_PASSWORD` (optional, but strongly recommended)
+    * `DATABASE_PASSWORD` or contents in `DATABASE_PASSWORD_FILE` (optional, but strongly recommended)
     * `PGHOST` or `DATABASE_HOST` (default: "localhost")
     * `PGPORT` (default: "5432")
     * `PGUSER` (default: "postgres", must be a PostgreSQL superuser)
-    * `PGPASSWORD` (required for `PGUSER` in most PostgreSQL installations)
+    * `PGPASSWORD` or contents in `PGPASSWORD_FILE` (required for `PGUSER` in most PostgreSQL installations)
+
+* `15_pgstatstatements.sh`: Add the [pg_stat_statements](https://www.postgresql.org/docs/current/pgstatstatements.html) extension to the `PGDATABASE`. This module is included in the PostGIS container image. If `WAIT_HOSTS` is empty or null, it will be set to `PGHOST`/`DATABASE_HOST`:`PGPORT`/"5432" and the script will proceed once the database service is ready. The script requires the following environment variables set:
+
+    * `PGDATABASE` (default: "postgres")
+    * `PGHOST` or `DATABASE_HOST` (default: "localhost")
+    * `PGPORT` (default: "5432")
+    * `PGUSER` (default: "postgres", must be a PostgreSQL superuser)
+    * `PGPASSWORD` or contents in `PGPASSWORD_FILE` (required for `PGUSER` in most PostgreSQL installations)
 
 * `20_dhis2-initwar.sh`: If the last line in _/dhis2-init.progress/20_dhis2-initwar_history.csv_ does not contain a line stating that the current DHIS2 version and build revision started successfully during a previous run of `20_dhis2-initwar.sh`, this script will start and stop Tomcat and record its progress. It will use `docker-entrypoint.sh` and `remco` to create _dhis.conf_ before starting Tomcat, so read other sections of this README for any values to set (for most cases, if the `DATABASE_*` values are set above for `10_dhis2-database.sh`, this script will function as expected).
 

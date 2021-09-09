@@ -83,7 +83,7 @@ services:
     environment:
       DATABASE_HOST: database
       DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
-      DHIS2_INIT_SKIP: 20_dhis2-initwar.sh  # String like "item1.sh,item2.sh"; NOTE: Only skip 20_dhis2-initwar.sh on stacks with a single Tomcat node
+      DHIS2_INIT_SKIP: 20_dhis2-initwar.sh  # String like "item1.sh,item2.sh"; NOTE: Only skip "20_dhis2-initwar.sh" on stacks with a single Tomcat node
       PGPASSWORD_FILE: /pass_pg_postgres/pass_pg_postgres.txt
       WAIT_BEFORE: 10  # Allow time for postgres to initialize itself. Also, 10_dhis2-database.sh will set WAIT_HOSTS to the database host if not specified.
     command:

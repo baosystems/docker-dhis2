@@ -116,11 +116,11 @@ fi
 # The following section requires the following environment variables set:
 # - DATABASE_DBNAME (default: "dhis2")
 # - DATABASE_USERNAME (default: "dhis")
-# - DATABASE_PASSWORD (optional, but strongly recommended)
+# - DATABASE_PASSWORD or contents in DATABASE_PASSWORD_FILE (optional, but strongly recommended)
 # - PGHOST or DATABASE_HOST (default: "localhost")
 # - PGPORT (default: "5432")
 # - PGUSER (default: "postgres", must be a PostgreSQL superuser)
-# - PGPASSWORD (required for PGUSER in most PostgreSQL installations)
+# - PGPASSWORD or contents in PGPASSWORD_FILE (required for PGUSER in most PostgreSQL installations)
 
 psql --echo-all --echo-hidden -v ON_ERROR_STOP=1 <<- EOSQL
 -- Create role if not exists (https://stackoverflow.com/a/8099557)
@@ -155,12 +155,8 @@ REVOKE ALL ON SCHEMA public FROM public;
 CREATE SCHEMA IF NOT EXISTS postgis AUTHORIZATION $PGUSER;
 ALTER SCHEMA postgis OWNER TO $PGUSER;
 
--- statements schema owned by $PGUSER
-CREATE SCHEMA IF NOT EXISTS statements AUTHORIZATION $PGUSER;
-ALTER SCHEMA statements OWNER TO $PGUSER;
-
 -- Set database search_path to include multiple schemas
-ALTER DATABASE "$DATABASE_DBNAME" SET search_path TO public,postgis,statements;
+ALTER DATABASE "$DATABASE_DBNAME" SET search_path TO public,postgis;
 EOSQL
 
 # Check if PostGIS is installed to the database
@@ -188,16 +184,6 @@ ALTER EXTENSION postgis UPDATE TO '${POSTGIS_VERSION}';
 EOSQL
 fi
 
-# Check if pg_stat_statements is installed to the database
-PGSTATSTATEMENTS_EXISTS="$( psql --dbname "$DATABASE_DBNAME" -At -c "SELECT 1 FROM pg_extension WHERE extname='pg_stat_statements';" )"
-# If so, move it to its own schema
-if [[ "${PGSTATSTATEMENTS_EXISTS:-0}" = "1" ]]; then
-  psql --dbname "$DATABASE_DBNAME" --echo-all --echo-hidden -v ON_ERROR_STOP=1 <<- EOSQL
--- If the pg_stat_statements extension is installed, ensure it is in the statements schema
-ALTER EXTENSION pg_stat_statements SET SCHEMA statements;
-EOSQL
-fi
-
 # Resume database setup
 psql --dbname "$DATABASE_DBNAME" --echo-all --echo-hidden -v ON_ERROR_STOP=1 <<- EOSQL
 -- postgis schema default privileges for user "$DATABASE_USERNAME" to use
@@ -216,18 +202,6 @@ DROP EXTENSION IF EXISTS postgis_raster;
 GRANT USAGE ON SCHEMA postgis TO $DATABASE_USERNAME;
 GRANT SELECT ON ALL TABLES IN SCHEMA postgis TO $DATABASE_USERNAME;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA postgis TO $DATABASE_USERNAME;
-
--- statements schema default privileges for user "$DATABASE_USERNAME" to use
--- NOTE: "TABLES" includes views
-ALTER DEFAULT PRIVILEGES IN SCHEMA statements GRANT SELECT ON TABLES TO $DATABASE_USERNAME;
-
--- Create pg_stat_statements extension in the statements schema (requires additional configuration in postgresql.conf)
-CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA statements;
-
--- statements schema effective privileges for user "$DATABASE_USERNAME" to use
--- NOTE: "TABLES" includes views
-GRANT USAGE ON SCHEMA statements TO $DATABASE_USERNAME;
-GRANT SELECT ON ALL TABLES IN SCHEMA statements TO $DATABASE_USERNAME;
 EOSQL
 
 # If DATABASE_PASSWORD is provided, set LOGIN capability and a password for DATABASE_USERNAME
