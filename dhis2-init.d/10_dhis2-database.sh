@@ -155,7 +155,7 @@ REVOKE ALL ON SCHEMA public FROM public;
 CREATE SCHEMA IF NOT EXISTS postgis AUTHORIZATION $PGUSER;
 ALTER SCHEMA postgis OWNER TO $PGUSER;
 
--- Set database search_path to include multiple schemas
+-- Set database search_path to include the postgis schema
 ALTER DATABASE "$DATABASE_DBNAME" SET search_path TO public,postgis;
 EOSQL
 
