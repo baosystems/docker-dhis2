@@ -25,18 +25,18 @@ jobs:
           - "2.35.0"
           - "dev"
         java_major: ["11"]  # 11 should always be the default; Bugs specific to Java 8 are unlikely to be fixed for DHIS2 2.35 and up
-        tomcat_version: ["9.0.52"]
+        tomcat_version: ["9.0.53"]
         include:
           # Use Tomcat 8.5 and Java 8 for DHIS2 versions incompatible with Java 11
-          - { dhis2_version: "2.34.6", java_major: "8", tomcat_version: "8.5.70" }
-          - { dhis2_version: "2.34.5", java_major: "8", tomcat_version: "8.5.70" }
-          - { dhis2_version: "2.34.3", java_major: "8", tomcat_version: "8.5.70" }
-          - { dhis2_version: "2.34.2", java_major: "8", tomcat_version: "8.5.70" }
-          - { dhis2_version: "2.34.1", java_major: "8", tomcat_version: "8.5.70" }
-          - { dhis2_version: "2.34.0", java_major: "8", tomcat_version: "8.5.70" }
+          - { dhis2_version: "2.34.6", java_major: "8", tomcat_version: "8.5.71" }
+          - { dhis2_version: "2.34.5", java_major: "8", tomcat_version: "8.5.71" }
+          - { dhis2_version: "2.34.3", java_major: "8", tomcat_version: "8.5.71" }
+          - { dhis2_version: "2.34.2", java_major: "8", tomcat_version: "8.5.71" }
+          - { dhis2_version: "2.34.1", java_major: "8", tomcat_version: "8.5.71" }
+          - { dhis2_version: "2.34.0", java_major: "8", tomcat_version: "8.5.71" }
           # Build the latest version for each unsupported major release.
           # (only the 3 latest major releases are actively supported)
-          - { dhis2_version: "2.33.9", java_major: "8", tomcat_version: "8.5.70" }
+          - { dhis2_version: "2.33.9", java_major: "8", tomcat_version: "8.5.71" }
 
     steps:
 
@@ -59,9 +59,9 @@ jobs:
         run: |
           # Define latest versions (static until determined automatically)
 
-          LATEST_TOMCAT_10='10.0.10'
-          LATEST_TOMCAT_9='9.0.52'
-          LATEST_TOMCAT_8='8.5.70'
+          LATEST_TOMCAT_10='10.0.11'
+          LATEST_TOMCAT_9='9.0.53'
+          LATEST_TOMCAT_8='8.5.71'
 
           LATEST_DHIS2_236='2.36.3'
           LATEST_DHIS2_235='2.35.7'
