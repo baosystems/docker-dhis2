@@ -212,6 +212,9 @@ ENV DHIS2_VERSION=$DHIS2_VERSION
 COPY ./dhis2-init.sh /usr/local/bin/
 COPY ./dhis2-init.d/* /usr/local/share/dhis2-init.d/
 
+# Add image helper scripts
+COPY ./helpers/* /usr/local/bin/
+
 # remco configurations and templates, and initialize log file for the tomcat user
 COPY ./remco/config.toml /etc/remco/config
 COPY ./remco/onetime.toml /etc/remco/onetime.toml
