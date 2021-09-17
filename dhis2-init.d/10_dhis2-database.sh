@@ -151,6 +151,29 @@ GRANT ALL PRIVILEGES ON DATABASE $DATABASE_DBNAME TO $DATABASE_USERNAME;
 ALTER SCHEMA public OWNER TO $DATABASE_USERNAME;
 REVOKE ALL ON SCHEMA public FROM public;
 
+-- public schema existing object ownership, excluding PostGIS objects
+DO \$\$DECLARE r record;
+BEGIN
+  FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename != 'spatial_ref_sys'
+  LOOP
+    EXECUTE 'ALTER TABLE '|| r.tablename ||' OWNER TO $DATABASE_USERNAME;';
+  END LOOP;
+END\$\$;
+DO \$\$DECLARE r record;
+BEGIN
+  FOR r IN SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public'
+  LOOP
+    EXECUTE 'ALTER SEQUENCE '|| r.sequence_name ||' OWNER TO $DATABASE_USERNAME;';
+  END LOOP;
+END\$\$;
+DO \$\$DECLARE r record;
+BEGIN
+  FOR r IN SELECT table_name FROM information_schema.views WHERE table_schema = 'public' AND table_name != 'geography_columns' AND table_name != 'geometry_columns'
+  LOOP
+    EXECUTE 'ALTER VIEW '|| r.table_name ||' OWNER TO $DATABASE_USERNAME;';
+  END LOOP;
+END\$\$;
+
 -- postgis schema owned by $PGUSER
 CREATE SCHEMA IF NOT EXISTS postgis AUTHORIZATION $PGUSER;
 ALTER SCHEMA postgis OWNER TO $PGUSER;
