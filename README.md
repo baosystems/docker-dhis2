@@ -326,9 +326,6 @@ docker compose stop dhis2
 # Drop the database
 docker compose run --rm dhis2_init db-empty.sh
 
-# Force dhis2_init to re-run 10_dhis2-database.sh before the dhis2 service starts when running the next command
-docker compose run --rm dhis2_init rm -f /dhis2-init.progress/10_dhis2-database_status.txt
-
 # Start Tomcat
 docker compose start dhis2
 
@@ -358,9 +355,6 @@ gunzip -c dhis2-db-sierra-leone-2.36.sql.gz | docker compose exec -T database ps
 # If the previous command didn't work, try the steps below which will copy the file into the container before importing
 #docker cp dhis2-db-sierra-leone-2.36.sql.gz "$( docker compose ps -q 'database' | head -n1 )":/tmp/db.sql.gz
 #docker compose exec database bash -c "gunzip -c /tmp/db.sql.gz | psql -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2' && rm -v /tmp/db.sql.gz"
-
-# Force dhis2_init to re-run 10_dhis2-database.sh before the dhis2 service starts when running the next command
-docker compose run --rm dhis2_init rm -f /dhis2-init.progress/10_dhis2-database_status.txt
 
 # Start Tomcat
 docker compose start dhis2

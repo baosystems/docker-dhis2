@@ -95,6 +95,11 @@ psql \
   -v ON_ERROR_STOP=1 \
   --command="CREATE EXTENSION IF NOT EXISTS postgis;"
 
+if [[ -e '/dhis2-init.progress/10_dhis2-database_status.txt' ]]; then
+  echo "[INFO] $SELF: Delete the '10_dhis2-database_status.txt' progress file so that the database gets re-initialized:"
+  rm --verbose --force '/dhis2-init.progress/10_dhis2-database_status.txt'
+fi
+
 
 ################################################################################
 
