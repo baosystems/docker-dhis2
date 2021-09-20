@@ -208,7 +208,7 @@ jobs:
         if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') }}
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Multi-platform build and push
