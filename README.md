@@ -314,42 +314,20 @@ docker compose run --rm pass_init bash -c 'for i in pg_dhis pg_postgres ; do ech
 
 ## Advanced
 
-### Empty the database
+### Recreate the database
 
 You'll want an empty database for starting a new DHIS2 installation. Perform the steps below to
-remove existing data.
-
-#### Recreate the public schema
-
-Try this method first:
-
-```bash
-# Stop Tomcat
-docker compose stop dhis2
-
-# Empty the database public schema
-docker compose exec database psql -v 'ON_ERROR_STOP=1' --username='dhis' --dbname='dhis2' --command='DROP SCHEMA public CASCADE; CREATE SCHEMA IF NOT EXISTS public;'
-
-# Force run dhis2_init
-docker compose run --rm --env 'DHIS2_INIT_FORCE=1' --env 'WAIT_BEFORE=0' --workdir '/opt/dhis2/logs/' dhis2_init
-
-# Start Tomcat
-docker compose start dhis2
-```
-
-#### Recreate the database
-
-**Only try this method if the previous failed!**
+remove existing data and re-initialize the database.
 
 ```bash
 # Stop Tomcat
 docker compose stop dhis2
 
 # Drop the database
-docker compose exec database psql --username='postgres' --command='DROP DATABASE dhis2;'
+docker compose run --rm dhis2_init db-empty.sh
 
-# Force run dhis2_init
-docker compose run --rm --env 'DHIS2_INIT_FORCE=1' --env 'WAIT_BEFORE=0' --workdir '/opt/dhis2/logs/' dhis2_init
+# Force dhis2_init to re-run 10_dhis2-database.sh before the dhis2 service starts when running the next command
+docker compose run --rm dhis2_init rm -f /dhis2-init.progress/10_dhis2-database_status.txt
 
 # Start Tomcat
 docker compose start dhis2
