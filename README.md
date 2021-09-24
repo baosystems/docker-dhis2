@@ -360,6 +360,25 @@ gunzip -c dhis2-db-sierra-leone-2.36.sql.gz | docker compose exec -T database ps
 docker compose start dhis2
 ```
 
+### Export the database to a file on your system
+
+An included helper script will run `pg_dump` with generated tables excluded and perform some minor
+changes to increase the liklihood of being imported on other systems.
+
+```bash
+# Stop Tomcat
+docker compose stop dhis2
+
+# Run db-export.sh without the default entrypoint and compress the exported database with gzip
+docker compose run --rm --entrypoint db-export.sh dhis2_init | gzip > output.sql.gz
+
+# Alternatively, you can skip compression but the file will be significantly larger
+#docker compose run --rm --entrypoint db-export.sh dhis2_init > output.sql
+
+# Start Tomcat
+docker compose start dhis2
+```
+
 ### Upgrade DHIS2 version
 
 If the container tag changes in an updated copy of the Compose file, or if the .env file is changed,
