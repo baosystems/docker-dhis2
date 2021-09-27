@@ -249,9 +249,8 @@ The version of DHIS2 can be set in the _.env_ file; see
 [.env.example](https://github.com/baosystems/docker-dhis2/blob/main/.env.example) for an example.
 See https://github.com/baosystems/docker-dhis2/pkgs/container/dhis2/versions for available versions.
 
-The following has been tested with [the newer v2 Compose
-v2](https://docs.docker.com/compose/cli-command/) and [the older v1 Compose
-v1](https://pypi.org/project/docker-compose/).
+The following has been tested with [the newer v2 Compose](https://docs.docker.com/compose/cli-command/)
+and [the older v1 Compose](https://pypi.org/project/docker-compose/).
 
 ## Quick
 
