@@ -10,7 +10,8 @@ volumes:
 services:
 
   pass_init:
-    image: "docker.io/debian:buster-20210902"
+    # Using the same image as dhis2, but with a different command
+    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-2.36.3}"
     volumes:
       - type: volume
         source: pass_pg_dhis
