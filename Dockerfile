@@ -134,7 +134,7 @@ RUN set -eux; \
 
 
 # Tomcat with OpenJDK - https://hub.docker.com/_/tomcat
-FROM "docker.io/tomcat:${TOMCAT_VERSION}-jdk${JAVA_MAJOR}-openjdk-bullseye" as dhis2
+FROM "docker.io/tomcat:${TOMCAT_VERSION}-jre${JAVA_MAJOR}-openjdk-slim-bullseye" as dhis2
 
 # Add Java major version to the environment (JAVA_VERSION is provided by the FROM image)
 ARG JAVA_MAJOR
@@ -146,8 +146,17 @@ RUN set -eux; \
   apt-get install -y --no-install-recommends bind9-dnsutils netcat-traditional; \
   rm -r -f /var/lib/apt/lists/*
 
-# Install latest PostgreSQL client from PGDG for dhis2-init.sh
+# Install unzip and wget for dhis2-init.sh tasks (not included in bullseye-slim)
 RUN set -eux; \
+  apt-get update; \
+  apt-get install -y --no-install-recommends unzip wget; \
+  rm -r -f /var/lib/apt/lists/*
+
+# Install latest PostgreSQL client from PGDG for dhis2-init.sh
+# Also, install curl and gpg to add the PDGD repository (not included in bullseye-slim)
+RUN set -eux; \
+  apt-get update; \
+  apt-get install -y --no-install-recommends curl gpg; \
   echo "deb http://apt.postgresql.org/pub/repos/apt $( awk -F'=' '/^VERSION_CODENAME/ {print $NF}' /etc/os-release )-pgdg main" > /etc/apt/sources.list.d/pgdg.list; \
   curl --silent https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg; \
   apt-get update; \
