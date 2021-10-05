@@ -108,7 +108,7 @@ RUN set -eux; \
 
 # wait pauses until remote hosts are available - https://github.com/ufoscout/docker-compose-wait
 # Tests are excluded due to the time taken building arm64 images in emulation; see https://github.com/ufoscout/docker-compose-wait/issues/54
-FROM docker.io/rust:1.55.0-buster as wait-builder
+FROM docker.io/rust:1.55.0-bullseye as wait-builder
 ARG WAIT_VERSION
 WORKDIR /work
 RUN set -eux; \
@@ -134,7 +134,7 @@ RUN set -eux; \
 
 
 # Tomcat with OpenJDK - https://hub.docker.com/_/tomcat
-FROM "docker.io/tomcat:${TOMCAT_VERSION}-jdk${JAVA_MAJOR}-openjdk" as dhis2
+FROM "docker.io/tomcat:${TOMCAT_VERSION}-jdk${JAVA_MAJOR}-openjdk-bullseye" as dhis2
 
 # Add Java major version to the environment (JAVA_VERSION is provided by the FROM image)
 ARG JAVA_MAJOR
@@ -143,16 +143,16 @@ ENV JAVA_MAJOR=$JAVA_MAJOR
 # Install dig and netcat for use in docker-entrypoint.sh and debugging
 RUN set -eux; \
   apt-get update; \
-  apt-get install -y --no-install-recommends dnsutils netcat-traditional; \
+  apt-get install -y --no-install-recommends bind9-dnsutils netcat-traditional; \
   rm -r -f /var/lib/apt/lists/*
 
 # Install latest PostgreSQL client from PGDG for dhis2-init.sh
 RUN set -eux; \
   echo "deb http://apt.postgresql.org/pub/repos/apt $( awk -F'=' '/^VERSION_CODENAME/ {print $NF}' /etc/os-release )-pgdg main" > /etc/apt/sources.list.d/pgdg.list; \
-  wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -; \
+  curl --silent https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg; \
   apt-get update; \
   apt-get install -y --no-install-recommends postgresql-client; \
-  rm -r -f /var/lib/apt/lists/* /root/.wget-hsts
+  rm -r -f /var/lib/apt/lists/*
 
 # Add tools from other build stages and add versions to the environment
 COPY --chown=root:root --from=gosu-downloader /work/gosu /usr/local/bin/
