@@ -13,6 +13,7 @@ SELF="$( basename "$0" )"
 
 # Exit immediately if any required scripts or programs are not found
 ITEMS=(
+  basename
   dirname
   flock
   head

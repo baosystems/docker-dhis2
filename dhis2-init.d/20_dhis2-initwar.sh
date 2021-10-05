@@ -21,13 +21,11 @@ ITEMS=(
   dirname
   docker-entrypoint.sh
   env
-  flock
+  gosu
   grep
-  head
   mkdir
+  remco
   rm
-  seq
-  shuf
   sleep
   tail
   tee

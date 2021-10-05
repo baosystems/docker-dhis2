@@ -16,15 +16,10 @@ echo "[INFO] $SELF: started..."
 # Exit immediately if any required scripts or programs are not found
 ITEMS=(
   dirname
-  flock
   grep
-  head
   mkdir
   psql
   rm
-  seq
-  shuf
-  sleep
   tail
   tee
   /usr/local/bin/wait
