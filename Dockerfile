@@ -24,10 +24,10 @@ ARG WAIT_VERSION=2.9.0
 
 
 # DHIS2 downloaded as a separate stage to improve build caches
-FROM docker.io/debian:buster-20210902 as dhis2-downloader
+FROM docker.io/debian:bullseye-20210927 as dhis2-downloader
 RUN set -eux; \
   apt-get update; \
-  apt-get install -y --no-install-recommends bsdtar ca-certificates wget unzip; \
+  apt-get install -y --no-install-recommends ca-certificates libarchive-tools wget unzip; \
   rm -r -f /var/lib/apt/lists/*
 ARG DHIS2_MAJOR
 ARG DHIS2_VERSION
@@ -50,7 +50,7 @@ RUN set -eux; \
 
 
 # gosu for easy step-down from root - https://github.com/tianon/gosu/releases
-FROM docker.io/debian:buster-20210902 as gosu-downloader
+FROM docker.io/debian:bullseye-20210927 as gosu-downloader
 RUN set -eux; \
   apt-get update; \
   apt-get install -y --no-install-recommends ca-certificates gnupg wget; \
