@@ -28,6 +28,7 @@ jobs:
         tomcat_version: ["9.0.53"]
         include:
           # Use Tomcat 8.5 and Java 8 for DHIS2 versions incompatible with Java 11
+          - { dhis2_version: "2.34.7", java_major: "8", tomcat_version: "8.5.71" }
           - { dhis2_version: "2.34.6", java_major: "8", tomcat_version: "8.5.71" }
           - { dhis2_version: "2.34.5", java_major: "8", tomcat_version: "8.5.71" }
           - { dhis2_version: "2.34.3", java_major: "8", tomcat_version: "8.5.71" }
@@ -65,7 +66,7 @@ jobs:
 
           LATEST_DHIS2_236='2.36.3'
           LATEST_DHIS2_235='2.35.7'
-          LATEST_DHIS2_234='2.34.6'
+          LATEST_DHIS2_234='2.34.7'
           LATEST_DHIS2_233='2.33.9'
           LATEST_DHIS2_232='2.32.7'
           LATEST_DHIS2_231='2.31.9'
