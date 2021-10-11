@@ -394,10 +394,10 @@ EOF
 
 docker compose up --detach
 
-# Later, upgrade to 2.36.3:
+# Later, upgrade to 2.36.4:
 
 cat >> .env <<'EOF'
-DHIS2_TAG=2.36.3
+DHIS2_TAG=2.36.4
 EOF
 
 docker compose stop dhis2

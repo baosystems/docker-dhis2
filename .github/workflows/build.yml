@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         dhis2_version:
+          - "2.36.4"
           - "2.36.3"
           - "2.36.2"
           - "2.36.1"
@@ -64,7 +65,7 @@ jobs:
           LATEST_TOMCAT_9='9.0.54'
           LATEST_TOMCAT_8='8.5.72'
 
-          LATEST_DHIS2_236='2.36.3'
+          LATEST_DHIS2_236='2.36.4'
           LATEST_DHIS2_235='2.35.8'
           LATEST_DHIS2_234='2.34.7'
           LATEST_DHIS2_233='2.33.9'

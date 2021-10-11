@@ -11,7 +11,7 @@ services:
 
   pass_init:
     # Using the same image as dhis2, but with a different command
-    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-2.36.3}"
+    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-2.36.4}"
     volumes:
       - type: volume
         source: pass_pg_dhis
@@ -65,7 +65,7 @@ services:
 
   dhis2_init:
     # Using the same image as dhis2, but with a different command
-    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-2.36.3}"
+    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-2.36.4}"
     depends_on:
       - database
     working_dir: /opt/dhis2/logs  # DHIS2 attempts to create an empty "{WORKDIR}/dhis.log" file on startup
@@ -95,7 +95,7 @@ services:
   #
 
   dhis2:
-    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-2.36.3}"
+    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-2.36.4}"
     depends_on:
       dhis2_init:
         condition: service_completed_successfully
