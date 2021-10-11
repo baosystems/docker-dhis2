@@ -61,7 +61,6 @@ jobs:
         run: |
           # Define latest versions (static until determined automatically)
 
-          LATEST_TOMCAT_10='10.0.12'
           LATEST_TOMCAT_9='9.0.54'
           LATEST_TOMCAT_8='8.5.72'
 
@@ -101,8 +100,7 @@ jobs:
             IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_VERSION}-jdk${JAVA_MAJOR}-openjdk")
 
             # If latest Tomcat version within Tomcat major...
-            if [[ $TOMCAT_VERSION == $LATEST_TOMCAT_10 ]] \
-            || [[ $TOMCAT_VERSION == $LATEST_TOMCAT_9 ]] \
+            if [[ $TOMCAT_VERSION == $LATEST_TOMCAT_9 ]] \
             || [[ $TOMCAT_VERSION == $LATEST_TOMCAT_8 ]]
             then
               # Then, tag as: ${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}
