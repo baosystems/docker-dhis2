@@ -65,7 +65,7 @@ jobs:
           LATEST_TOMCAT_8='8.5.72'
 
           LATEST_DHIS2_236='2.36.3'
-          LATEST_DHIS2_235='2.35.7'
+          LATEST_DHIS2_235='2.35.8'
           LATEST_DHIS2_234='2.34.7'
           LATEST_DHIS2_233='2.33.9'
           LATEST_DHIS2_232='2.32.7'
