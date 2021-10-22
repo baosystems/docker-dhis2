@@ -1,0 +1,143 @@
+name: Build dev image nightly
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '36 3 * * *'
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DHIS2_VERSION: dev  # This should be "dev" or a value like "2.30" or "2.36.4". If like the latter, the "major" version, like "2.36", will be determined automatically
+
+jobs:
+
+  lookup_tomcat:
+    name: Look up versions of Java and Tomcat in source image
+    runs-on: ubuntu-20.04
+    container: docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye  # 1st number is TOMCAT_MAJOR and 2nd number is JAVA_MAJOR; cannot be set at top-level env
+    steps:
+      - name: Lookup versions from latest Tomcat image
+        id: tomcat_query
+        run: |
+          echo "::set-output name=java_major::$( sed -r -e 's/^([^\.]+)\..*$/\1/' <<< "$JAVA_VERSION" )"
+          echo "::set-output name=java_version::$JAVA_VERSION"
+          echo "::set-output name=tomcat_major::$TOMCAT_MAJOR"
+          echo "::set-output name=tomcat_version::$TOMCAT_VERSION"
+    outputs:
+      java_major: ${{ steps.tomcat_query.outputs.java_major }}
+      java_version: ${{ steps.tomcat_query.outputs.java_version }}
+      tomcat_major: ${{ steps.tomcat_query.outputs.tomcat_major }}
+      tomcat_version: ${{ steps.tomcat_query.outputs.tomcat_version }}
+
+  lookup_dhis2:
+    name: Look up dhis.war build metadata
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Install bsdtar and wget
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ca-certificates libarchive-tools wget
+      - name: Set DHIS2_MAJOR from DHIS2_VERSION
+        id: set_major
+        run: |
+          DHIS2_MAJOR="$( sed -r -e 's/^(2\.[0-9]{2})\.[0-9]{1,2}$/\1/' <<<"${{ env.DHIS2_VERSION }}" )"
+          echo "DHIS2_MAJOR=$DHIS2_MAJOR" | tee -a $GITHUB_ENV
+          echo "::set-output name=major::$DHIS2_MAJOR"
+      - name: Download dhis.war
+        run: |
+          wget \
+            --no-verbose \
+            --directory-prefix=/tmp \
+            --output-document=/tmp/dhis.war \
+            https://releases.dhis2.org/${{ env.DHIS2_MAJOR }}/dhis.war
+      - name: Lookup build metadata
+        id: query_metadata
+        run: |
+          DHIS2_BUILD_PROPERTIES="$(
+            bsdtar \
+              -f /tmp/dhis.war \
+              -x \
+              --to-stdout \
+              "$( bsdtar -t -f /tmp/dhis.war | grep -E 'WEB-INF/lib/dhis-service-core-2\.[0-9.]+(-(EMBARGOED|SNAPSHOT))?\.jar' )" \
+            | bsdtar \
+                -f - \
+                -x \
+                --to-stdout \
+                build.properties )"
+          echo "::set-output name=build_revision::$( awk -F'=' '/^build\.revision/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+          echo "::set-output name=build_time::$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+          echo "::set-output name=build_version::$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+          echo "::set-output name=jasperreports_version::$( awk -F'=' '/^jasperreports\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+    outputs:
+      major: ${{ steps.set_major.outputs.major }}
+      build_revision: ${{ steps.query_metadata.outputs.build_revision }}
+      build_time: ${{ steps.query_metadata.outputs.build_time }}
+      build_version: ${{ steps.query_metadata.outputs.build_version }}
+      jasperreports_version: ${{ steps.query_metadata.outputs.jasperreports_version }}
+
+  build_push_dev:
+    name: Build and push image
+    runs-on: ubuntu-20.04
+
+    needs:
+      - lookup_dhis2
+      - lookup_tomcat
+
+    steps:
+
+      - name: Set up QEMU for amd64 and arm64
+        uses: docker/setup-qemu-action@27d0a4f181a40b142cce983c5393082c365d1480  # v1.2.0 (2021-10-22)
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@94ab11c41e45d028884a99163086648e898eed25  # v1.6.0 (2021-10-22)
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@3a3bb3a81753dc99f090d24ee7e5343838b73a96  # v3.5.0 (2021-10-22)
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/dhis2
+          labels: |
+            org.opencontainers.image.title=dhis2
+            org.opencontainers.image.version=${{ env.DHIS2_VERSION }}
+            org.opencontainers.image.base.name=docker.io/tomcat:${{ needs.lookup_tomcat.outputs.tomcat_version }}-jre${{ needs.lookup_tomcat.outputs.java_major }}-openjdk-slim-bullseye
+            dhis2.build.revision=${{ needs.lookup_dhis2.outputs.build_revision }}
+            dhis2.build.time=${{ needs.lookup_dhis2.outputs.build_time }}
+            dhis2.build.version=${{ needs.lookup_dhis2.outputs.build_version }}
+            dhis2.jasperreports.version=${{ needs.lookup_dhis2.outputs.jasperreports_version }}
+            java.major=${{ needs.lookup_tomcat.outputs.java_major }}
+            java.version=${{ needs.lookup_tomcat.outputs.java_version }}
+            tomcat.major=${{ needs.lookup_tomcat.outputs.tomcat_major }}
+            tomcat.version=${{ needs.lookup_tomcat.outputs.tomcat_version }}
+          tags: ${{ needs.lookup_dhis2.outputs.major }}
+
+      - name: Login to GitHub Container Registry
+        if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9  # v1.10.0 (2021-10-22)
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Multi-platform build
+        uses: docker/build-push-action@a66e35b9cbcf4ad0ea91ffcaf7bbad63ad9e0229  # v2.7.0 (2021-10-22)
+        with:
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            DHIS2_MAJOR=${{ needs.lookup_dhis2.outputs.major }}
+            DHIS2_VERSION=${{ env.DHIS2_VERSION }}
+            JAVA_MAJOR=${{ needs.lookup_tomcat.outputs.java_major }}
+            TOMCAT_VERSION=${{ needs.lookup_tomcat.outputs.tomcat_version }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          pull: true
+          load: false
+          push: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -7,12 +7,11 @@
 #
 # Ensure docker-compose.yml:services.dhis2.image matches the value of DHIS2_VERSION.
 
-ARG DHIS2_MAJOR=2.36
+ARG DHIS2_MAJOR=2.36  # While major can be derived from version, it is specified so it can be added as ENV in the final image
 ARG DHIS2_VERSION=2.36.4
 
 ARG JAVA_MAJOR=11
 
-ARG TOMCAT_MAJOR=9.0
 ARG TOMCAT_VERSION=9.0.54
 
 ARG GOSU_VERSION=1.14
