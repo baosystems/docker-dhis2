@@ -170,7 +170,15 @@ jobs:
             ${{ runner.os }}-buildx-${{ matrix.tomcat_version }}-
             ${{ runner.os }}-buildx-
 
-      - name: Multi-platform build (no push or load)
+      - if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Multi-platform build and push ${{ matrix.dhis2_version }}-tomcat${{ matrix.tomcat_version }}-jre${{ matrix.java_major }}
         uses: docker/build-push-action@v2
         with:
           platforms: |
@@ -182,9 +190,9 @@ jobs:
             DHIS2_VERSION=${{ matrix.dhis2_version }}
             JAVA_MAJOR=${{ matrix.java_major }}
             TOMCAT_VERSION=${{ matrix.tomcat_version }}
-          pull: false
-          load: false
-          push: false
+          tags: ${{ env.IMAGE_TAGS }}
+          pull: true
+          push: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
           # [2/3] GHA cache workaround
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
@@ -194,41 +202,3 @@ jobs:
         run: |
           rm -v -rf /tmp/.buildx-cache
           mv -v /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-      - name: Cached build and load ${{ matrix.dhis2_version }}-${{ matrix.tomcat_version }}-jre${{ matrix.java_major }} on default platform
-        uses: docker/build-push-action@v2
-        with:
-          build-args: |
-            DHIS2_MAJOR=${{ env.DHIS2_MAJOR }}
-            DHIS2_VERSION=${{ matrix.dhis2_version }}
-            JAVA_MAJOR=${{ matrix.java_major }}
-            TOMCAT_VERSION=${{ matrix.tomcat_version }}
-          tags: ghcr.io/baosystems/dhis2:${{ matrix.dhis2_version }}-tomcat${{ matrix.tomcat_version }}-jre${{ matrix.java_major }}-openjdk
-          pull: false
-          load: true
-          push: false
-
-      - if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') }}
-        name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') }}
-        name: Cached multi-platform build and push
-        uses: docker/build-push-action@v2
-        with:
-          platforms: |
-            linux/amd64
-            linux/arm64
-          build-args: |
-            DHIS2_MAJOR=${{ env.DHIS2_MAJOR }}
-            DHIS2_VERSION=${{ matrix.dhis2_version }}
-            JAVA_MAJOR=${{ matrix.java_major }}
-            TOMCAT_VERSION=${{ matrix.tomcat_version }}
-          tags: ${{ env.IMAGE_TAGS }}
-          pull: false
-          load: false
-          push: true
