@@ -7,7 +7,7 @@ on:
 
 jobs:
 
-  build:
+  build_push_stable:
 
     runs-on: ubuntu-20.04
 
@@ -44,14 +44,6 @@ jobs:
 
     steps:
 
-      - name: Set up QEMU for amd64 and arm64
-        uses: docker/setup-qemu-action@v1
-        with:
-          platforms: amd64,arm64
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
       - name: Export DHIS2_MAJOR and IMAGE_TAGS
         env:
           DHIS2_VERSION: ${{ matrix.dhis2_version }}
@@ -78,84 +70,81 @@ jobs:
           # https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
           echo "DHIS2_MAJOR=$DHIS2_MAJOR" | tee -a $GITHUB_ENV
 
+          TOMCAT_MAJOR="$( sed -r -e 's/^([0-9]+)\..*/\1/' <<<"${TOMCAT_VERSION}" )"
+          echo "TOMCAT_MAJOR=$TOMCAT_MAJOR" | tee -a $GITHUB_ENV
+
           ########
 
-          # Create an array of image tags
-          unset IMAGE_TAGS
-          declare -a IMAGE_TAGS
+          echo "IS_DEV=false" | tee -a $GITHUB_ENV
+          echo "IS_TOMCAT_LATEST=false" | tee -a $GITHUB_ENV
+          echo "IS_DHIS2_MAJOR_LATEST=false" | tee -a $GITHUB_ENV
+          echo "IS_DHIS2_LATEST=false" | tee -a $GITHUB_ENV
 
-          if [[ $DHIS2_MAJOR == 'dev' ]] || [[ $DHIS2_VERSION == 'dev' ]]; then
-            # If dev, use single tag
-            IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:dev")
+          # If dev...
+          if [[ $DHIS2_MAJOR == 'dev' ]]; then
+            # Then, tag as: "dev"
+            echo "IS_DEV=true" | tee -a $GITHUB_ENV
 
           else
-            # Tag as full DHIS2 version, Tomcat version, and JDK
-            echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_VERSION}-jre${JAVA_MAJOR}-openjdk"
-            IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_VERSION}-jre${JAVA_MAJOR}-openjdk")
 
             # If latest Tomcat version within Tomcat major...
             if [[ $TOMCAT_VERSION == "$LATEST_TOMCAT_9" ]] \
             || [[ $TOMCAT_VERSION == "$LATEST_TOMCAT_8" ]]
             then
-              # Then, tag as: ${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}
-              TOMCAT_MAJOR="$( sed -r -e 's/^([0-9]+)\..*/\1/' <<<"${TOMCAT_VERSION}" )"
-              echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}"
-              IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}")
-            fi
 
-            # If $DHIS2_MAJOR is 2.35 or higher...
-            if [[ ${DHIS2_MAJOR//./} -ge 235 ]]; then
+              # Then, tag as: "${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}" and "${DHIS2_VERSION}"
+              echo "IS_TOMCAT_LATEST=true" | tee -a $GITHUB_ENV
 
-              # And, if latest Tomcat 9...
-              if [[ $TOMCAT_VERSION == "$LATEST_TOMCAT_9" ]]; then
-                # Then, tag as: $DHIS2_VERSION
-                echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_VERSION"
-                IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_VERSION")
+              # And, if latest $DHIS2_VERSION within $DHIS2_MAJOR...
+              if [[ $DHIS2_VERSION == "$LATEST_DHIS2_236" ]] \
+              || [[ $DHIS2_VERSION == "$LATEST_DHIS2_235" ]] \
+              || [[ $DHIS2_VERSION == "$LATEST_DHIS2_234" ]] \
+              || [[ $DHIS2_VERSION == "$LATEST_DHIS2_233" ]] \
+              || [[ $DHIS2_VERSION == "$LATEST_DHIS2_232" ]] \
+              || [[ $DHIS2_VERSION == "$LATEST_DHIS2_231" ]]
+              then
 
-                # And, if latest $DHIS2_VERSION within $DHIS2_MAJOR...
-                if [[ $DHIS2_VERSION == "$LATEST_DHIS2_236" ]] \
-                || [[ $DHIS2_VERSION == "$LATEST_DHIS2_235" ]]
-                then
-                  # Then, tag as: $DHIS2_MAJOR
-                  echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_MAJOR"
-                  IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_MAJOR")
+                # Then, tag as: "${DHIS2_MAJOR}"
+                echo "IS_DHIS2_MAJOR_LATEST=true" | tee -a $GITHUB_ENV
+
+                # And, if latest ${DHIS2_VERSION} of all releases...
+                if [[ $DHIS2_VERSION == "$LATEST_DHIS2_VERSION" ]]; then
+                  # Then, tag as: "latest"
+                  echo "IS_DHIS2_LATEST=true" | tee -a $GITHUB_ENV
                 fi
               fi
-
-            # Or, if $DHIS2_MAJOR is lower than 2.35...
-            else
-
-              # And, if latest Tomcat 8.5...
-              if [[ $TOMCAT_VERSION == "$LATEST_TOMCAT_8" ]]; then
-                # Then, tag as: $DHIS2_VERSION
-                echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_VERSION"
-                IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_VERSION")
-
-                # And, if latest $DHIS2_VERSION within $DHIS2_MAJOR...
-                if [[ $DHIS2_VERSION == "$LATEST_DHIS2_234" ]] \
-                || [[ $DHIS2_VERSION == "$LATEST_DHIS2_233" ]] \
-                || [[ $DHIS2_VERSION == "$LATEST_DHIS2_232" ]] \
-                || [[ $DHIS2_VERSION == "$LATEST_DHIS2_231" ]]
-                then
-                  # Then, tag as: $DHIS2_MAJOR
-                  echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:$DHIS2_MAJOR"
-                  IMAGE_TAGS+=("ghcr.io/baosystems/dhis2:$DHIS2_MAJOR")
-                fi
-              fi
-
-            fi
-
-            # Finally, if latest $DHIS2_VERSION of all releases...
-            if [[ $DHIS2_VERSION == "$LATEST_DHIS2_VERSION" ]]; then
-              # Then, tag as: latest
-              echo "IMAGE_TAG=ghcr.io/baosystems/dhis2:latest"
-              IMAGE_TAGS+=('ghcr.io/baosystems/dhis2:latest')
             fi
           fi
 
-          # Export IMAGE_TAGS as comma-separated string
-          IMAGE_TAGS="$(IFS=,; echo "${IMAGE_TAGS[*]}")"
-          echo "IMAGE_TAGS=$IMAGE_TAGS" | tee -a $GITHUB_ENV
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/dhis2
+          labels: |
+            org.opencontainers.image.title=dhis2
+            org.opencontainers.image.version=${{ matrix.dhis2_version }}
+            org.opencontainers.image.base.name=docker.io/tomcat:${{ matrix.tomcat_version }}-jre${{ matrix.java_major }}-openjdk-slim-bullseye
+            dhis2.build.version=${{ matrix.dhis2_version }}
+            java.major=${{ matrix.java_major }}
+            tomcat.major=${{ env.TOMCAT_MAJOR }}
+            tomcat.version=${{ matrix.tomcat_version }}
+          flavor: latest=false
+          tags: |
+            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ matrix.tomcat_version }}-jre${{ matrix.java_major }}-openjdk,enable=true
+            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ env.TOMCAT_MAJOR }},enable=${{ env.IS_TOMCAT_LATEST }}
+            type=raw,value=${{ matrix.dhis2_version }},enable=${{ env.IS_TOMCAT_LATEST }}
+            type=raw,value=${{ env.DHIS2_MAJOR }},enable=${{ env.IS_DHIS2_MAJOR_LATEST }}
+            type=raw,value=latest,enable=${{ env.IS_DHIS2_LATEST }}
+            type=raw,value=dev,enable=${{ env.IS_DEV }}
+
+      - name: Set up QEMU for amd64 and arm64
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: amd64,arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
 
       # [1/3] GitHub Actions local cache (GHA mode appears to have issues when builds run in parallel)
       #       https://github.com/docker/build-push-action/blob/master/docs/advanced/cache.md#local-cache
@@ -184,13 +173,14 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-          # DHIS2_MAJOR and IMAGE_TAGS were exported to the environment in a previous step
+          # DHIS2_MAJOR was exported to the environment in a previous step
           build-args: |
             DHIS2_MAJOR=${{ env.DHIS2_MAJOR }}
             DHIS2_VERSION=${{ matrix.dhis2_version }}
             JAVA_MAJOR=${{ matrix.java_major }}
             TOMCAT_VERSION=${{ matrix.tomcat_version }}
-          tags: ${{ env.IMAGE_TAGS }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           pull: true
           push: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
           # [2/3] GHA cache workaround
