@@ -1,4 +1,4 @@
-name: Build dev image nightly
+name: dev image
 
 on:
   push:
