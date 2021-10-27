@@ -77,8 +77,8 @@ jobs:
 
           echo "IS_DEV=false" | tee -a $GITHUB_ENV
           echo "IS_TOMCAT_LATEST=false" | tee -a $GITHUB_ENV
-          echo "IS_DHIS2_MAJOR_LATEST=false" | tee -a $GITHUB_ENV
-          echo "IS_DHIS2_LATEST=false" | tee -a $GITHUB_ENV
+          echo "IS_TOMCAT_LATEST_AND_DHIS2_MAJOR_LATEST=false" | tee -a $GITHUB_ENV
+          echo "IS_TOMCAT_LATEST_AND_DHIS2_OVERALL_LATEST=false" | tee -a $GITHUB_ENV
 
           # If dev...
           if [[ $DHIS2_MAJOR == 'dev' ]]; then
@@ -86,12 +86,10 @@ jobs:
             echo "IS_DEV=true" | tee -a $GITHUB_ENV
 
           else
-
             # If latest Tomcat version within Tomcat major...
             if [[ $TOMCAT_VERSION == "$LATEST_TOMCAT_9" ]] \
             || [[ $TOMCAT_VERSION == "$LATEST_TOMCAT_8" ]]
             then
-
               # Then, tag as: "${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}" and "${DHIS2_VERSION}"
               echo "IS_TOMCAT_LATEST=true" | tee -a $GITHUB_ENV
 
@@ -103,15 +101,14 @@ jobs:
               || [[ $DHIS2_VERSION == "$LATEST_DHIS2_232" ]] \
               || [[ $DHIS2_VERSION == "$LATEST_DHIS2_231" ]]
               then
-
                 # Then, tag as: "${DHIS2_MAJOR}"
-                echo "IS_DHIS2_MAJOR_LATEST=true" | tee -a $GITHUB_ENV
+                echo "IS_TOMCAT_LATEST_AND_DHIS2_MAJOR_LATEST=true" | tee -a $GITHUB_ENV
+              fi
 
-                # And, if latest ${DHIS2_VERSION} of all releases...
-                if [[ $DHIS2_VERSION == "$LATEST_DHIS2_VERSION" ]]; then
-                  # Then, tag as: "latest"
-                  echo "IS_DHIS2_LATEST=true" | tee -a $GITHUB_ENV
-                fi
+              # And, if latest ${DHIS2_VERSION} of all releases...
+              if [[ $DHIS2_VERSION == "$LATEST_DHIS2_VERSION" ]]; then
+                # Then, tag as: "latest"
+                echo "IS_TOMCAT_LATEST_AND_DHIS2_OVERALL_LATEST=true" | tee -a $GITHUB_ENV
               fi
             fi
           fi
@@ -134,8 +131,8 @@ jobs:
             type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ matrix.tomcat_version }}-jre${{ matrix.java_major }}-openjdk,enable=true
             type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ env.TOMCAT_MAJOR }},enable=${{ env.IS_TOMCAT_LATEST }}
             type=raw,value=${{ matrix.dhis2_version }},enable=${{ env.IS_TOMCAT_LATEST }}
-            type=raw,value=${{ env.DHIS2_MAJOR }},enable=${{ env.IS_DHIS2_MAJOR_LATEST }}
-            type=raw,value=latest,enable=${{ env.IS_DHIS2_LATEST }}
+            type=raw,value=${{ env.DHIS2_MAJOR }},enable=${{ env.IS_TOMCAT_LATEST_AND_DHIS2_MAJOR_LATEST }}
+            type=raw,value=latest,enable=${{ env.IS_TOMCAT_LATEST_AND_DHIS2_OVERALL_LATEST }}
             type=raw,value=dev,enable=${{ env.IS_DEV }}
 
       - name: Set up QEMU for amd64 and arm64
