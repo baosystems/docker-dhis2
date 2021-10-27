@@ -44,7 +44,7 @@ jobs:
 
     steps:
 
-      - name: Export DHIS2_MAJOR and IMAGE_TAGS
+      - name: Determine DHIS2_MAJOR and image tags
         env:
           DHIS2_VERSION: ${{ matrix.dhis2_version }}
           JAVA_MAJOR: ${{ matrix.java_major }}
