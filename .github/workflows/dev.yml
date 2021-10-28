@@ -123,10 +123,10 @@ jobs:
         uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ needs.lookup_tomcat.outputs.tomcat_version }}-jre${{ needs.lookup_tomcat.outputs.tomcat_major }}-${{ env.DHIS2_VERSION }}-${{ github.sha }}
+          key: ${{ runner.os }}-buildx-${{ needs.lookup_tomcat.outputs.tomcat_version }}-jre${{ needs.lookup_tomcat.outputs.java_major }}-${{ env.DHIS2_VERSION }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-${{ needs.lookup_tomcat.outputs.tomcat_version }}-jre${{ needs.lookup_tomcat.outputs.tomcat_major }}-${{ env.DHIS2_VERSION }}-
-            ${{ runner.os }}-buildx-${{ needs.lookup_tomcat.outputs.tomcat_version }}-jre${{ needs.lookup_tomcat.outputs.tomcat_major }}-
+            ${{ runner.os }}-buildx-${{ needs.lookup_tomcat.outputs.tomcat_version }}-jre${{ needs.lookup_tomcat.outputs.java_major }}-${{ env.DHIS2_VERSION }}-
+            ${{ runner.os }}-buildx-${{ needs.lookup_tomcat.outputs.tomcat_version }}-jre${{ needs.lookup_tomcat.outputs.java_major }}-
             ${{ runner.os }}-buildx-${{ needs.lookup_tomcat.outputs.tomcat_version }}-
             ${{ runner.os }}-buildx-
 
