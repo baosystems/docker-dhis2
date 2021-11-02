@@ -38,11 +38,6 @@ jobs:
           - { dhis2_version: "2.34.2", java_major: "8", tomcat_version: "8.5.72" }
           - { dhis2_version: "2.34.1", java_major: "8", tomcat_version: "8.5.72" }
           - { dhis2_version: "2.34.0", java_major: "8", tomcat_version: "8.5.72" }
-          # Build the latest version for each unsupported major release.
-          # (only the 3 latest major releases are actively supported)
-          - { dhis2_version: "2.33.9", java_major: "8", tomcat_version: "8.5.72" }
-          - { dhis2_version: "2.32.7", java_major: "8", tomcat_version: "8.5.72" }
-          - { dhis2_version: "2.31.9", java_major: "8", tomcat_version: "8.5.72" }
 
     steps:
 
