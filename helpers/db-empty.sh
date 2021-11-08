@@ -77,7 +77,7 @@ psql \
   --echo-all \
   --echo-hidden \
   -v ON_ERROR_STOP=1 \
-  --command="DROP DATABASE ${DATABASE_DBNAME};"
+  --command="DROP DATABASE ${DATABASE_DBNAME} IF EXISTS;"
 
 echo "[INFO] $SELF: Create empty database \"${DATABASE_DBNAME}\":"
 psql \
