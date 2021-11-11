@@ -340,7 +340,7 @@ match the least-privilege approach used in this setup.
 
 ```bash
 # Download database file to your system
-wget -nc -O dhis2-db-sierra-leone-2.36.sql.gz https://databases.dhis2.org/sierra-leone/2.36/dhis2-db-sierra-leone.sql.gz
+wget -nc -O dhis2-db-sierra-leone-2.37.sql.gz https://databases.dhis2.org/sierra-leone/2.37/dhis2-db-sierra-leone.sql.gz
 
 # Stop Tomcat
 docker compose stop dhis2
@@ -349,10 +349,10 @@ docker compose stop dhis2
 docker compose run --rm dhis2_init db-empty.sh
 
 # Import the database backup into the empty database
-gunzip -c dhis2-db-sierra-leone-2.36.sql.gz | docker compose exec -T database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
+gunzip -c dhis2-db-sierra-leone-2.37.sql.gz | docker compose exec -T database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
 
 # If the previous command didn't work, try the steps below which will copy the file into the container before importing
-#docker cp dhis2-db-sierra-leone-2.36.sql.gz "$( docker compose ps -q 'database' | head -n1 )":/tmp/db.sql.gz
+#docker cp dhis2-db-sierra-leone-2.37.sql.gz "$( docker compose ps -q 'database' | head -n1 )":/tmp/db.sql.gz
 #docker compose exec database bash -c "gunzip -c /tmp/db.sql.gz | psql -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2' && rm -v /tmp/db.sql.gz"
 
 # Start Tomcat
@@ -386,18 +386,18 @@ Because two versions of DHIS2 should not be running at the same time, stop the d
 first.
 
 ```bash
-# Let's say you started with 2.36.2:
+# Let's say you started with 2.36.4:
 
 cat >> .env <<'EOF'
-DHIS2_TAG=2.36.2
+DHIS2_TAG=2.36.4
 EOF
 
 docker compose up --detach
 
-# Later, upgrade to 2.36.4:
+# Later, upgrade to 2.37.0:
 
 cat >> .env <<'EOF'
-DHIS2_TAG=2.36.4
+DHIS2_TAG=2.37.0
 EOF
 
 docker compose stop dhis2

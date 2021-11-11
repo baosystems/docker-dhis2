@@ -14,6 +14,7 @@ jobs:
     strategy:
       matrix:
         dhis2_version:
+          - "2.37.0"
           - "2.36.4"
           - "2.36.3"
           - "2.36.2"
@@ -52,6 +53,7 @@ jobs:
           LATEST_TOMCAT_9='9.0.54'
           LATEST_TOMCAT_8='8.5.72'
 
+          LATEST_DHIS2_237='2.37.0'
           LATEST_DHIS2_236='2.36.4'
           LATEST_DHIS2_235='2.35.8'
           LATEST_DHIS2_234='2.34.7'
@@ -59,7 +61,7 @@ jobs:
           LATEST_DHIS2_232='2.32.7'
           LATEST_DHIS2_231='2.31.9'
 
-          LATEST_DHIS2_VERSION="$LATEST_DHIS2_236"
+          LATEST_DHIS2_VERSION="$LATEST_DHIS2_237"
 
           ########
 
@@ -91,7 +93,8 @@ jobs:
               echo "IS_TOMCAT_LATEST=true" | tee -a $GITHUB_ENV
 
               # And, if latest $DHIS2_VERSION within $DHIS2_MAJOR...
-              if [[ $DHIS2_VERSION == "$LATEST_DHIS2_236" ]] \
+              if [[ $DHIS2_VERSION == "$LATEST_DHIS2_237" ]] \
+              || [[ $DHIS2_VERSION == "$LATEST_DHIS2_236" ]] \
               || [[ $DHIS2_VERSION == "$LATEST_DHIS2_235" ]] \
               || [[ $DHIS2_VERSION == "$LATEST_DHIS2_234" ]] \
               || [[ $DHIS2_VERSION == "$LATEST_DHIS2_233" ]] \
