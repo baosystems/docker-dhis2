@@ -140,4 +140,4 @@ jobs:
           load: false
           push: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
           cache-from: type=registry,src=ghcr.io/${{ github.repository_owner }}/dhis2
-          cache-to: type=registry,dest=ghcr.io/${{ github.repository_owner }}/dhis2
+          cache-to: type=registry,dest=ghcr.io/${{ github.repository_owner }}/dhis2,mode=max
