@@ -28,17 +28,8 @@ jobs:
           - "2.35.2"
           - "2.35.1"
           - "2.35.0"
-        java_major: ["11"]  # 11 should always be the default; Bugs specific to Java 8 are unlikely to be fixed for DHIS2 2.35 and up
+        java_major: ["11"]
         tomcat_version: ["9.0.55"]
-        include:
-          # Use Tomcat 8.5 and Java 8 for DHIS2 versions incompatible with Java 11
-          - { dhis2_version: "2.34.7", java_major: "8", tomcat_version: "8.5.73" }
-          - { dhis2_version: "2.34.6", java_major: "8", tomcat_version: "8.5.73" }
-          - { dhis2_version: "2.34.5", java_major: "8", tomcat_version: "8.5.73" }
-          - { dhis2_version: "2.34.3", java_major: "8", tomcat_version: "8.5.73" }
-          - { dhis2_version: "2.34.2", java_major: "8", tomcat_version: "8.5.73" }
-          - { dhis2_version: "2.34.1", java_major: "8", tomcat_version: "8.5.73" }
-          - { dhis2_version: "2.34.0", java_major: "8", tomcat_version: "8.5.73" }
 
     steps:
 
@@ -51,7 +42,6 @@ jobs:
           # Define latest versions (static until determined automatically)
 
           LATEST_TOMCAT_9='9.0.55'
-          LATEST_TOMCAT_8='8.5.73'
 
           LATEST_DHIS2_237='2.37.0'
           LATEST_DHIS2_236='2.36.4'
@@ -86,9 +76,7 @@ jobs:
 
           else
             # If latest Tomcat version within Tomcat major...
-            if [[ $TOMCAT_VERSION == "$LATEST_TOMCAT_9" ]] \
-            || [[ $TOMCAT_VERSION == "$LATEST_TOMCAT_8" ]]
-            then
+            if [[ $TOMCAT_VERSION == "$LATEST_TOMCAT_9" ]]; then
               # Then, tag as: "${DHIS2_VERSION}-tomcat${TOMCAT_MAJOR}" and "${DHIS2_VERSION}"
               echo "IS_TOMCAT_LATEST=true" | tee -a $GITHUB_ENV
 
