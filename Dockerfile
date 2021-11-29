@@ -236,6 +236,3 @@ EXPOSE 8080
 
 # Value is copied from the FROM image. If not specified, the CMD in this image would be "null"
 CMD ["catalina.sh", "run"]
-
-# Link to repository
-LABEL org.opencontainers.image.source=https://github.com/baosystems/docker-dhis2
