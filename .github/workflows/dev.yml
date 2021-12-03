@@ -18,8 +18,8 @@ jobs:
 
   lookup_versions:
     name: Look up versions of Java and Tomcat, and set DHIS2 major
-    runs-on: ubuntu-20.04
 
+    runs-on: ubuntu-20.04
     container: docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye  # [static] 1st number is TOMCAT_MAJOR and 2nd number is JAVA_MAJOR; this cannot be set at top-level env
 
     steps:
@@ -48,7 +48,9 @@ jobs:
 
   get_dhis2:
     name: Download dhis.war and lookup build metadata
+
     runs-on: ubuntu-20.04
+
     needs: lookup_versions
 
     steps:
@@ -107,6 +109,7 @@ jobs:
 
   image_meta:
     name: Set container image metadata
+
     runs-on: ubuntu-20.04
 
     needs:
@@ -145,11 +148,13 @@ jobs:
 
   image_build:
     name: Build container image
+
     runs-on: ubuntu-20.04
 
     needs:
-      - image_meta
       - lookup_versions
+      - get_dhis2
+      - image_meta
 
     services:
       registry:
@@ -230,10 +235,10 @@ jobs:
 
   e2e_cucumber:
     name: DHIS2 Cucumber e2e-tests
+
     runs-on: ubuntu-20.04
 
-    needs:
-      - image_build
+    needs: image_build
 
     services:
       postgres:
@@ -517,6 +522,7 @@ jobs:
 
   e2e_mocha:
     name: '[Optional] DHIS2 Mocha e2e-tests'
+
     runs-on: ubuntu-20.04
 
     needs:
@@ -825,12 +831,13 @@ jobs:
 
   image_push:
     name: Push container image
+
     runs-on: ubuntu-20.04
 
     needs:
-      - e2e_cucumber  # Mocha tests do not need to pass at this time
-      - image_build
       - image_meta
+      - image_build
+      - e2e_cucumber  # Mocha tests do not need to pass at this time
 
     steps:
 
