@@ -12,58 +12,76 @@ defaults:
     shell: bash
 
 env:
-  DHIS2_VERSION: dev  # This should be "dev" or a value like "2.30" or "2.36.4". If like the latter, the "major" version, like "2.36", will be determined automatically
+  DHIS2_VERSION: 'dev'  # This should be "dev" or a value like "2.30" or "2.36.4". If like the latter, the "major" version, like "2.36", will be determined later
 
 jobs:
 
-  lookup_tomcat:
-    name: Look up versions of Java and Tomcat in source image
+  lookup_versions:
+    name: Look up versions of Java and Tomcat, and set DHIS2 major
     runs-on: ubuntu-20.04
-    container: docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye  # 1st number is TOMCAT_MAJOR and 2nd number is JAVA_MAJOR; cannot be set at top-level env
+
+    container: docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye  # [static] 1st number is TOMCAT_MAJOR and 2nd number is JAVA_MAJOR; this cannot be set at top-level env
+
     steps:
-      - name: Lookup versions from latest Tomcat image
+
+      - name: Lookup versions of Java and Tomcat from latest Tomcat image
         id: tomcat_query
         run: |
+          set -x
           echo "::set-output name=java_major::$( sed -r -e 's/^([^\.]+)\..*$/\1/' <<< "$JAVA_VERSION" )"
           echo "::set-output name=java_version::$JAVA_VERSION"
           echo "::set-output name=tomcat_major::$TOMCAT_MAJOR"
           echo "::set-output name=tomcat_version::$TOMCAT_VERSION"
+
+      - name: Get DHIS2 major version from env.DHIS2_VERSION
+        id: dhis2_query
+        run: |
+          set -x
+          echo "::set-output name=dhis2_major::$( sed -r -e 's/^(2\.[0-9]{2})\.[0-9]{1,2}$/\1/' <<< "$DHIS2_VERSION" )"
+
     outputs:
+      dhis2_major: ${{ steps.dhis2_query.outputs.dhis2_major }}
       java_major: ${{ steps.tomcat_query.outputs.java_major }}
       java_version: ${{ steps.tomcat_query.outputs.java_version }}
       tomcat_major: ${{ steps.tomcat_query.outputs.tomcat_major }}
       tomcat_version: ${{ steps.tomcat_query.outputs.tomcat_version }}
 
-  lookup_dhis2:
-    name: Look up dhis.war build metadata
+  get_dhis2:
+    name: Download dhis.war and lookup build metadata
     runs-on: ubuntu-20.04
+    needs: lookup_versions
+
     steps:
-      - name: Install bsdtar and wget
+
+      - name: Install bsdtar
         run: |
+          set -x
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ca-certificates libarchive-tools wget
-      - name: Set DHIS2_MAJOR from DHIS2_VERSION
-        id: set_major
-        run: |
-          DHIS2_MAJOR="$( sed -r -e 's/^(2\.[0-9]{2})\.[0-9]{1,2}$/\1/' <<<"${{ env.DHIS2_VERSION }}" )"
-          echo "DHIS2_MAJOR=$DHIS2_MAJOR" | tee -a $GITHUB_ENV
-          echo "::set-output name=major::$DHIS2_MAJOR"
+          sudo apt-get install -y --no-install-recommends libarchive-tools
+
       - name: Download dhis.war
         run: |
+          set -x
+          if [ "${{ needs.lookup_versions.outputs.dhis2_major }}" = "dev" ] || [ "$DHIS2_VERSION" = "dev" ]; then
+            DHIS2_WAR_URL="https://releases.dhis2.org/dev/dhis.war"
+          else
+            DHIS2_WAR_URL="https://releases.dhis2.org/${{ needs.lookup_versions.outputs.dhis2_major }}/dhis2-stable-${DHIS2_VERSION}.war"
+          fi
           wget \
             --no-verbose \
-            --directory-prefix=/tmp \
-            --output-document=/tmp/dhis.war \
-            https://releases.dhis2.org/${{ env.DHIS2_MAJOR }}/dhis.war
+            --output-document=dhis.war \
+            "$DHIS2_WAR_URL"
+
       - name: Lookup build metadata
         id: query_metadata
         run: |
+          set -x
           DHIS2_BUILD_PROPERTIES="$(
             bsdtar \
-              -f /tmp/dhis.war \
+              -f dhis.war \
               -x \
               --to-stdout \
-              "$( bsdtar -t -f /tmp/dhis.war | grep -E 'WEB-INF/lib/dhis-service-core-2\.[0-9.]+(-(EMBARGOED|SNAPSHOT))?\.jar' )" \
+              "$( bsdtar -t -f dhis.war | grep -E 'WEB-INF/lib/dhis-service-core-2\.[0-9.]+(-(EMBARGOED|SNAPSHOT))?\.jar' )" \
             | bsdtar \
                 -f - \
                 -x \
@@ -73,6 +91,13 @@ jobs:
           echo "::set-output name=build_time::$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
           echo "::set-output name=build_version::$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
           echo "::set-output name=jasperreports_version::$( awk -F'=' '/^jasperreports\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+
+      - name: Upload dhis.war artifact
+        uses: actions/upload-artifact@27121b0bdffd731efa15d66772be8dc71245d074  # v2.2.4 (2021-06-16)
+        with:
+          name: dhis_war
+          path: dhis.war
+
     outputs:
       major: ${{ steps.set_major.outputs.major }}
       build_revision: ${{ steps.query_metadata.outputs.build_revision }}
@@ -80,64 +105,771 @@ jobs:
       build_version: ${{ steps.query_metadata.outputs.build_version }}
       jasperreports_version: ${{ steps.query_metadata.outputs.jasperreports_version }}
 
-  build_push_dev:
-    name: Build and push image
+  image_meta:
+    name: Set container image metadata
     runs-on: ubuntu-20.04
 
     needs:
-      - lookup_dhis2
-      - lookup_tomcat
+      - get_dhis2
+      - lookup_versions
+
+    steps:
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@a2e02890a0d28163b34ac2e4b575b9264a5ee3e2  # v3.6.1 (2021-11-29)
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/dhis2
+          labels: |
+            org.opencontainers.image.base.name=docker.io/library/tomcat:${{ needs.lookup_versions.outputs.tomcat_version }}-jre${{ needs.lookup_versions.outputs.java_major }}-openjdk-slim-bullseye
+            org.opencontainers.image.title=dhis2
+            org.opencontainers.image.url=https://github.com/baosystems/docker-dhis2/pkgs/container/dhis2
+            org.opencontainers.image.version=${{ env.DHIS2_VERSION }}
+            dhis2.build.revision=${{ needs.get_dhis2.outputs.build_revision }}
+            dhis2.build.time=${{ needs.get_dhis2.outputs.build_time }}
+            dhis2.build.version=${{ needs.get_dhis2.outputs.build_version }}
+            dhis2.jasperreports.version=${{ needs.get_dhis2.outputs.jasperreports_version }}
+            dhis2.major=${{ needs.lookup_versions.outputs.dhis2_major }}
+            dhis2.version=${{ env.DHIS2_VERSION }}
+            java.major=${{ needs.lookup_versions.outputs.java_major }}
+            java.version=${{ needs.lookup_versions.outputs.java_version }}
+            tomcat.major=${{ needs.lookup_versions.outputs.tomcat_major }}
+            tomcat.version=${{ needs.lookup_versions.outputs.tomcat_version }}
+          flavor: latest=false
+          tags: |
+            dev
+
+    outputs:
+      labels: ${{ steps.meta.outputs.labels }}
+      tags: ${{ steps.meta.outputs.tags }}
+
+  image_build:
+    name: Build container image
+    runs-on: ubuntu-20.04
+
+    needs:
+      - image_meta
+      - lookup_versions
+
+    services:
+      registry:
+        image: docker.io/library/registry:2
+        volumes:
+          - ${{ github.workspace }}/registry_data:/var/lib/registry
+        ports:
+          - 5000:5000
 
     steps:
 
       - name: Set up QEMU for amd64 and arm64
-        uses: docker/setup-qemu-action@27d0a4f181a40b142cce983c5393082c365d1480  # v1.2.0 (2021-10-22)
+        uses: docker/setup-qemu-action@27d0a4f181a40b142cce983c5393082c365d1480  # v1.2.0 (2021-05-26)
         with:
           platforms: linux/amd64,linux/arm64
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@94ab11c41e45d028884a99163086648e898eed25  # v1.6.0 (2021-10-22)
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@3a3bb3a81753dc99f090d24ee7e5343838b73a96  # v3.5.0 (2021-10-22)
+        uses: docker/setup-buildx-action@94ab11c41e45d028884a99163086648e898eed25  # v1.6.0 (2021-09-03)
         with:
-          images: ghcr.io/${{ github.repository_owner }}/dhis2
-          labels: |
-            org.opencontainers.image.title=dhis2
-            org.opencontainers.image.version=${{ env.DHIS2_VERSION }}
-            org.opencontainers.image.base.name=docker.io/tomcat:${{ needs.lookup_tomcat.outputs.tomcat_version }}-jre${{ needs.lookup_tomcat.outputs.java_major }}-openjdk-slim-bullseye
-            dhis2.build.revision=${{ needs.lookup_dhis2.outputs.build_revision }}
-            dhis2.build.time=${{ needs.lookup_dhis2.outputs.build_time }}
-            dhis2.build.version=${{ needs.lookup_dhis2.outputs.build_version }}
-            dhis2.jasperreports.version=${{ needs.lookup_dhis2.outputs.jasperreports_version }}
-            java.major=${{ needs.lookup_tomcat.outputs.java_major }}
-            java.version=${{ needs.lookup_tomcat.outputs.java_version }}
-            tomcat.major=${{ needs.lookup_tomcat.outputs.tomcat_major }}
-            tomcat.version=${{ needs.lookup_tomcat.outputs.tomcat_version }}
-          tags: ${{ needs.lookup_dhis2.outputs.major }}
+          driver-opts: network=host
+
+      - name: Checkout repo to source subdirectory
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579  # v2.4.0 (2021-11-02)
+        with:
+          path: source
+
+      - name: Download dhis.war artifact to source subdirectory
+        uses: actions/download-artifact@3be87be14a055c47b01d3bd88f8fe02320a9bb60  # v2.0.10 (2021-06-16)
+        with:
+          name: dhis_war
+          path: ${{ github.workspace }}/source
+
+      - name: Buildx cache to GHA if DHIS2 is latest or dev
+        id: latest_or_dev  # https://github.community/t/do-expressions-support-ternary-operators-to-change-their-returned-value/18114/2
+        run: |
+          if [[ "$DHIS2_VERSION" == "2.37.0" ]] \
+          || [[ "$DHIS2_VERSION" == "dev" ]]
+          then
+            echo "::set-output name=cache_to::type=gha,mode=max"
+          fi
+
+      - name: Multi-platform build and push to local registry
+        id: docker_build
+        uses: docker/build-push-action@a66e35b9cbcf4ad0ea91ffcaf7bbad63ad9e0229  # v2.7.0 (2021-08-20)
+        with:
+          context: ${{ github.workspace }}/source  # The default is to refer to the sha URL directly, but we need the context for dhis.war
+          file: ${{ github.workspace }}/source/Dockerfile.byo  # NOTE: A dhis.war file must be in the same directory as this file
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            DHIS2_MAJOR=${{ needs.lookup_versions.outputs.dhis2_major }}
+            DHIS2_VERSION=${{ env.DHIS2_VERSION }}
+            JAVA_MAJOR=${{ needs.lookup_versions.outputs.java_major }}
+            TOMCAT_VERSION=${{ needs.lookup_versions.outputs.tomcat_version }}
+          labels: ${{ needs.image_meta.outputs.labels }}
+          tags: localhost:5000/dhis2:${{ github.sha }}
+          pull: true
+          push: true
+          cache-from: type=gha
+          cache-to: ${{ steps.latest_or_dev.outputs.cache_to }}
+
+      - name: Delete dhis.war artifact
+        if: always()
+        uses: geekyeggo/delete-artifact@b73cb986740e466292a536d0e32e2666c56fdeb3  # v1.0.0 (2020-04-25)
+        with:
+          name: dhis_war
+
+      - name: Inspect image in local registry
+        run: docker buildx imagetools inspect ${{ fromJSON(steps.docker_build.outputs.metadata)['image.name'] }}
+
+      - name: Upload local registry data volume artifact
+        uses: actions/upload-artifact@27121b0bdffd731efa15d66772be8dc71245d074  # v2.2.4 (2021-06-16)
+        with:
+          name: registry_data
+          path: ${{ github.workspace }}/registry_data
+
+    outputs:
+      image_name: ${{ fromJSON(steps.docker_build.outputs.metadata)['image.name'] }}
+
+  e2e_cucumber:
+    name: DHIS2 Cucumber e2e-tests
+    runs-on: ubuntu-20.04
+
+    needs:
+      - image_build
+
+    services:
+      postgres:
+        image: docker.io/postgis/postgis:14-3.1
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+
+      - name: Download local registry data volume artifact
+        uses: actions/download-artifact@3be87be14a055c47b01d3bd88f8fe02320a9bb60  # v2.0.10 (2021-06-16)
+        with:
+          name: registry_data
+          path: ${{ github.workspace }}/registry_data
+
+      - name: Start registry container
+        run: |
+          docker run \
+            --name registry \
+            --detach \
+            --rm \
+            --publish 5000:5000 \
+            --volume '${{ github.workspace }}/registry_data:/var/lib/registry' \
+            docker.io/library/registry:2
+
+      - name: Pull DHIS2 image from local registry
+        run: |
+          docker pull ${{ needs.image_build.outputs.image_name }}
+
+      - name: Stop registry container  # no longer needed after pull
+        if: always()
+        continue-on-error: true
+        run: docker stop registry
+
+      ##########################################################################
+
+      - name: Install latest postgresql-client
+        run: |
+          set -x
+          echo "deb http://apt.postgresql.org/pub/repos/apt $( awk -F'=' '/^VERSION_CODENAME/ {print $NF}' /etc/os-release )-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          curl --silent https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client
+
+      # Runner specs: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
+      - name: PGTune
+        env:
+          PGHOST: localhost
+          PGPORT: ${{ job.services.postgres.ports[5432] }}
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: |
+          psql << 'EOF'
+          -- PGTune: https://pgtune.leopard.in.ua/
+          -- DB Version: 14
+          -- OS Type: linux
+          -- DB Type: web
+          -- Total Memory (RAM): 4 GB
+          -- CPUs num: 2
+          -- Connections num: 40
+          -- Data Storage: ssd
+          ALTER SYSTEM SET max_connections = '43';
+          ALTER SYSTEM SET shared_buffers = '1GB';
+          ALTER SYSTEM SET effective_cache_size = '3GB';
+          ALTER SYSTEM SET maintenance_work_mem = '256MB';
+          ALTER SYSTEM SET checkpoint_completion_target = '0.9';
+          ALTER SYSTEM SET wal_buffers = '16MB';
+          ALTER SYSTEM SET default_statistics_target = '100';
+          ALTER SYSTEM SET random_page_cost = '1.1';
+          ALTER SYSTEM SET effective_io_concurrency = '200';
+          ALTER SYSTEM SET work_mem = '26214kB';
+          ALTER SYSTEM SET min_wal_size = '1GB';
+          ALTER SYSTEM SET max_wal_size = '4GB';
+          ALTER SYSTEM SET max_worker_processes = '2';
+          ALTER SYSTEM SET max_parallel_workers_per_gather = '1';
+          ALTER SYSTEM SET max_parallel_workers = '2';
+          ALTER SYSTEM SET max_parallel_maintenance_workers = '1';
+          -- DHIS2 recommendations (options not changed in PGTune portion)
+          ALTER SYSTEM SET synchronous_commit = 'off';
+          ALTER SYSTEM SET wal_writer_delay = '10000ms';
+          ALTER SYSTEM SET max_locks_per_transaction = '1024';
+          EOF
+
+      - name: Empty database
+        env:
+          DATABASE_DBNAME: dhis2
+          PGHOST: postgres  # Matches the name of the service for PostgreSQL
+          PGPORT: ${{ job.services.postgres.ports[5432] }}
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: |
+          docker run \
+            --rm \
+            --network '${{ job.services.postgres.network }}' \
+            --env 'DATABASE_DBNAME' \
+            --env 'PGHOST' \
+            --env 'PGPORT' \
+            --env 'PGUSER' \
+            --env 'PGPASSWORD' \
+            ${{ needs.image_build.outputs.image_name }} \
+            db-empty.sh
+
+      - name: Create database role and import sample database
+        env:
+          DATABASE_USERNAME: dhis  # The backup file being imported expects this role in PostgreSQL
+          PGHOST: localhost
+          PGPORT: ${{ job.services.postgres.ports[5432] }}
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: |
+          psql -q -v 'ON_ERROR_STOP=1' --command="CREATE ROLE $DATABASE_USERNAME"
+          wget --no-verbose --no-hsts --output-document=/tmp/db.sql.gz https://databases.dhis2.org/sierra-leone/${DHIS2_VERSION}/dhis2-db-sierra-leone.sql.gz
+          gunzip -c /tmp/db.sql.gz | psql -q -v 'ON_ERROR_STOP=1' --dbname='dhis2'
+          rm -v -f /tmp/db.sql.gz
+
+      - name: Initialize the database
+        env:
+          DATABASE_DBNAME: dhis2
+          DATABASE_PASSWORD: dhis
+          DATABASE_USERNAME: dhis
+          PGHOST: postgres
+          PGPORT: ${{ job.services.postgres.ports[5432] }}
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: |
+          docker run \
+            --rm \
+            --network '${{ job.services.postgres.network }}' \
+            --env 'DHIS2_INIT_SKIP=15_pgstatstatements.sh,20_dhis2-initwar.sh' \
+            --env 'DATABASE_DBNAME' \
+            --env 'DATABASE_PASSWORD' \
+            --env 'DATABASE_USERNAME' \
+            --env 'PGHOST' \
+            --env 'PGPORT' \
+            --env 'PGUSER' \
+            --env 'PGPASSWORD' \
+            ${{ needs.image_build.outputs.image_name }} \
+            dhis2-init.sh
+
+      ##########################################################################
+
+      - name: Start DHIS2 container
+        env:
+          DATABASE_HOST: postgres
+          DATABASE_PORT: ${{ job.services.postgres.ports[5432] }}
+          DATABASE_DBNAME: dhis2
+          DATABASE_USERNAME: dhis
+          DATABASE_PASSWORD: dhis
+          DHIS2_CONNECTION_POOL_MAXSIZE: 40  # Needs to match the value used in PGTune
+          CATALINA_OPTS: "-Xms1536M -Xmx1536M"  # GitHub-hosted runner has 7 GB and 4 GB is assigned to PostgreSQL, remainder needed for tests
+        run: |
+          docker run \
+            --name tomcat \
+            --detach \
+            --rm \
+            --network '${{ job.services.postgres.network }}' \
+            --env 'DATABASE_HOST' \
+            --env 'DATABASE_PORT' \
+            --env 'DATABASE_DBNAME' \
+            --env 'DATABASE_USERNAME' \
+            --env 'DATABASE_PASSWORD' \
+            --env 'DHIS2_CONNECTION_POOL_MAXSIZE' \
+            --env 'CATALINA_OPTS' \
+            --publish 8080:8080 \
+            --health-cmd 'curl -fsS http://localhost:8080/dhis-web-commons/security/login.action' \
+            --health-interval 1m30s \
+            --health-timeout 30s \
+            --health-retries 3 \
+            --health-start-period 60s \
+            ${{ needs.image_build.outputs.image_name }} \
+            remco
+
+      - name: Wait for DHIS2 login page
+        run: |
+          sleep 30
+          curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
+            --location \
+            --output /dev/null \
+            --write-out '%{http_code}\n' \
+            'http://localhost:8080/dhis-web-commons/security/login.action'
+
+      ##########################################################################
+
+      - name: install Java for Selenium-Standalone
+        uses: actions/setup-java@5f00602cd1b2819185d88dc7a1b1985f598c6705  # v2.4.0 (2021-11-29)
+        with:
+          distribution: zulu
+          java-version: '11'
+
+      - name: Install NodeJS
+        uses: actions/setup-node@04c56d2f954f1e4c69436aa54cfef261a018f458  # v2.5.0 (2021-11-29)
+        with:
+          node-version: '14'  # NOTE: A dependency in e2e-tests will not run in v16 or higher
+
+      - name: Install latest google-chrome-stable
+        run: |
+          set -x
+          echo "deb [arch=$(dpkg --print-architecture)] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list >/dev/null
+          curl --silent  https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/google.gpg >/dev/null
+          sudo apt-get update
+          if ! dpkg-query -W google-chrome-stable ; then
+            sudo apt-get install -y --no-install-recommends google-chrome-stable
+          else
+            sudo apt-get install -y --only-upgrade google-chrome-stable
+          fi
+
+      - name: Choose the remote git reference based on DHIS2 version
+        id: check_if_dev  # https://github.community/t/do-expressions-support-ternary-operators-to-change-their-returned-value/18114/2
+        run: |
+          if [[ "$DHIS2_VERSION" == "dev" ]]
+          then
+            echo "::set-output name=remote_ref::master"
+          else
+            echo "::set-output name=remote_ref::${DHIS2_VERSION}-rc"
+          fi
+
+      - name: Clone e2e-tests repository
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579  # v2.4.0 (2021-11-02)
+        with:
+          repository: dhis2/e2e-tests
+          ref: ${{ steps.check_if_dev.outputs.remote_ref }}  # "master" for dev, "${{ env.DHIS2_VERSION }}-rc" for releases, see previous command for logic
+
+      - name: npm install
+        run: |
+          npm install
+
+      - name: Add headless Chrome options to wdio
+        run: |
+          sed -r -e "/\s*--disable-web-security/ { s/^(\s*)/\1'--headless','--disable-gpu','--window-size=2048,1536','--ignore-certificate-errors','--disable-extensions','--no-sandbox','--disable-dev-shm-usage',\n\1/ }" -i ./tests/config/wdio.local.conf.js
+
+      ##########################################################################
+
+      - name: Fix test for dev (2.38) and up
+        run: |
+          if [[ "$DHIS2_VERSION" == "dev" ]]; then
+            sed -r -e 's/(#)(root)/\1dhis2-app-\2/g' -i ./tests/step_definitions/dhis2/capture/capture.js
+          fi
+
+      - name: Cucumber tests  # does NOT require analytics to have been generated
+        run: |
+          npx wdio ./tests/config/wdio.cucumber.conf.js
+        env:
+          BASE_URL: http://localhost:8080/
+
+      ##########################################################################
+
+      - name: Delete registry artifact on cancel or failure
+        if: cancelled() || failure()
+        uses: geekyeggo/delete-artifact@b73cb986740e466292a536d0e32e2666c56fdeb3  # v1.0.0 (2020-04-25)
+        with:
+          name: registry_data
+
+      - name: Stop DHIS2 container
+        if: always()
+        continue-on-error: true
+        run: |
+          docker stop tomcat
+
+      - name: Upload wdio logs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: wdio-cucumber
+          path: output/
+          if-no-files-found: ignore
+
+      - name: Upload allure results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: allure-cucumber
+          path: reports/allure-results/
+          if-no-files-found: ignore
+
+  e2e_mocha:
+    name: '[Optional] DHIS2 Mocha e2e-tests'
+    runs-on: ubuntu-20.04
+
+    needs:
+      - image_build
+      - lookup_versions
+
+    services:
+      postgres:
+        image: docker.io/postgis/postgis:14-3.1
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+
+      - name: Download local registry data volume artifact
+        uses: actions/download-artifact@3be87be14a055c47b01d3bd88f8fe02320a9bb60  # v2.0.10 (2021-06-16)
+        with:
+          name: registry_data
+          path: ${{ github.workspace }}/registry_data
+
+      - name: Start registry container
+        run: |
+          docker run \
+            --name registry \
+            --detach \
+            --rm \
+            --publish 5000:5000 \
+            --volume '${{ github.workspace }}/registry_data:/var/lib/registry' \
+            docker.io/library/registry:2
+
+      - name: Pull DHIS2 image from local registry
+        run: |
+          docker pull ${{ needs.image_build.outputs.image_name }}
+
+      - name: Stop registry container  # no longer needed after pull
+        if: always()
+        continue-on-error: true
+        run: docker stop registry
+
+      ##########################################################################
+
+      - name: Install latest postgresql-client
+        run: |
+          set -x
+          echo "deb http://apt.postgresql.org/pub/repos/apt $( awk -F'=' '/^VERSION_CODENAME/ {print $NF}' /etc/os-release )-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          curl --silent https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client
+
+      # Runner specs: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
+      - name: PGTune
+        env:
+          PGHOST: localhost
+          PGPORT: ${{ job.services.postgres.ports[5432] }}
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: |
+          psql << 'EOF'
+          -- PGTune: https://pgtune.leopard.in.ua/
+          -- DB Version: 14
+          -- OS Type: linux
+          -- DB Type: web
+          -- Total Memory (RAM): 4 GB
+          -- CPUs num: 2
+          -- Connections num: 40
+          -- Data Storage: ssd
+          ALTER SYSTEM SET max_connections = '43';
+          ALTER SYSTEM SET shared_buffers = '1GB';
+          ALTER SYSTEM SET effective_cache_size = '3GB';
+          ALTER SYSTEM SET maintenance_work_mem = '256MB';
+          ALTER SYSTEM SET checkpoint_completion_target = '0.9';
+          ALTER SYSTEM SET wal_buffers = '16MB';
+          ALTER SYSTEM SET default_statistics_target = '100';
+          ALTER SYSTEM SET random_page_cost = '1.1';
+          ALTER SYSTEM SET effective_io_concurrency = '200';
+          ALTER SYSTEM SET work_mem = '26214kB';
+          ALTER SYSTEM SET min_wal_size = '1GB';
+          ALTER SYSTEM SET max_wal_size = '4GB';
+          ALTER SYSTEM SET max_worker_processes = '2';
+          ALTER SYSTEM SET max_parallel_workers_per_gather = '1';
+          ALTER SYSTEM SET max_parallel_workers = '2';
+          ALTER SYSTEM SET max_parallel_maintenance_workers = '1';
+          -- DHIS2 recommendations (options not changed in PGTune portion)
+          ALTER SYSTEM SET synchronous_commit = 'off';
+          ALTER SYSTEM SET wal_writer_delay = '10000ms';
+          ALTER SYSTEM SET max_locks_per_transaction = '1024';
+          EOF
+
+      - name: Empty database
+        env:
+          DATABASE_DBNAME: dhis2
+          PGHOST: postgres  # Matches the name of the service for PostgreSQL
+          PGPORT: ${{ job.services.postgres.ports[5432] }}
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: |
+          docker run \
+            --rm \
+            --network '${{ job.services.postgres.network }}' \
+            --env 'DATABASE_DBNAME' \
+            --env 'PGHOST' \
+            --env 'PGPORT' \
+            --env 'PGUSER' \
+            --env 'PGPASSWORD' \
+            ${{ needs.image_build.outputs.image_name }} \
+            db-empty.sh
+
+      - name: Create database role and import sample database
+        env:
+          DATABASE_USERNAME: dhis  # The backup file being imported expects this role in PostgreSQL
+          PGHOST: localhost
+          PGPORT: ${{ job.services.postgres.ports[5432] }}
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: |
+          psql -q -v 'ON_ERROR_STOP=1' --command="CREATE ROLE $DATABASE_USERNAME"
+          wget --no-verbose --no-hsts --output-document=/tmp/db.sql.gz https://databases.dhis2.org/sierra-leone/${DHIS2_VERSION}/dhis2-db-sierra-leone.sql.gz
+          gunzip -c /tmp/db.sql.gz | psql -q -v 'ON_ERROR_STOP=1' --dbname='dhis2'
+          rm -v -f /tmp/db.sql.gz
+
+      - name: Initialize the database
+        env:
+          DATABASE_DBNAME: dhis2
+          DATABASE_PASSWORD: dhis
+          DATABASE_USERNAME: dhis
+          PGHOST: postgres
+          PGPORT: ${{ job.services.postgres.ports[5432] }}
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: |
+          docker run \
+            --rm \
+            --network '${{ job.services.postgres.network }}' \
+            --env 'DHIS2_INIT_SKIP=15_pgstatstatements.sh,20_dhis2-initwar.sh' \
+            --env 'DATABASE_DBNAME' \
+            --env 'DATABASE_PASSWORD' \
+            --env 'DATABASE_USERNAME' \
+            --env 'PGHOST' \
+            --env 'PGPORT' \
+            --env 'PGUSER' \
+            --env 'PGPASSWORD' \
+            ${{ needs.image_build.outputs.image_name }} \
+            dhis2-init.sh
+
+      ##########################################################################
+
+      - name: Start DHIS2 container
+        env:
+          DATABASE_HOST: postgres
+          DATABASE_PORT: ${{ job.services.postgres.ports[5432] }}
+          DATABASE_DBNAME: dhis2
+          DATABASE_USERNAME: dhis
+          DATABASE_PASSWORD: dhis
+          DHIS2_CONNECTION_POOL_MAXSIZE: 40  # Needs to match the value used in PGTune
+          CATALINA_OPTS: "-Xms1536M -Xmx1536M"  # GitHub-hosted runner has 7 GB and 4 GB is assigned to PostgreSQL, remainder needed for tests
+        run: |
+          docker run \
+            --name tomcat \
+            --detach \
+            --rm \
+            --network '${{ job.services.postgres.network }}' \
+            --env 'DATABASE_HOST' \
+            --env 'DATABASE_PORT' \
+            --env 'DATABASE_DBNAME' \
+            --env 'DATABASE_USERNAME' \
+            --env 'DATABASE_PASSWORD' \
+            --env 'DHIS2_CONNECTION_POOL_MAXSIZE' \
+            --env 'CATALINA_OPTS' \
+            --publish 8080:8080 \
+            --health-cmd 'curl -fsS http://localhost:8080/dhis-web-commons/security/login.action' \
+            --health-interval 1m30s \
+            --health-timeout 30s \
+            --health-retries 3 \
+            --health-start-period 60s \
+            ${{ needs.image_build.outputs.image_name }} \
+            remco
+
+      - name: Wait for DHIS2 login page
+        run: |
+          sleep 10
+
+          curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
+            --location \
+            --output /dev/null \
+            --write-out '%{http_code}\n' \
+            'http://localhost:8080/dhis-web-commons/security/login.action'
+
+      - name: Generate analytics
+        id: generate_analytics
+        run: |
+          sleep 1
+
+          STATUS_URI="$(
+            curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
+              --request POST \
+              --location \
+              'http://localhost:8080/api/resourceTables/analytics' \
+            | jq -r '.response.relativeNotifierEndpoint'
+          )"
+
+          echo "::set-output name=status_uri::$STATUS_URI"
+
+      ##########################################################################
+
+      - name: install Java for Selenium-Standalone
+        uses: actions/setup-java@5f00602cd1b2819185d88dc7a1b1985f598c6705  # v2.4.0 (2021-11-29)
+        with:
+          distribution: zulu
+          java-version: '11'
+
+      - name: Install NodeJS
+        uses: actions/setup-node@04c56d2f954f1e4c69436aa54cfef261a018f458  # v2.5.0 (2021-11-29)
+        with:
+          node-version: '14'  # NOTE: A dependency in e2e-tests will not run in v16 or higher
+
+      - name: Install latest google-chrome-stable
+        run: |
+          set -x
+          echo "deb [arch=$(dpkg --print-architecture)] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list >/dev/null
+          curl --silent  https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/google.gpg >/dev/null
+          sudo apt-get update
+          if ! dpkg-query -W google-chrome-stable ; then
+            sudo apt-get install -y --no-install-recommends google-chrome-stable
+          else
+            sudo apt-get install -y --only-upgrade google-chrome-stable
+          fi
+
+      - name: Choose the remote git reference based on DHIS2 version
+        id: check_if_dev  # https://github.community/t/do-expressions-support-ternary-operators-to-change-their-returned-value/18114/2
+        run: |
+          if [[ "$DHIS2_VERSION" == "dev" ]]
+          then
+            echo "::set-output name=remote_ref::master"
+          else
+            echo "::set-output name=remote_ref::${DHIS2_VERSION}-rc"
+          fi
+
+      - name: Clone e2e-tests repository
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579  # v2.4.0 (2021-11-02)
+        with:
+          repository: dhis2/e2e-tests
+          ref: ${{ steps.check_if_dev.outputs.remote_ref }}  # "master" for dev, "${{ env.DHIS2_VERSION }}-rc" for releases, see previous command for logic
+
+      - name: npm install
+        run: |
+          npm install
+
+      - name: Add headless Chrome options to wdio
+        run: |
+          sed -r -e "/\s*--disable-web-security/ { s/^(\s*)/\1'--headless','--disable-gpu','--window-size=2048,1536','--ignore-certificate-errors','--disable-extensions','--no-sandbox','--disable-dev-shm-usage',\n\1/ }" -i ./tests/config/wdio.local.conf.js
+
+      ##########################################################################
+
+      - name: Wait for analytics before proceeding
+        run: |
+          export STATUS_URI='${{ steps.generate_analytics.outputs.status_uri }}'
+
+          until [[ "$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq -r "sort_by(.time, .completed)|.[-1].completed" )" == "true" ]]; do
+            STATUS_CURRENT="$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq "sort_by(.time, .completed)|.[-1]" )"
+            echo "[$( jq -r ".level" <<<"$STATUS_CURRENT" )] $( jq -r ".time" <<<"$STATUS_CURRENT" ) $( jq -r ".message" <<<"$STATUS_CURRENT" ) (Completed: $( jq -r ".completed" <<<"$STATUS_CURRENT" ))"
+            sleep 10
+          done
+
+          STATUS_LATEST="$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq "sort_by(.time, .completed)|.[-1]" )"
+          echo "[$( jq -r ".level" <<<"$STATUS_LATEST" )] $( jq -r ".time" <<<"$STATUS_LATEST" ) $( jq -r ".message" <<<"$STATUS_LATEST" ) (Completed: $( jq -r ".completed" <<<"$STATUS_LATEST" ))"
+
+      - name: Mocha tests  # requires analytics to have been generated
+        if: github.ref == 'refs/heads/e2e' && github.event_name != 'pull_request'
+        continue-on-error: true
+        run: |
+          npx wdio ./tests/config/wdio.mocha.conf.js
+        env:
+          BASE_URL: http://localhost:8080/
+          DEBUG: '1'  # Runs sequentially, fails without this in GHA
+
+      ##########################################################################
+
+      - name: Stop DHIS2 container
+        if: always()
+        continue-on-error: true
+        run: |
+          docker stop tomcat
+
+      - name: Upload wdio logs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: wdio-mocha
+          path: output/
+          if-no-files-found: ignore
+
+      - name: Upload allure results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: allure-mocha
+          path: reports/allure-results/
+          if-no-files-found: ignore
+
+  image_push:
+    name: Push container image
+    runs-on: ubuntu-20.04
+
+    needs:
+      - e2e_cucumber  # Mocha tests do not need to pass at this time
+      - image_build
+      - image_meta
+
+    steps:
 
       - name: Login to GitHub Container Registry
-        if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9  # v1.10.0 (2021-10-22)
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9  # v1.10.0 (2021-06-23)
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Multi-platform build
-        uses: docker/build-push-action@a66e35b9cbcf4ad0ea91ffcaf7bbad63ad9e0229  # v2.7.0 (2021-10-22)
+      - name: Download local registry data volume artifact
+        uses: actions/download-artifact@3be87be14a055c47b01d3bd88f8fe02320a9bb60  # v2.0.10 (2021-06-16)
         with:
-          platforms: linux/amd64,linux/arm64
-          build-args: |
-            DHIS2_MAJOR=${{ needs.lookup_dhis2.outputs.major }}
-            DHIS2_VERSION=${{ env.DHIS2_VERSION }}
-            JAVA_MAJOR=${{ needs.lookup_tomcat.outputs.java_major }}
-            TOMCAT_VERSION=${{ needs.lookup_tomcat.outputs.tomcat_version }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          pull: true
-          load: false
-          push: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
-          cache-from: type=registry,src=ghcr.io/${{ github.repository_owner }}/dhis2
-          cache-to: type=registry,dest=ghcr.io/${{ github.repository_owner }}/dhis2,mode=max
+          name: registry_data
+          path: ${{ github.workspace }}/registry_data
+
+      - name: Start registry container
+        run: |
+          docker run \
+            --name registry \
+            --detach \
+            --rm \
+            --publish 5000:5000 \
+            --volume '${{ github.workspace }}/registry_data:/var/lib/registry' \
+            docker.io/library/registry:2
+
+      - name: Push Image to public registry
+        uses: akhilerm/tag-push-action@f973043dc002b8e5a772c53e79441e6e1861e874  # v2.0.0 (2021-09-28)
+        with:
+          src: ${{ needs.image_build.outputs.image_name }}
+          dst: ${{ needs.image_meta.outputs.tags }}
+
+      - name: Stop registry container
+        if: always()
+        continue-on-error: true
+        run: docker stop registry
+
+      - name: Delete registry artifact
+        if: always()
+        uses: geekyeggo/delete-artifact@b73cb986740e466292a536d0e32e2666c56fdeb3  # v1.0.0 (2020-04-25)
+        with:
+          name: registry_data
