@@ -797,7 +797,6 @@ jobs:
           echo "[$( jq -r ".level" <<<"$STATUS_LATEST" )] $( jq -r ".time" <<<"$STATUS_LATEST" ) $( jq -r ".message" <<<"$STATUS_LATEST" ) (Completed: $( jq -r ".completed" <<<"$STATUS_LATEST" ))"
 
       - name: Mocha tests  # requires analytics to have been generated
-        if: github.ref == 'refs/heads/e2e' && github.event_name != 'pull_request'
         continue-on-error: true
         run: |
           npx wdio ./tests/config/wdio.mocha.conf.js
