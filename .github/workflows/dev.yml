@@ -101,7 +101,6 @@ jobs:
           path: dhis.war
 
     outputs:
-      major: ${{ steps.set_major.outputs.major }}
       build_revision: ${{ steps.query_metadata.outputs.build_revision }}
       build_time: ${{ steps.query_metadata.outputs.build_time }}
       build_version: ${{ steps.query_metadata.outputs.build_version }}
