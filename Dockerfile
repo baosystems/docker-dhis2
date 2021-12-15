@@ -234,5 +234,8 @@ ENTRYPOINT ["docker-entrypoint.sh"]
 # Default Tomcat listener (value is copied from the FROM image for verbosity)
 EXPOSE 8080
 
+# Mitigation for CVE-2021-44228 "Log4Shell"
+ENV LOG4J_FORMAT_MSG_NO_LOOKUPS=true
+
 # Value is copied from the FROM image. If not specified, the CMD in this image would be "null"
 CMD ["catalina.sh", "run"]
