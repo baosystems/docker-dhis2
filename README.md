@@ -386,18 +386,18 @@ Because two versions of DHIS2 should not be running at the same time, stop the d
 first.
 
 ```bash
-# Let's say you started with 2.36.4:
+# Let's say you started with 2.36.5:
 
 cat >> .env <<'EOF'
-DHIS2_TAG=2.36.4
+DHIS2_TAG=2.36.5
 EOF
 
 docker compose up --detach
 
-# Later, upgrade to 2.37.0:
+# Later, upgrade to 2.37.1:
 
 cat >> .env <<'EOF'
-DHIS2_TAG=2.37.0
+DHIS2_TAG=2.37.1
 EOF
 
 docker compose stop dhis2
