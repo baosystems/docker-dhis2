@@ -200,7 +200,7 @@ jobs:
         uses: docker/build-push-action@a66e35b9cbcf4ad0ea91ffcaf7bbad63ad9e0229  # v2.7.0 (2021-08-20)
         with:
           context: ${{ github.workspace }}/source  # The default is to refer to the sha URL directly, but we need the context for dhis.war
-          file: ${{ github.workspace }}/source/Dockerfile.byo  # NOTE: A dhis.war file must be in the same directory as this file
+          file: ${{ github.workspace }}/source/Dockerfile  # NOTE: A dhis.war file must be in the same directory as this file
           platforms: linux/amd64,linux/arm64
           build-args: |
             DHIS2_MAJOR=${{ needs.lookup_versions.outputs.dhis2_major }}

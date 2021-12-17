@@ -4,55 +4,33 @@
 
 # Setting "ARG"s before the first "FROM" allows for the values to be used in any "FROM" value below.
 # ARG values can be overridden with command line arguments.
-#
-# Ensure docker-compose.yml:services.dhis2.image matches the value of DHIS2_VERSION.
 
-ARG DHIS2_MAJOR=2.37  # While major can be derived from version, it is specified so it can be added as ENV in the final image
-ARG DHIS2_VERSION=2.37.0
-
-ARG JAVA_MAJOR=11
-
-ARG TOMCAT_VERSION=9.0.55
-
-ARG GOSU_VERSION=1.14
-ARG REMCO_VERSION=0.12.1
-ARG WAIT_VERSION=2.9.0
+# Default if not provided at build time
+ARG BASE_IMAGE="docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye"
 
 
 ################################################################################
 
 
-# DHIS2 downloaded as a separate stage to improve build caches
-FROM docker.io/debian:bullseye-20211115 as dhis2-downloader
-RUN set -eux; \
-  apt-get update; \
-  apt-get install -y --no-install-recommends ca-certificates libarchive-tools wget unzip; \
-  rm -r -f /var/lib/apt/lists/*
-ARG DHIS2_MAJOR
-ARG DHIS2_VERSION
+# DHIS2 from provided dhis.war
+# NOTE: Using rust:bullseye instead of debian:bullseye for gpg, unzip, wget preinstalled
+FROM docker.io/library/rust:1.56.1-bullseye as dhis2-builder
 WORKDIR /work
+COPY --chown=root:root ./dhis.war /work/dhis.war
 RUN set -eux; \
-  if [ "$DHIS2_MAJOR" = "dev" ] || [ "$DHIS2_VERSION" = "dev" ]; then \
-    wget --quiet -O dhis.war "https://releases.dhis2.org/dev/dhis.war"; \
-  else \
-    wget --quiet -O dhis.war "https://releases.dhis2.org/${DHIS2_MAJOR}/dhis2-stable-${DHIS2_VERSION}.war"; \
-  fi; \
+  umask 0022; \
   unzip -qq dhis.war -d ROOT; \
   rm -v -f dhis.war; \
-  bsdtar -x -f "$( find ROOT -regextype posix-egrep -regex '.*/dhis-service-core-2\.[0-9]+(-(EMBARGOED|SNAPSHOT))?.*\.jar$' )" build.properties; \
-  cat build.properties
+  find ROOT/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; | tee build.properties
 
 
 ################################################################################
 
 
 # gosu for easy step-down from root - https://github.com/tianon/gosu/releases
-FROM docker.io/debian:bullseye-20211115 as gosu-downloader
-RUN set -eux; \
-  apt-get update; \
-  apt-get install -y --no-install-recommends ca-certificates gnupg wget; \
-  rm -r -f /var/lib/apt/lists/*
-ARG GOSU_VERSION
+# NOTE: Using rust:bullseye instead of debian:bullseye for gpg, unzip, wget preinstalled
+FROM docker.io/library/rust:1.56.1-bullseye as gosu-builder
+ARG GOSU_VERSION=1.14
 WORKDIR /work
 RUN set -eux; \
   dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"; \
@@ -71,16 +49,15 @@ RUN set -eux; \
 # remco for building template files and controlling Tomcat - https://github.com/HeavyHorst/remco
 # Using same verion of golang as shown in the output of `remco -version` from the released 0.12.1 binary.
 # The 0.12.1 git tag has a typo in the Makefile.
-FROM docker.io/golang:1.15.2-buster as remco-builder
-RUN set -eux; \
-  apt-get update; \
-  apt-get install -y --no-install-recommends unzip; \
-  rm -r -f /var/lib/apt/lists/*
-ARG REMCO_VERSION
+FROM docker.io/library/golang:1.15.2-buster as remco-builder
+ARG REMCO_VERSION=0.12.1
 WORKDIR /work
 RUN set -eux; \
   dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"; \
   if [ "$dpkgArch" = "amd64" ]; then \
+    apt-get update; \
+    apt-get install -y --no-install-recommends unzip; \
+    rm -r -f /var/lib/apt/lists/*; \
     wget --quiet -O remco_linux.zip "https://github.com/HeavyHorst/remco/releases/download/v${REMCO_VERSION}/remco_${REMCO_VERSION}_linux_${dpkgArch}.zip"; \
     unzip remco_linux.zip; \
     mv --verbose remco_linux remco; \
@@ -104,9 +81,9 @@ RUN set -eux; \
 
 
 # wait pauses until remote hosts are available - https://github.com/ufoscout/docker-compose-wait
-# Tests are excluded due to the time taken building arm64 images in emulation; see https://github.com/ufoscout/docker-compose-wait/issues/54
-FROM docker.io/rust:1.56.1-bullseye as wait-builder
-ARG WAIT_VERSION
+# Tests are excluded due to the time taken running in arm64 emulation; see https://github.com/ufoscout/docker-compose-wait/issues/54
+FROM docker.io/library/rust:1.56.1-bullseye as wait-builder
+ARG WAIT_VERSION=2.9.0
 WORKDIR /work
 RUN set -eux; \
   dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"; \
@@ -131,47 +108,24 @@ RUN set -eux; \
 
 
 # Tomcat with OpenJDK - https://hub.docker.com/_/tomcat
-FROM "docker.io/tomcat:${TOMCAT_VERSION}-jre${JAVA_MAJOR}-openjdk-slim-bullseye" as dhis2
+FROM "$BASE_IMAGE" as dhis2
 
-# Add Java major version to the environment (JAVA_VERSION is provided by the FROM image)
-ARG JAVA_MAJOR
-ENV JAVA_MAJOR=$JAVA_MAJOR
-
-# Install dig and netcat for use in docker-entrypoint.sh and debugging
+# Install dependencies for dhis2-init.sh tasks, docker-entrypoint.sh, and general debugging
 RUN set -eux; \
   apt-get update; \
-  apt-get install -y --no-install-recommends bind9-dnsutils netcat-traditional; \
-  rm -r -f /var/lib/apt/lists/*
-
-# Install unzip and wget for dhis2-init.sh tasks (not included in bullseye-slim)
-RUN set -eux; \
-  apt-get update; \
-  apt-get install -y --no-install-recommends unzip wget; \
-  rm -r -f /var/lib/apt/lists/*
-
-# Install latest PostgreSQL client from PGDG for dhis2-init.sh
-# Also, install curl and gpg to add the PDGD repository (not included in bullseye-slim)
-RUN set -eux; \
-  apt-get update; \
-  apt-get install -y --no-install-recommends curl gpg; \
+  apt-get install -y --no-install-recommends bind9-dnsutils curl gpg netcat-traditional unzip wget; \
   echo "deb http://apt.postgresql.org/pub/repos/apt $( awk -F'=' '/^VERSION_CODENAME/ {print $NF}' /etc/os-release )-pgdg main" > /etc/apt/sources.list.d/pgdg.list; \
   curl --silent https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg; \
   apt-get update; \
   apt-get install -y --no-install-recommends postgresql-client; \
   rm -r -f /var/lib/apt/lists/*
 
-# Add tools from other build stages and add versions to the environment
-COPY --chown=root:root --from=gosu-downloader /work/gosu /usr/local/bin/
-ARG GOSU_VERSION
-ENV GOSU_VERSION=$GOSU_VERSION
+# Add tools from other build stages
+COPY --chown=root:root --from=gosu-builder /work/gosu /usr/local/bin/
 COPY --chown=root:root --from=remco-builder /work/remco /usr/local/bin/
-ARG REMCO_VERSION
-ENV REMCO_VERSION=$REMCO_VERSION
 COPY --chown=root:root --from=wait-builder /work/wait /usr/local/bin/
-ARG WAIT_VERSION
-ENV WAIT_VERSION=$WAIT_VERSION
 
-# Create tomcat system user, disable crons, and clean up
+# Create and clean up tomcat system user, disable crons
 RUN set -eux; \
   adduser --system --disabled-password --group tomcat; \
   echo 'tomcat' >> /etc/cron.deny; \
@@ -202,18 +156,6 @@ RUN set -eux; \
   mkdir -v -p /opt/dhis2; \
   chown --changes tomcat:tomcat /opt/dhis2
 
-# Add contents of the extracted dhis.war
-COPY --chown=root:root --from=dhis2-downloader /work/ROOT/ /usr/local/tomcat/webapps/ROOT/
-
-# Add extracted build.properties to DHIS2_HOME
-COPY --chown=root:root --from=dhis2-downloader /work/build.properties /opt/dhis2/build.properties
-
-# Add DHIS2 version to the environment
-ARG DHIS2_MAJOR
-ENV DHIS2_MAJOR=$DHIS2_MAJOR
-ARG DHIS2_VERSION
-ENV DHIS2_VERSION=$DHIS2_VERSION
-
 # Add dhis2-init.sh and bundled scripts
 COPY ./dhis2-init.sh /usr/local/bin/
 COPY ./dhis2-init.d/* /usr/local/share/dhis2-init.d/
@@ -239,3 +181,9 @@ ENV LOG4J_FORMAT_MSG_NO_LOOKUPS=true
 
 # Value is copied from the FROM image. If not specified, the CMD in this image would be "null"
 CMD ["catalina.sh", "run"]
+
+# Add contents of the extracted dhis.war
+COPY --chown=root:root --from=dhis2-builder /work/ROOT/ /usr/local/tomcat/webapps/ROOT/
+
+# Add extracted build.properties to DHIS2_HOME
+COPY --chown=root:root --from=dhis2-builder /work/build.properties /opt/dhis2/build.properties
