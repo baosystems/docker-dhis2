@@ -244,7 +244,7 @@ jobs:
             dhis2.major=${{ steps.versions_helper.outputs.dhis2_major }}
             dhis2.version=${{ matrix.dhis2_version }}
             java.major=${{ needs.baseimage_query.outputs.java_major }}
-            java.version=${{ steps.baseimage_query.outputs.java_version }}
+            java.version=${{ needs.baseimage_query.outputs.java_version }}
             tomcat.major=${{ needs.baseimage_query.outputs.tomcat_major }}
             tomcat.version=${{ needs.baseimage_query.outputs.tomcat_version }}
           flavor: latest=false
