@@ -1,4 +1,4 @@
-name: dev image
+name: dev images
 
 on:
   push:
@@ -90,9 +90,13 @@ jobs:
 
     strategy:
       matrix:
-        dhis2_version: [dev]
-        latest_major: [false]    # Always "false" for dev/snapshot
-        latest_overall: [false]  # Always "false" for dev/snapshot
+        dhis2_version:
+          - 2.35-dev
+          - 2.36-dev
+          - 2.37-dev
+        latest_overall: [false]
+        include:
+          - { dhis2_version: "dev", latest_overall: true }
 
     steps:
 
@@ -150,6 +154,8 @@ jobs:
           if [[ "$DHIS2_MAJOR" == "dev" ]] \
           && [[ "${{ matrix.dhis2_version }}" == "dev" ]]; then
             DHIS2_WAR_URL="https://releases.dhis2.org/$DHIS2_MAJOR/dhis.war"
+          elif [[ "${{ matrix.dhis2_version }}" =~ ^2\.[0-9]{2}-dev$ ]]; then
+            DHIS2_WAR_URL="https://releases.dhis2.org/$DHIS2_MAJOR/dev/dhis2-dev-${DHIS2_MAJOR}.war"
           else
             DHIS2_WAR_URL="https://releases.dhis2.org/$DHIS2_MAJOR/dhis2-stable-${{ matrix.dhis2_version }}.war"
           fi
@@ -172,31 +178,38 @@ jobs:
         run: |
           set -x
 
-          # Trims full version like "2.36.1" or "2.36.7-SNAPSHOT" to "2.36" from war file
+          # Trims full version like "2.36.1" or "2.36.7-SNAPSHOT" to "2.36" from war file build properties
           DHIS2_MAJOR="$( cut -c1-4 <<< "${{ steps.get_war.outputs.build_version }}" )"
           echo "::set-output name=dhis2_major::$DHIS2_MAJOR"
 
-          # Due to limited GHA cache space, only retain Docker cache for latest overall and dev
-          if ${{ matrix.latest_overall }} \
-          || [[ "$DHIS2_MAJOR" == "dev" ]]
-          then
+          # Due to limited GHA cache space, only retain Docker cache for latest overall
+          if ${{ matrix.latest_overall }}; then
             echo "::set-output name=cache_to::type=gha,mode=max"
           fi
 
           # Git checkout reference for e2e-tests repository
-          if [[ "$DHIS2_MAJOR" == "dev" ]]; then
-            echo "::set-output name=e2e_remote_ref::master"
+          if [[ "${{ matrix.dhis2_version }}" == "dev" ]]; then
+            E2E_REMOTE_REF='master'
+          elif [[ "${{ matrix.dhis2_version }}" =~ ^2\.[0-9]{2}-dev$ ]]; then
+            # For a version like "2.37-dev", use "2.37rc". If that doesn't exist, choose the latest as it is likely too new
+            if git ls-remote --heads --refs --sort='version:refname' https://github.com/dhis2/e2e-tests.git | awk '/[[:blank:]]+refs\/heads\/[0-9.]+rc$/ {gsub("refs/heads/",""); print $NF}' | grep "^${DHIS2_MAJOR}rc$"
+            then
+              E2E_REMOTE_REF="${DHIS2_MAJOR}rc"
+            else
+              E2E_REMOTE_REF="$( git ls-remote --heads --refs --sort='version:refname' https://github.com/dhis2/e2e-tests.git | awk '/[[:blank:]]+refs\/heads\/[0-9.]+rc$/ {gsub("refs/heads/",""); print $NF}' | sort --version-sort | tail -1 )"
+            fi
           else
             # The tag for a version may not exist in github.com/dhis2/e2e-tests, such as tag "2.37.0-rc"
             # for version "2.37.1" as of this writing. This logic will determine the appropriate version
             # if there is not a direct match.
             if git ls-remote --tags --refs --sort='version:refname' https://github.com/dhis2/e2e-tests.git | awk '/[[:blank:]]+refs\/tags\/[0-9.]+-rc$/ {gsub("refs/tags/",""); print $NF}' | grep -q "^${{ matrix.dhis2_version }}-rc$"
             then
-              echo "::set-output name=e2e_remote_ref::${{ matrix.dhis2_version }}-rc"
+              E2E_REMOTE_REF="${{ matrix.dhis2_version }}-rc"
             else
-              echo "::set-output name=e2e_remote_ref::$( git ls-remote --tags --refs --sort='version:refname' https://github.com/dhis2/e2e-tests.git | awk '/[[:blank:]]+refs\/tags\/[0-9.]+-rc$/ {gsub("refs/tags/",""); print $NF}'| grep "^${DHIS2_MAJOR}" | sort --version-sort | tail -1 )"
+              E2E_REMOTE_REF="$( git ls-remote --tags --refs --sort='version:refname' https://github.com/dhis2/e2e-tests.git | awk '/[[:blank:]]+refs\/tags\/[0-9.]+-rc$/ {gsub("refs/tags/",""); print $NF}'| grep "^${DHIS2_MAJOR}" | sort --version-sort | tail -1 )"
             fi
           fi
+          echo "::set-output name=e2e_remote_ref::$E2E_REMOTE_REF"
 
           # Git checkout depth for e2e-tests repository
           if [[ "${{ matrix.dhis2_version }}" =~ ^2\.36\.[012]$ ]] ; then
@@ -215,18 +228,20 @@ jobs:
             org.opencontainers.image.title=dhis2
             org.opencontainers.image.url=https://github.com/baosystems/docker-dhis2/pkgs/container/dhis2
             org.opencontainers.image.version=${{ matrix.dhis2_version }}
+            dhis2.build.major=${{ steps.versions_helper.outputs.dhis2_major }}
             dhis2.build.version=${{ steps.get_war.outputs.build_version }}
             dhis2.build.revision=${{ steps.get_war.outputs.build_revision }}
             dhis2.build.time=${{ steps.get_war.outputs.build_time }}
             dhis2.build.date=${{ steps.get_war.outputs.build_date }}
-            dhis2.major=${{ steps.versions_helper.outputs.dhis2_major }}
-            dhis2.version=${{ matrix.dhis2_version }}
             java.major=${{ needs.baseimage_query.outputs.java_major }}
             java.version=${{ needs.baseimage_query.outputs.java_version }}
             tomcat.major=${{ needs.baseimage_query.outputs.tomcat_major }}
             tomcat.version=${{ needs.baseimage_query.outputs.tomcat_version }}
           flavor: latest=false
-          tags: dev
+          tags: |  # If 1st and 2nd resolve to the same value, the action will reduce to one tag
+            type=raw,value=${{ matrix.dhis2_version }}
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_major }}-dev
+            type=raw,value=dev,enable=${{ matrix.latest_overall }}
 
       - name: Multi-platform build and push to local registry
         id: image_build
@@ -332,8 +347,20 @@ jobs:
           PGPASSWORD: postgres
         run: |
           set -x
-          wget --no-verbose --output-document=/tmp/db.sql.gz https://databases.dhis2.org/sierra-leone/${{ matrix.dhis2_version }}/dhis2-db-sierra-leone.sql.gz
+
+          if [[ "${{ matrix.dhis2_version }}" =~ ^2\.[0-9]{2}-dev$ ]]; then
+            DHIS2_DB_URL="https://databases.dhis2.org/sierra-leone/${{ steps.versions_helper.outputs.dhis2_major }}/dhis2-db-sierra-leone.sql.gz"
+          else
+            DHIS2_DB_URL="https://databases.dhis2.org/sierra-leone/${{ matrix.dhis2_version }}/dhis2-db-sierra-leone.sql.gz"
+          fi
+
+          wget \
+            --no-verbose \
+            --output-document=/tmp/db.sql.gz \
+            "$DHIS2_DB_URL"
+
           gunzip -c /tmp/db.sql.gz | psql -q -v 'ON_ERROR_STOP=1' --dbname='dhis2'
+
           rm -v -f /tmp/db.sql.gz
 
       - name: Initialize database
@@ -403,6 +430,36 @@ jobs:
           echo "::set-output name=network::$( docker inspect --format='{{range .NetworkSettings.Networks}}{{.NetworkID}}{{end}}' tomcat )"
           echo "::set-output name=ports::$( docker inspect --format='{"8080": "{{(index (index .NetworkSettings.Ports "8080/tcp") 0).HostPort}}"}' tomcat | jq -Rs )"
 
+      - name: Generate analytics
+        run: |
+          set -x
+          export STATUS_URI="$(
+            curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
+              --request POST \
+              --location \
+              'http://localhost:8080/api/resourceTables/analytics' \
+            | jq -r '.response.relativeNotifierEndpoint'
+          )"
+          set +x
+
+          # Print status messages as they change
+          until [[ "$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq -r "sort_by(.time, .completed)|.[-1].completed" )" == "true" ]]; do
+            STATUS_CURRENT="$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq "sort_by(.time, .completed)|.[-1]" )"
+            LINE_CURRENT="[$( jq -r ".level" <<<"$STATUS_CURRENT" )] $( jq -r ".time" <<<"$STATUS_CURRENT" ) $( jq -r ".message" <<<"$STATUS_CURRENT" ) (Completed: $( jq -r ".completed" <<<"$STATUS_CURRENT" ))"
+            if [[ "${LINE_PREV:-}" != "$LINE_CURRENT" ]]; then
+              echo "$LINE_CURRENT"
+            fi
+            LINE_PREV="$LINE_CURRENT"
+            sleep 3
+          done
+
+          # Print final status message
+          STATUS_LATEST="$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq "sort_by(.time, .completed)|.[-1]" )"
+          LINE_LATEST="[$( jq -r ".level" <<<"$STATUS_LATEST" )] $( jq -r ".time" <<<"$STATUS_LATEST" ) $( jq -r ".message" <<<"$STATUS_LATEST" ) (Completed: $( jq -r ".completed" <<<"$STATUS_LATEST" ))"
+          if [[ "${LINE_PREV:-}" != "$LINE_LATEST" ]]; then
+            echo "$LINE_LATEST"
+          fi
+
       ##########################################################################
 
       - name: Checkout e2e-tests repository to current directory
@@ -454,42 +511,13 @@ jobs:
           matrix.dhis2_version != '2.35.4' &&
           matrix.dhis2_version != '2.35.5' &&
           matrix.dhis2_version != '2.36.0'
+        continue-on-error: ${{ endsWith(matrix.dhis2_version, 'dev') }}  # don't block the remaining actions if it fails on dev versions
         env:
           BASE_URL: http://localhost:8080/
           DEBUG: '1'  # Do not run in parallel; there can be more failures in GHA without this due to limited resources
         run: |
           set -x
           npx wdio ./tests/config/wdio.cucumber.conf.js
-
-      - name: Generate analytics
-        run: |
-          set -x
-          export STATUS_URI="$(
-            curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
-              --request POST \
-              --location \
-              'http://localhost:8080/api/resourceTables/analytics' \
-            | jq -r '.response.relativeNotifierEndpoint'
-          )"
-          set +x
-
-          # Print status messages as they change
-          until [[ "$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq -r "sort_by(.time, .completed)|.[-1].completed" )" == "true" ]]; do
-            STATUS_CURRENT="$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq "sort_by(.time, .completed)|.[-1]" )"
-            LINE_CURRENT="[$( jq -r ".level" <<<"$STATUS_CURRENT" )] $( jq -r ".time" <<<"$STATUS_CURRENT" ) $( jq -r ".message" <<<"$STATUS_CURRENT" ) (Completed: $( jq -r ".completed" <<<"$STATUS_CURRENT" ))"
-            if [[ "${LINE_PREV:-}" != "$LINE_CURRENT" ]]; then
-              echo "$LINE_CURRENT"
-            fi
-            LINE_PREV="$LINE_CURRENT"
-            sleep 3
-          done
-
-          # Print final status message
-          STATUS_LATEST="$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq "sort_by(.time, .completed)|.[-1]" )"
-          LINE_LATEST="[$( jq -r ".level" <<<"$STATUS_LATEST" )] $( jq -r ".time" <<<"$STATUS_LATEST" ) $( jq -r ".message" <<<"$STATUS_LATEST" ) (Completed: $( jq -r ".completed" <<<"$STATUS_LATEST" ))"
-          if [[ "${LINE_PREV:-}" != "$LINE_LATEST" ]]; then
-            echo "$LINE_LATEST"
-          fi
 
       ##########################################################################
 
@@ -499,7 +527,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Copy image from local registry and push to public registry
         uses: akhilerm/tag-push-action@f973043dc002b8e5a772c53e79441e6e1861e874  # v2.0.0 (2021-09-28)
         with:
@@ -510,12 +538,14 @@ jobs:
 
       - name: Stop DHIS2 container
         if: always()
+        continue-on-error: true
         run: |
           set -x
           docker stop tomcat
 
       - name: Upload wdio logs
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@da838ae9595ac94171fa2d4de5a2f117b3e7ac32  # v2.3.0 (2021-12-07)
         with:
           name: ${{ matrix.dhis2_version }}_wdio
@@ -527,12 +557,16 @@ jobs:
       # "There are over 10,000 files in this artifact, consider creating an archive before upload to improve the upload performance."
       - name: Archive allure results
         if: always()
+        continue-on-error: true
         run: |
           if [[ -d reports/allure-results ]] ; then
-            zip -q -r reports/allure-results.zip reports/allure-results
+            cd reports/
+            zip -q -r allure-results.zip allure-results
           fi
+
       - name: Upload allure results
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@da838ae9595ac94171fa2d4de5a2f117b3e7ac32  # v2.3.0 (2021-12-07)
         with:
           name: ${{ matrix.dhis2_version }}_allure
