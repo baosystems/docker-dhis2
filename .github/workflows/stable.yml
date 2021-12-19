@@ -79,13 +79,13 @@ jobs:
       - name: Install Python packages
         run: |
           set -x
-          pip3 install --requirement .github/workflows/matrix/requirements.txt
+          pip3 install --requirement .github/workflows/support/matrix/requirements.txt
 
       - name: Generate matrix
         id: matrix_cmd
         run: |
           set -x
-          echo "::set-output name=dhis2_matrix::$( python3 .github/workflows/matrix/matrix.py )"
+          echo "::set-output name=dhis2_matrix::$( python3 .github/workflows/support/matrix/matrix.py )"
 
     outputs:
       dhis2_matrix: ${{ steps.matrix_cmd.outputs.dhis2_matrix }}
@@ -101,23 +101,10 @@ jobs:
     runs-on: ubuntu-20.04
 
     services:
-
       registry:
         image: docker.io/library/registry:2
         ports:
           - 5000:5000
-
-      postgres:
-        image: docker.io/postgis/postgis:14-3.1
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     strategy:
       matrix: ${{fromJSON(needs.generate_matrix.outputs.dhis2_matrix)}}
@@ -132,7 +119,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@94ab11c41e45d028884a99163086648e898eed25  # v1.6.0 (2021-09-03)
         with:
-          driver-opts: network=host  # Required to push to local registry
+          driver-opts: network=host  # Required for buildx container to push to local registry
 
       - name: Install NodeJS
         uses: actions/setup-node@04c56d2f954f1e4c69436aa54cfef261a018f458  # v2.5.0 (2021-11-29)
@@ -140,13 +127,11 @@ jobs:
           node-version: '14'  # NOTE: A dependency in e2e-tests will not run in v16 or higher
           check-latest: true
 
-      - name: Install default-jre and the latest postgresql-client
-        run: |
-          set -x
-          echo "deb http://apt.postgresql.org/pub/repos/apt $( awk -F'=' '/^VERSION_CODENAME/ {print $NF}' /etc/os-release )-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
-          curl --silent https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends default-jre postgresql-client
+      - name: Install Java  # For Selenium
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'zulu'  # OpenJDK
+          java-version: '11'
 
       - name: Install latest google-chrome-stable
         run: |
@@ -290,87 +275,61 @@ jobs:
 
       ##########################################################################
 
-      # Optimize database performance for GitHub Actions
-      # Runner specs: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
-      - name: PGTune
-        env:
-          PGHOST: localhost
-          PGPORT: ${{ job.services.postgres.ports[5432] }}
-          PGUSER: postgres
-          PGPASSWORD: postgres
+      - name: Use image from local registry in Compose
         run: |
           set -x
 
-          # DHIS2 recommendations (for properties not set in PGTune section below)
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "synchronous_commit=off" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "wal_writer_delay=10s" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "max_locks_per_transaction=1024" >> /var/lib/postgresql/data/postgresql.conf'
+          sed \
+            -r \
+            -e "/^\s+image:/ s,ghcr\.io/baosystems/dhis2[^\"]+,${{ fromJSON(steps.image_build.outputs.metadata)['image.name'] }},g" \
+            -i \
+            source/docker-compose.yml
 
-          # PGTune with: version=14, os=linux, type=web, ram=4GB, cpus=2, conns=40, storage=ssd
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "shared_buffers=1GB" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "effective_cache_size=3GB" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "maintenance_work_mem=256MB" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "checkpoint_completion_target=0.9" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "wal_buffers=16MB" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "default_statistics_target=100" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "random_page_cost=1.1" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "effective_io_concurrency=200" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "work_mem=26214kB" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "min_wal_size=1GB" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "max_wal_size=4GB" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "max_worker_processes=2" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "max_parallel_workers_per_gather=1" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "max_parallel_workers=2" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "max_parallel_maintenance_workers=1" >> /var/lib/postgresql/data/postgresql.conf'
-
-          # Improve performance (https://github.community/t/how-do-i-properly-override-a-service-entrypoint/17435/8)
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "fsync=off" >> /var/lib/postgresql/data/postgresql.conf'
-          docker exec ${{ job.services.postgres.id }} bash -c 'echo "full_page_writes=off" >> /var/lib/postgresql/data/postgresql.conf'
-
-          # Some settings require full restart to apply (max_locks_per_transaction, shared_buffers, wal_buffers, max_worker_processes)
-          docker restart ${{ job.services.postgres.id }}
-
-          # Wait 30s for service to be healthy (https://stackoverflow.com/a/58759974)
-          timeout 30s bash -c 'until grep -q healthy <(docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" ${{ job.services.postgres.id }}); do sleep 1; done'
-
-      - name: Create empty database
-        env:
-          DATABASE_DBNAME: dhis2
-          PGHOST: postgres  # Matches the service name for PostgreSQL
-          PGPORT: ${{ job.services.postgres.ports[5432] }}
-          PGUSER: postgres
-          PGPASSWORD: postgres
+      - name: Pull Compose stack images
         run: |
           set -x
-          docker run \
-            --rm \
-            --network '${{ job.services.postgres.network }}' \
-            --env 'DATABASE_DBNAME' \
-            --env 'PGHOST' \
-            --env 'PGPORT' \
-            --env 'PGUSER' \
-            --env 'PGPASSWORD' \
-            ${{ fromJSON(steps.image_build.outputs.metadata)['image.name'] }} \
-            db-empty.sh
 
-      - name: Create database role
-        env:
-          DATABASE_USERNAME: dhis  # The backup file being imported expects this role in PostgreSQL
-          PGHOST: localhost
-          PGPORT: ${{ job.services.postgres.ports[5432] }}
-          PGUSER: postgres
-          PGPASSWORD: postgres
+          docker compose \
+            --project-name 'docker-dhis2' \
+            --project-directory 'source' \
+            --file 'source/docker-compose.yml' \
+            --file 'source/.github/workflows/support/docker-compose.override.yml' \
+            pull --quiet
+
+      - name: Create and start DHIS2 Compose stack
         run: |
           set -x
-          psql -q -v 'ON_ERROR_STOP=1' --command="CREATE ROLE $DATABASE_USERNAME"
+
+          docker compose \
+            --project-name 'docker-dhis2' \
+            --project-directory 'source' \
+            --file 'source/docker-compose.yml' \
+            --file 'source/.github/workflows/support/docker-compose.override.yml' \
+            up --detach
+
+      - name: Stop DHIS2 container
+        run: |
+          set -x
+
+          docker compose \
+            --project-name 'docker-dhis2' \
+            --project-directory 'source' \
+            --file 'source/docker-compose.yml' \
+            --file 'source/.github/workflows/support/docker-compose.override.yml' \
+            stop dhis2
+
+      - name: Empty the database
+        run: |
+          set -x
+
+          docker compose \
+            --project-name 'docker-dhis2' \
+            --project-directory 'source' \
+            --file 'source/docker-compose.yml' \
+            --file 'source/.github/workflows/support/docker-compose.override.yml' \
+            run --rm dhis2_init db-empty.sh
 
       - name: Import sample data
-        env:
-          DATABASE_USERNAME: dhis  # The backup file being imported expects this role in PostgreSQL
-          PGHOST: localhost
-          PGPORT: ${{ job.services.postgres.ports[5432] }}
-          PGUSER: postgres
-          PGPASSWORD: postgres
         run: |
           set -x
 
@@ -385,76 +344,27 @@ jobs:
             --output-document=/tmp/db.sql.gz \
             "$DHIS2_DB_URL"
 
-          gunzip -c /tmp/db.sql.gz | psql -q -v 'ON_ERROR_STOP=1' --dbname='dhis2'
-
-          rm -v -f /tmp/db.sql.gz
-
-      - name: Initialize database
-        env:
-          DATABASE_DBNAME: dhis2
-          DATABASE_PASSWORD: dhis
-          DATABASE_USERNAME: dhis
-          PGHOST: postgres
-          PGPORT: ${{ job.services.postgres.ports[5432] }}
-          PGUSER: postgres
-          PGPASSWORD: postgres
-        run: |
-          set -x
-          docker run \
-            --rm \
-            --network '${{ job.services.postgres.network }}' \
-            --env 'DHIS2_INIT_SKIP=15_pgstatstatements.sh,20_dhis2-initwar.sh' \
-            --env 'DATABASE_DBNAME' \
-            --env 'DATABASE_PASSWORD' \
-            --env 'DATABASE_USERNAME' \
-            --env 'PGHOST' \
-            --env 'PGPORT' \
-            --env 'PGUSER' \
-            --env 'PGPASSWORD' \
-            ${{ fromJSON(steps.image_build.outputs.metadata)['image.name'] }} \
-            dhis2-init.sh
+          gunzip -c /tmp/db.sql.gz \
+          | docker compose \
+              --project-name 'docker-dhis2' \
+              --project-directory 'source' \
+              --file 'source/docker-compose.yml' \
+              --file 'source/.github/workflows/support/docker-compose.override.yml' \
+              exec -T database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
 
       - name: Start DHIS2 container
-        id: tomcat
-        env:
-          DATABASE_HOST: postgres
-          DATABASE_PORT: ${{ job.services.postgres.ports[5432] }}
-          DATABASE_DBNAME: dhis2
-          DATABASE_USERNAME: dhis
-          DATABASE_PASSWORD: dhis
-          DHIS2_CONNECTION_POOL_MAXSIZE: 40  # Needs to match the value used in PGTune calculation
-          CATALINA_OPTS: "-Xms1536M -Xmx1536M"  # GitHub-hosted runner has 7 GB and 4 GB is assigned to PostgreSQL (remainder reserved for tests)
         run: |
           set -x
 
-          docker run \
-            --name tomcat \
-            --detach \
-            --rm \
-            --network '${{ job.services.postgres.network }}' \
-            --env 'DATABASE_HOST' \
-            --env 'DATABASE_PORT' \
-            --env 'DATABASE_DBNAME' \
-            --env 'DATABASE_USERNAME' \
-            --env 'DATABASE_PASSWORD' \
-            --env 'DHIS2_CONNECTION_POOL_MAXSIZE' \
-            --env 'CATALINA_OPTS' \
-            --publish 8080:8080 \
-            --health-cmd 'curl -fsS http://localhost:8080/dhis-web-commons/security/login.action' \
-            --health-interval 1m30s \
-            --health-timeout 30s \
-            --health-retries 3 \
-            --health-start-period 60s \
-            ${{ fromJSON(steps.image_build.outputs.metadata)['image.name'] }} \
-            remco
+          docker compose \
+            --project-name 'docker-dhis2' \
+            --project-directory 'source' \
+            --file 'source/docker-compose.yml' \
+            --file 'source/.github/workflows/support/docker-compose.override.yml' \
+            start dhis2
 
           # Wait 300s for service to be healthy (https://stackoverflow.com/a/58759974)
-          timeout 300s bash -c 'until grep -q healthy <(docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" tomcat); do sleep 3; done'
-
-          # Same outputs as a service
-          echo "::set-output name=id::$( docker inspect --format='{{print .Id}}' tomcat )"
-          echo "::set-output name=network::$( docker inspect --format='{{range .NetworkSettings.Networks}}{{.NetworkID}}{{end}}' tomcat )"
-          echo "::set-output name=ports::$( docker inspect --format='{"8080": "{{(index (index .NetworkSettings.Ports "8080/tcp") 0).HostPort}}"}' tomcat | jq -Rs )"
+          timeout 300s bash -c 'until grep -q healthy <( docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 'docker-dhis2-dhis2-1' ); do sleep 3; done'
 
       - name: Generate analytics
         run: |
@@ -488,14 +398,14 @@ jobs:
 
       ##########################################################################
 
-      - name: Checkout e2e-tests repository to current directory
+      - name: Checkout dhis/e2e-tests to current directory
         uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579  # v2.4.0 (2021-11-02)
         with:
           repository: dhis2/e2e-tests
           ref: ${{ steps.versions_helper.outputs.e2e_remote_ref }}  # "master" for dev, "${{ matrix.dhis2_version }}-rc" for releases; see "versions_helper" for logic
           fetch-depth: ${{ steps.versions_helper.outputs.e2e_remote_depth }}  # default is "1", "0" for certain versions; see "versions_helper" for logic
 
-      - name: npm install
+      - name: Install dependencies for dhis2/e2e-tests
         run: |
           set -x
           npm install
@@ -548,6 +458,7 @@ jobs:
       ##########################################################################
 
       - name: Login to GitHub Container Registry
+        if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9  # v1.10.0 (2021-06-23)
         with:
           registry: ghcr.io
@@ -555,6 +466,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Copy image from local registry and push to public registry
+        if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
         uses: akhilerm/tag-push-action@f973043dc002b8e5a772c53e79441e6e1861e874  # v2.0.0 (2021-09-28)
         with:
           src: ${{ fromJSON(steps.image_build.outputs.metadata)['image.name'] }}
@@ -562,16 +474,8 @@ jobs:
 
       ##########################################################################
 
-      - name: Stop DHIS2 container
-        if: always()
-        continue-on-error: true
-        run: |
-          set -x
-          docker stop tomcat
-
       - name: Upload wdio logs
         if: always()
-        continue-on-error: true
         uses: actions/upload-artifact@da838ae9595ac94171fa2d4de5a2f117b3e7ac32  # v2.3.0 (2021-12-07)
         with:
           name: ${{ matrix.dhis2_version }}_wdio
@@ -583,7 +487,6 @@ jobs:
       # "There are over 10,000 files in this artifact, consider creating an archive before upload to improve the upload performance."
       - name: Archive allure results
         if: always()
-        continue-on-error: true
         run: |
           if [[ -d reports/allure-results ]] ; then
             cd reports/
@@ -592,10 +495,20 @@ jobs:
 
       - name: Upload allure results
         if: always()
-        continue-on-error: true
         uses: actions/upload-artifact@da838ae9595ac94171fa2d4de5a2f117b3e7ac32  # v2.3.0 (2021-12-07)
         with:
           name: ${{ matrix.dhis2_version }}_allure
           path: reports/allure-results.zip
           retention-days: 8
           if-no-files-found: ignore
+
+      - name: Destroy DHIS2 Compose stack
+        if: always()
+        run: |
+          set -x
+          docker compose \
+            --project-name 'docker-dhis2' \
+            --project-directory 'source' \
+            --file 'source/docker-compose.yml' \
+            --file 'source/.github/workflows/support/docker-compose.override.yml' \
+            down --volumes --remove-orphans --rmi 'all'
