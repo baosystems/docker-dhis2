@@ -1,0 +1,15 @@
+---
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/.github/workflows/support/matrix"  # Location of package manifests
+    schedule:
+      interval: "daily"
+    labels:
+      - "pip dependencies"
+  - package-ecosystem: "github-actions"
+    directory: "/"  # Workflow files stored in the default location of `.github/workflows`
+    schedule:
+      interval: "daily"
+    labels:
+      - "github actions"
