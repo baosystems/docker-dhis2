@@ -249,9 +249,6 @@ The version of DHIS2 can be set in the _.env_ file; see
 [.env.example](https://github.com/baosystems/docker-dhis2/blob/main/.env.example) for an example.
 See https://github.com/baosystems/docker-dhis2/pkgs/container/dhis2/versions for available versions.
 
-The following has been tested with [the newer v2 Compose](https://docs.docker.com/compose/cli-command/)
-and [the older v1 Compose](https://pypi.org/project/docker-compose/).
-
 ## Quick
 
 ### Start
@@ -292,13 +289,6 @@ Delete containers and data storage volumes:
 
 ```bash
 docker compose down --volumes
-```
-
-There may be some situations where named volumes are not deleted. If that occurs, this will attempt
-to delete them:
-
-```bash
-until docker volume ls -q | grep -E "^${COMPOSE_PROJECT_NAME:-$(basename "$(pwd)")}_" | xargs --no-run-if-empty docker volume rm; do sleep 3; done
 ```
 
 ## Passwords
@@ -371,9 +361,6 @@ docker compose stop dhis2
 # Run db-export.sh without the default entrypoint and compress the exported database with gzip
 docker compose run --rm --entrypoint db-export.sh dhis2_init | gzip > output.sql.gz
 
-# Alternatively, you can skip compression but the file will be significantly larger
-#docker compose run --rm --entrypoint db-export.sh dhis2_init > output.sql
-
 # Start Tomcat
 docker compose start dhis2
 ```
@@ -386,18 +373,18 @@ Because two versions of DHIS2 should not be running at the same time, stop the d
 first.
 
 ```bash
-# Let's say you started with 2.36.5:
+# Let's say you started with 2.36.6:
 
 cat >> .env <<'EOF'
-DHIS2_TAG=2.36.5
+DHIS2_TAG=2.36.6
 EOF
 
 docker compose up --detach
 
-# Later, upgrade to 2.37.1:
+# Later, upgrade to 2.37.2:
 
 cat >> .env <<'EOF'
-DHIS2_TAG=2.37.1
+DHIS2_TAG=2.37.2
 EOF
 
 docker compose stop dhis2
