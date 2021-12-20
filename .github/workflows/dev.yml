@@ -436,7 +436,7 @@ jobs:
 
       - name: Login to GitHub Container Registry
         if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9  # v1.10.0 (2021-06-23)
+        uses: docker/login-action@42d299face0c5c43a0487c477f595ac9cf22f1a7  # v1.12.0 (2021-12-20)
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
