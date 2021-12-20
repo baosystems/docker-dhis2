@@ -1,6 +1,12 @@
 ---
 version: 2
 updates:
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    labels:
+      - "Dockerfile dependencies"
   - package-ecosystem: "pip"
     directory: "/.github/workflows/support/matrix"  # Location of package manifests
     schedule:
