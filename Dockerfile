@@ -49,7 +49,7 @@ RUN set -eux; \
 # remco for building template files and controlling Tomcat - https://github.com/HeavyHorst/remco
 # Using same verion of golang as shown in the output of `remco -version` from the released 0.12.1 binary.
 # The 0.12.1 git tag has a typo in the Makefile.
-FROM docker.io/library/golang:1.15.2-buster as remco-builder
+FROM docker.io/library/golang:1.17.5-buster as remco-builder
 ARG REMCO_VERSION=0.12.1
 WORKDIR /work
 RUN set -eux; \
