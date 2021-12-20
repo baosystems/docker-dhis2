@@ -453,7 +453,7 @@ jobs:
 
       - name: Upload wdio logs
         if: always()
-        uses: actions/upload-artifact@da838ae9595ac94171fa2d4de5a2f117b3e7ac32  # v2.3.0 (2021-12-07)
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2  # v2.3.1 (2021-12-15)
         with:
           name: ${{ matrix.dhis2_version }}_wdio
           path: output/
@@ -472,7 +472,7 @@ jobs:
 
       - name: Upload allure results
         if: always()
-        uses: actions/upload-artifact@da838ae9595ac94171fa2d4de5a2f117b3e7ac32  # v2.3.0 (2021-12-07)
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2  # v2.3.1 (2021-12-15)
         with:
           name: ${{ matrix.dhis2_version }}_allure
           path: reports/allure-results.zip
