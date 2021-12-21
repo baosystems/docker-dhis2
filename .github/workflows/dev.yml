@@ -90,42 +90,6 @@ jobs:
 
     steps:
 
-      - name: Set up QEMU for amd64 and arm64
-        uses: docker/setup-qemu-action@27d0a4f181a40b142cce983c5393082c365d1480
-        with:
-          platforms: linux/amd64,linux/arm64
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@94ab11c41e45d028884a99163086648e898eed25
-        with:
-          driver-opts: network=host  # Required for buildx container to push to local registry
-
-      - name: Install NodeJS
-        uses: actions/setup-node@04c56d2f954f1e4c69436aa54cfef261a018f458
-        with:
-          node-version: '14'  # NOTE: A dependency in e2e-tests will not run in v16 or higher
-          check-latest: true
-
-      - name: Install Java  # For Selenium
-        uses: actions/setup-java@f0bb91606209742fe3ea40199be2f3ef195ecabf
-        with:
-          distribution: 'zulu'  # OpenJDK
-          java-version: '11'
-
-      - name: Install latest google-chrome-stable
-        run: |
-          set -x
-          echo "deb [arch=$(dpkg --print-architecture)] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list >/dev/null
-          curl --silent  https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/google.gpg >/dev/null
-          sudo apt-get update
-          if ! dpkg-query -W google-chrome-stable ; then
-            sudo apt-get install -y --no-install-recommends google-chrome-stable
-          else
-            sudo apt-get install -y --only-upgrade google-chrome-stable
-          fi
-
-      ##########################################################################
-
       - name: Checkout this repository to source/ subdirectory
         uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
         with:
@@ -230,6 +194,16 @@ jobs:
             type=raw,value=${{ matrix.dhis2_version }}
             type=raw,value=${{ steps.versions_helper.outputs.dhis2_major }}-dev
             type=raw,value=dev,enable=${{ matrix.latest_overall }}
+
+      - name: Set up QEMU for amd64 and arm64
+        uses: docker/setup-qemu-action@27d0a4f181a40b142cce983c5393082c365d1480
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@94ab11c41e45d028884a99163086648e898eed25
+        with:
+          driver-opts: network=host  # Required for buildx container to push to local registry
 
       - name: Multi-platform build and push to local registry
         id: image_build
@@ -374,6 +348,18 @@ jobs:
           fi
 
       ##########################################################################
+
+      - name: Install NodeJS
+        uses: actions/setup-node@04c56d2f954f1e4c69436aa54cfef261a018f458
+        with:
+          node-version: '14'  # NOTE: A dependency in e2e-tests will not run in v16 or higher
+          check-latest: true
+
+      - name: Install Java  # For Selenium
+        uses: actions/setup-java@f0bb91606209742fe3ea40199be2f3ef195ecabf
+        with:
+          distribution: 'adopt'
+          java-version: '11'
 
       - name: Checkout dhis/e2e-tests to current directory
         uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
