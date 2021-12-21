@@ -14,7 +14,7 @@ ARG BASE_IMAGE="docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye"
 
 # DHIS2 from provided dhis.war
 # NOTE: Using rust:bullseye instead of debian:bullseye for gpg, unzip, wget preinstalled
-FROM docker.io/library/rust:1.56.1-bullseye as dhis2-builder
+FROM docker.io/library/rust:1.57.0-bullseye as dhis2-builder
 WORKDIR /work
 COPY --chown=root:root ./dhis.war /work/dhis.war
 RUN set -eux; \
@@ -29,7 +29,7 @@ RUN set -eux; \
 
 # gosu for easy step-down from root - https://github.com/tianon/gosu/releases
 # NOTE: Using rust:bullseye instead of debian:bullseye for gpg, unzip, wget preinstalled
-FROM docker.io/library/rust:1.56.1-bullseye as gosu-builder
+FROM docker.io/library/rust:1.57.0-bullseye as gosu-builder
 ARG GOSU_VERSION=1.14
 WORKDIR /work
 RUN set -eux; \
@@ -82,7 +82,7 @@ RUN set -eux; \
 
 # wait pauses until remote hosts are available - https://github.com/ufoscout/docker-compose-wait
 # Tests are excluded due to the time taken running in arm64 emulation; see https://github.com/ufoscout/docker-compose-wait/issues/54
-FROM docker.io/library/rust:1.56.1-bullseye as wait-builder
+FROM docker.io/library/rust:1.57.0-bullseye as wait-builder
 ARG WAIT_VERSION=2.9.0
 WORKDIR /work
 RUN set -eux; \
