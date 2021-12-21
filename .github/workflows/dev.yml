@@ -91,17 +91,17 @@ jobs:
     steps:
 
       - name: Set up QEMU for amd64 and arm64
-        uses: docker/setup-qemu-action@27d0a4f181a40b142cce983c5393082c365d1480  # v1.2.0 (2021-05-26)
+        uses: docker/setup-qemu-action@27d0a4f181a40b142cce983c5393082c365d1480
         with:
           platforms: linux/amd64,linux/arm64
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@94ab11c41e45d028884a99163086648e898eed25  # v1.6.0 (2021-09-03)
+        uses: docker/setup-buildx-action@94ab11c41e45d028884a99163086648e898eed25
         with:
           driver-opts: network=host  # Required for buildx container to push to local registry
 
       - name: Install NodeJS
-        uses: actions/setup-node@04c56d2f954f1e4c69436aa54cfef261a018f458  # v2.5.0 (2021-11-29)
+        uses: actions/setup-node@04c56d2f954f1e4c69436aa54cfef261a018f458
         with:
           node-version: '14'  # NOTE: A dependency in e2e-tests will not run in v16 or higher
           check-latest: true
@@ -127,7 +127,7 @@ jobs:
       ##########################################################################
 
       - name: Checkout this repository to source/ subdirectory
-        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579  # v2.4.0 (2021-11-02)
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
         with:
           path: source
 
@@ -208,7 +208,7 @@ jobs:
 
       - name: Container image metadata
         id: image_meta
-        uses: docker/metadata-action@e5622373a38e60fb6d795a4421e56882f2d7a681  # v3.6.2 (2021-12-06)
+        uses: docker/metadata-action@e5622373a38e60fb6d795a4421e56882f2d7a681
         with:
           images: ghcr.io/${{ github.repository_owner }}/dhis2
           labels: |
@@ -233,7 +233,7 @@ jobs:
 
       - name: Multi-platform build and push to local registry
         id: image_build
-        uses: docker/build-push-action@a66e35b9cbcf4ad0ea91ffcaf7bbad63ad9e0229  # v2.7.0 (2021-08-20)
+        uses: docker/build-push-action@a66e35b9cbcf4ad0ea91ffcaf7bbad63ad9e0229
         with:
           context: source  # The default is to refer to the github.com sha URL, but we need the context as a directory for the downloaded dhis.war
           file: source/Dockerfile  # NOTE: A dhis.war file must be in the same directory as this file
@@ -376,7 +376,7 @@ jobs:
       ##########################################################################
 
       - name: Checkout dhis/e2e-tests to current directory
-        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579  # v2.4.0 (2021-11-02)
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
         with:
           repository: dhis2/e2e-tests
           ref: ${{ steps.versions_helper.outputs.e2e_remote_ref }}  # "master" for dev, "${{ matrix.dhis2_version }}-rc" for releases; see "versions_helper" for logic
@@ -436,7 +436,7 @@ jobs:
 
       - name: Login to GitHub Container Registry
         if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
-        uses: docker/login-action@42d299face0c5c43a0487c477f595ac9cf22f1a7  # v1.12.0 (2021-12-20)
+        uses: docker/login-action@42d299face0c5c43a0487c477f595ac9cf22f1a7
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -444,7 +444,7 @@ jobs:
 
       - name: Copy image from local registry and push to public registry
         if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
-        uses: akhilerm/tag-push-action@f973043dc002b8e5a772c53e79441e6e1861e874  # v2.0.0 (2021-09-28)
+        uses: akhilerm/tag-push-action@f973043dc002b8e5a772c53e79441e6e1861e874
         with:
           src: ${{ fromJSON(steps.image_build.outputs.metadata)['image.name'] }}
           dst: ${{ steps.image_meta.outputs.tags }}
@@ -453,7 +453,7 @@ jobs:
 
       - name: Upload wdio logs
         if: always()
-        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2  # v2.3.1 (2021-12-15)
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2
         with:
           name: ${{ matrix.dhis2_version }}_wdio
           path: output/
@@ -472,7 +472,7 @@ jobs:
 
       - name: Upload allure results
         if: always()
-        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2  # v2.3.1 (2021-12-15)
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2
         with:
           name: ${{ matrix.dhis2_version }}_allure
           path: reports/allure-results.zip
