@@ -40,8 +40,14 @@ jobs:
         run: |
           set -x
           echo "::set-output name=version::$( source .env.example && echo "$DHIS2_TAG" )"
+      - name: Query version of Tomcat
+        id: tomcat
+        run: |
+          set -x
+          echo "::set-output name=version::$( grep --only-matching --extended-regexp 'tomcat[0-9]{1,2}\.[0-9.]+' .env.example | sed 's/^tomcat//' )"
     outputs:
       dhis2: ${{ steps.dhis2.outputs.version }}
+      tomcat: ${{ steps.tomcat.outputs.version }}
 
   image_latest:
     name: Query versions in the latest ghcr.io/baosystems/dhis2 image
@@ -53,8 +59,14 @@ jobs:
         run: |
           set -x
           echo "::set-output name=version::$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' /opt/dhis2/build.properties )"
+      - name: Query version of Tomcat
+        id: tomcat
+        run: |
+          set -x
+          echo "::set-output name=version::$TOMCAT_VERSION"
     outputs:
       dhis2: ${{ steps.dhis2.outputs.version }}
+      tomcat: ${{ steps.tomcat.outputs.version }}
 
   notify:
     name: Notify of dependencies that need to be updated
@@ -78,3 +90,10 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
           payload: "{\"level\": \":warning: WARNING\", \"message\": \"DHIS2_TAG in .env.example (${{ needs.env_example.outputs.dhis2 }}) does not match version in ghcr.io/baosystems/dhis2:latest (${{ needs.image_latest.outputs.dhis2 }})\"}"
+      - name: Send message to Slack about Tomcat version in .env.example
+        if: ${{ needs.compose_latest.outputs.tomcat != needs.image_latest.outputs.tomcat }}
+        uses: slackapi/slack-github-action@410ae57cff5c6b682b106440be0e6c7eb8c98c9d
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          payload: "{\"level\": \":warning: WARNING\", \"message\": \"Tomcat version in .env.example (${{ needs.env_example.outputs.tomcat }}) does not match version in ghcr.io/baosystems/dhis2:latest (${{ needs.image_latest.outputs.tomcat }})\"}"
