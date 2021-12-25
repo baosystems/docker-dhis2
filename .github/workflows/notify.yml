@@ -70,12 +70,16 @@ jobs:
 
   notify:
     name: Notify of dependencies that need to be updated
+
     needs:
       - file_compose
       - file_envexample
       - image_latest
+
     runs-on: ubuntu-20.04
+
     steps:
+
       - name: Send message to Slack about DHIS2_TAG in docker-compose.yml
         if: ${{ needs.file_compose.outputs.dhis2 != needs.image_latest.outputs.dhis2 }}
         uses: slackapi/slack-github-action@410ae57cff5c6b682b106440be0e6c7eb8c98c9d
@@ -83,6 +87,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
           payload: "{\"level\": \":warning: WARNING\", \"message\": \"DHIS2_TAG in docker-compose.yml (${{ needs.file_compose.outputs.dhis2 }}) does not match version in ghcr.io/baosystems/dhis2:latest (${{ needs.image_latest.outputs.dhis2 }})\"}"
+
       - name: Send message to Slack about DHIS2_TAG in .env.example
         if: ${{ needs.file_envexample.outputs.dhis2 != needs.image_latest.outputs.dhis2 }}
         uses: slackapi/slack-github-action@410ae57cff5c6b682b106440be0e6c7eb8c98c9d
@@ -90,6 +95,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
           payload: "{\"level\": \":warning: WARNING\", \"message\": \"DHIS2_TAG in .env.example (${{ needs.file_envexample.outputs.dhis2 }}) does not match version in ghcr.io/baosystems/dhis2:latest (${{ needs.image_latest.outputs.dhis2 }})\"}"
+
       - name: Send message to Slack about Tomcat version in .env.example
         if: ${{ needs.file_envexample.outputs.tomcat != needs.image_latest.outputs.tomcat }}
         uses: slackapi/slack-github-action@410ae57cff5c6b682b106440be0e6c7eb8c98c9d
