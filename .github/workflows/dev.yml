@@ -2,6 +2,13 @@ name: dev images
 
 on:
   push:
+    paths-ignore:
+      - '.env.example'
+      - '.github/dependabot.yml'
+      - '.github/workflows/notify.yml'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'README.md'
   pull_request:
     branches:
       - main
