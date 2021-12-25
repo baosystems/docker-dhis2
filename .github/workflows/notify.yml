@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '.env.example'
+      - '.github/workflows/notify.yml'
+      - 'docker-compose.yml'
+      - 'Dockerfile'
   schedule:
     - cron: '3 5 * * *'
 
