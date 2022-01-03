@@ -57,7 +57,7 @@ jobs:
         id: tomcat_query
         run: |
           set -x
-          echo "::set-output name=java_major::$( sed -r -e 's/^([0-9]+)(\.|u).*$/\1/' <<< "$JAVA_VERSION" )"
+          echo "::set-output name=java_major::$( sed --regexp-extended --expression='s/^([0-9]+)(\.|u).*$/\1/' <<< "$JAVA_VERSION" )"
           echo "::set-output name=java_version::$JAVA_VERSION"
           echo "::set-output name=tomcat_major::$TOMCAT_MAJOR"
           echo "::set-output name=tomcat_version::$TOMCAT_VERSION"
@@ -262,9 +262,9 @@ jobs:
           set -x
 
           sed \
-            -r \
-            -e "/^\s+image:/ s,ghcr\.io/baosystems/dhis2[^\"]+,${{ fromJSON(steps.image_build.outputs.metadata)['image.name'] }},g" \
-            -i \
+            --regexp-extended \
+            --expression="/^\s+image:/ s,ghcr\.io/baosystems/dhis2[^\"]+,${{ fromJSON(steps.image_build.outputs.metadata)['image.name'] }},g" \
+            --in-place \
             source/docker-compose.yml
 
       - name: Pull Compose stack images
@@ -414,7 +414,7 @@ jobs:
           matrix.dhis2_version == '2.36.2'
         run: |
           set -x
-          git show 2e090dd85936d8e95b5e5ed43ed1ceea7094888a | sed -r -e 's,([ab]/)(step_definitions/),\1tests/\2,g' | git apply --reverse
+          git show 2e090dd85936d8e95b5e5ed43ed1ceea7094888a | sed --regexp-extended --expression='s,([ab]/)(step_definitions/),\1tests/\2,g' | git apply --reverse
 
       - name: Add headless Chrome options to wdio
         run: |
