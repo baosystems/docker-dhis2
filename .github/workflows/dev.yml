@@ -148,12 +148,12 @@ jobs:
           if [[ "${{ matrix.dhis2_version }}" == "dev" ]]; then
             E2E_REMOTE_REF='master'
           elif [[ "${{ matrix.dhis2_version }}" =~ ^2\.[0-9]{2}-dev$ ]]; then
-            # For a version like "2.37-dev", use "2.37rc". If that doesn't exist, choose the latest as it is likely too new
-            if git ls-remote --heads --refs --sort='version:refname' https://github.com/dhis2/e2e-tests.git | awk '/[[:blank:]]+refs\/heads\/[0-9.]+rc$/ {gsub("refs/heads/",""); print $NF}' | grep "^${DHIS2_MAJOR}rc$"
+            # For a version like "2.37-dev", use "v37". If that doesn't exist, choose the latest as it is likely too new
+            if git ls-remote --heads --refs --sort='version:refname' https://github.com/dhis2/e2e-tests.git | awk '/[[:blank:]]+refs\/heads\/v[0-9]{2}$/ {gsub("refs/heads/",""); print $NF}' | grep "^v${DHIS2_MAJOR#2.}$"
             then
-              E2E_REMOTE_REF="${DHIS2_MAJOR}rc"
+              E2E_REMOTE_REF="v${DHIS2_MAJOR#2.}"
             else
-              E2E_REMOTE_REF="$( git ls-remote --heads --refs --sort='version:refname' https://github.com/dhis2/e2e-tests.git | awk '/[[:blank:]]+refs\/heads\/[0-9.]+rc$/ {gsub("refs/heads/",""); print $NF}' | sort --version-sort | tail -1 )"
+              E2E_REMOTE_REF="$( git ls-remote --heads --refs --sort='version:refname' https://github.com/dhis2/e2e-tests.git | awk '/[[:blank:]]+refs\/heads\/v[0-9]{2}$/ {gsub("refs/heads/",""); print $NF}' | sort --version-sort | tail -1 )"
             fi
           else
             # The tag for a version may not exist in github.com/dhis2/e2e-tests, such as tag "2.37.0-rc"
