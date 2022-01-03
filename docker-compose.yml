@@ -34,8 +34,8 @@ services:
   database:
     ## We will revert to the official image when ARM64 build is provided
     ## See https://github.com/postgis/docker-postgis/issues/216
-    # image: "docker.io/postgis/postgis:${POSTGIS_TAG:-14-3.1}"
-    image: "ghcr.io/baosystems/postgis:${POSTGIS_TAG:-14-3.1}"
+    # image: "docker.io/postgis/postgis:${POSTGIS_TAG:-latest}"
+    image: "ghcr.io/baosystems/postgis:${POSTGIS_TAG:-latest}"
     depends_on:
       pass_init:
         condition: service_completed_successfully
