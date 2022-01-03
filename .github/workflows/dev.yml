@@ -330,7 +330,7 @@ jobs:
               --request POST \
               --location \
               'http://localhost:8080/api/resourceTables/analytics' \
-            | jq -r '.response.relativeNotifierEndpoint'
+            | jq --raw-output '.response.relativeNotifierEndpoint'
           )"
           set +x
 
@@ -339,9 +339,9 @@ jobs:
           set +o pipefail
 
           # Print status messages as they change
-          until [[ "$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq -r "sort_by(.time, .completed)|.[-1].completed" )" == "true" ]]; do
+          until [[ "$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq --raw-output "sort_by(.time, .completed)|.[-1].completed" )" == "true" ]]; do
             STATUS_CURRENT="$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq "sort_by(.time, .completed)|.[-1]" )"
-            LINE_CURRENT="[$( jq -r ".level" <<<"$STATUS_CURRENT" )] $( jq -r ".time" <<<"$STATUS_CURRENT" ) $( jq -r ".message" <<<"$STATUS_CURRENT" ) (Completed: $( jq -r ".completed" <<<"$STATUS_CURRENT" ))"
+            LINE_CURRENT="[$( jq --raw-output ".level" <<<"$STATUS_CURRENT" )] $( jq --raw-output ".time" <<<"$STATUS_CURRENT" ) $( jq --raw-output ".message" <<<"$STATUS_CURRENT" ) (Completed: $( jq --raw-output ".completed" <<<"$STATUS_CURRENT" ))"
             if [[ "${LINE_PREV:-}" != "$LINE_CURRENT" ]]; then
               echo "$LINE_CURRENT"
             fi
@@ -351,7 +351,7 @@ jobs:
 
           # Print final status message
           STATUS_LATEST="$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq "sort_by(.time, .completed)|.[-1]" )"
-          LINE_LATEST="[$( jq -r ".level" <<<"$STATUS_LATEST" )] $( jq -r ".time" <<<"$STATUS_LATEST" ) $( jq -r ".message" <<<"$STATUS_LATEST" ) (Completed: $( jq -r ".completed" <<<"$STATUS_LATEST" ))"
+          LINE_LATEST="[$( jq --raw-output ".level" <<<"$STATUS_LATEST" )] $( jq --raw-output ".time" <<<"$STATUS_LATEST" ) $( jq --raw-output ".message" <<<"$STATUS_LATEST" ) (Completed: $( jq --raw-output ".completed" <<<"$STATUS_LATEST" ))"
           if [[ "${LINE_PREV:-}" != "$LINE_LATEST" ]]; then
             echo "$LINE_LATEST"
           fi
