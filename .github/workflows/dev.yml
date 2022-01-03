@@ -390,12 +390,6 @@ jobs:
           set -x
           git show 2e090dd85936d8e95b5e5ed43ed1ceea7094888a | sed -r -e 's,([ab]/)(step_definitions/),\1tests/\2,g' | git apply --reverse
 
-      - name: Fix tests for 2.38
-        if: steps.versions_helper.outputs.dhis2_major == '2.38'
-        run: |
-          set -x
-          sed -r -e 's/(#)(root)/\1dhis2-app-\2/g' -i ./tests/step_definitions/dhis2/capture/capture.js
-
       - name: Add headless Chrome options to wdio
         run: |
           set -x
