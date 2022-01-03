@@ -334,6 +334,10 @@ jobs:
           )"
           set +x
 
+          # Disable exiting on failure while parsing output
+          set +e
+          set +o pipefail
+
           # Print status messages as they change
           until [[ "$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq -r "sort_by(.time, .completed)|.[-1].completed" )" == "true" ]]; do
             STATUS_CURRENT="$( curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent "http://localhost:8080${STATUS_URI}" | jq "sort_by(.time, .completed)|.[-1]" )"
