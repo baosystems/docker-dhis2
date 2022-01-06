@@ -396,6 +396,18 @@ jobs:
           distribution: 'adopt'
           java-version: '11'
 
+      - name: Install latest google-chrome-stable
+        run: |
+          set -x
+          echo "deb [arch=$(dpkg --print-architecture)] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list >/dev/null
+          curl --silent  https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/google.gpg >/dev/null
+          sudo apt-get update
+          if ! dpkg-query -W google-chrome-stable ; then
+            sudo apt-get install -y --no-install-recommends google-chrome-stable
+          else
+            sudo apt-get install -y --only-upgrade google-chrome-stable
+          fi
+
       - name: Checkout dhis/e2e-tests to current directory
         uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
         with:
