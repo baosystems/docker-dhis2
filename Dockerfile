@@ -159,11 +159,12 @@ COPY ./dhis2-init.d/* /usr/local/share/dhis2-init.d/
 # Add image helper scripts
 COPY ./helpers/* /usr/local/bin/
 
-# remco configurations and templates, and initialize log file for the tomcat user
+# remco configurations and templates, and initialize empty log file for the tomcat user
 COPY ./remco/config.toml /etc/remco/config
 COPY ./remco/onetime.toml /etc/remco/onetime.toml
 COPY ./remco/templates/* /etc/remco/templates/
-RUN install -v -o tomcat -g tomcat -m 0644 -T /dev/null /var/log/remco.log
+COPY --chmod=644 --chown=tomcat:tomcat <<EOF /var/log/remco.log
+EOF
 
 # Add our own entrypoint for initialization
 COPY docker-entrypoint.sh /usr/local/bin/
