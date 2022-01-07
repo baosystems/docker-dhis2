@@ -1,13 +1,9 @@
 # syntax=docker/dockerfile:1.3-labs
 
-#
-# Note: This is a multi-stage build
-#
-
 # Setting "ARG"s before the first "FROM" allows for the values to be used in any "FROM" value below.
 # ARG values can be overridden with command line arguments.
-
-# Default if not provided at build time
+#
+# Default for dhis2 image if not provided at build time
 ARG BASE_IMAGE="docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye"
 
 
