@@ -1,6 +1,10 @@
 # syntax=docker/dockerfile:1.3-labs
-# Setting the syntax to 1.2 or higher is required for build mounts.
-# Setting the syntax to 1.3-labs is required for here-documents.
+# Using syntax 1.3-labs is required for here-documents.
+# See: https://github.com/moby/buildkit/blob/87e1fa7/frontend/dockerfile/docs/syntax.md
+
+
+################################################################################
+
 
 # Setting "ARG"s before the first "FROM" allows for the values to be used in any "FROM" value below.
 # ARG values can be overridden with command line arguments.
@@ -13,13 +17,13 @@ ARG BASE_IMAGE="docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye"
 
 
 # gosu for easy step-down from root - https://github.com/tianon/gosu/releases
-# NOTE: Using rust:bullseye instead of debian:bullseye for gpg, unzip, wget preinstalled
+# NOTE: Using rust:bullseye (same as wait-builder stage) instead of debian:bullseye to have gpg, unzip, and wget preinstalled.
 FROM docker.io/library/rust:1.57.0-bullseye as gosu-builder
 ARG GOSU_VERSION=1.14
 WORKDIR /work
 RUN <<EOF
   set -eux
-  dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"
+  dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
   wget --quiet -O gosu "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}"
   wget --quiet -O gosu.asc "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}.asc"
   gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4
@@ -41,7 +45,7 @@ ARG REMCO_VERSION=0.12.1
 WORKDIR /work
 RUN <<EOF
   set -eux
-  dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"
+  dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
   if [ "$dpkgArch" = "amd64" ]; then
     apt-get update
     apt-get install -y --no-install-recommends unzip
@@ -75,7 +79,7 @@ ARG WAIT_VERSION=2.9.0
 WORKDIR /work
 RUN <<EOF
   set -eux
-  dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"
+  dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
   if [ "$dpkgArch" = "amd64" ]; then
     wget "https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait"
     chmod --changes 0755 wait
@@ -97,7 +101,7 @@ EOF
 ################################################################################
 
 
-# Tomcat with OpenJDK - https://hub.docker.com/_/tomcat
+# Tomcat with OpenJDK - https://hub.docker.com/_/tomcat (see "ARG BASE_IMAGE" above)
 FROM "$BASE_IMAGE" as dhis2
 
 # Install dependencies for dhis2-init.sh tasks, docker-entrypoint.sh, and general debugging
@@ -159,24 +163,22 @@ COPY ./dhis2-init.d/* /usr/local/share/dhis2-init.d/
 # Add image helper scripts
 COPY ./helpers/* /usr/local/bin/
 
-# remco configurations and templates, and initialize empty log file for the tomcat user
+# remco configurations and templates
 COPY ./remco/config.toml /etc/remco/config
 COPY ./remco/onetime.toml /etc/remco/onetime.toml
 COPY ./remco/templates/* /etc/remco/templates/
+# initialize empty remco log file for the tomcat user
 COPY --chmod=644 --chown=tomcat:tomcat <<EOF /var/log/remco.log
 EOF
+
+# Mitigation for CVE-2021-44228 "Log4Shell"
+ENV LOG4J_FORMAT_MSG_NO_LOOKUPS=true
 
 # Add our own entrypoint for initialization
 COPY docker-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["docker-entrypoint.sh"]
 
-# Default Tomcat listener (value is copied from the FROM image for verbosity)
-EXPOSE 8080
-
-# Mitigation for CVE-2021-44228 "Log4Shell"
-ENV LOG4J_FORMAT_MSG_NO_LOOKUPS=true
-
-# Value is copied from the FROM image. If not specified, the CMD in this image would be "null"
+# Same value is copied from the FROM image. If not specified, the CMD in this image would be "null"
 CMD ["catalina.sh", "run"]
 
 # Extract the contents of a dhis.war file to webapps/ROOT/, and its build.properties to /opt/dhis2/
