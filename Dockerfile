@@ -21,7 +21,8 @@ FROM docker.io/library/rust:1.57.0-bullseye as gosu-builder
 ARG GOSU_VERSION=1.14
 WORKDIR /work
 RUN <<EOF
-set -eux
+#!/usr/bin/env bash
+set -euxo pipefail
 dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
 wget --no-verbose --output-document=gosu "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}"
 wget --no-verbose --output-document=gosu.asc "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}.asc"
@@ -43,7 +44,8 @@ FROM docker.io/library/golang:1.15.2-buster as remco-builder
 ARG REMCO_VERSION=0.12.1
 WORKDIR /work
 RUN <<EOF
-set -eux
+#!/usr/bin/env bash
+set -euxo pipefail
 dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
 if [ "$dpkgArch" = "amd64" ]; then
   apt-get update
@@ -77,7 +79,8 @@ FROM docker.io/library/rust:1.57.0-bullseye as wait-builder
 ARG WAIT_VERSION=2.9.0
 WORKDIR /work
 RUN <<EOF
-set -eux
+#!/usr/bin/env bash
+set -euxo pipefail
 dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
 if [ "$dpkgArch" = "amd64" ]; then
   wget --no-verbose "https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait"
@@ -105,7 +108,8 @@ FROM "$BASE_IMAGE" as dhis2
 
 # Install dependencies for dhis2-init.sh tasks, docker-entrypoint.sh, and general debugging
 RUN <<EOF
-set -eux
+#!/usr/bin/env bash
+set -euxo pipefail
 apt-get update
 apt-get install --yes --no-install-recommends bind9-dnsutils curl gpg netcat-traditional unzip wget zip
 echo "deb http://apt.postgresql.org/pub/repos/apt $( awk -F'=' '/^VERSION_CODENAME/ {print $NF}' /etc/os-release )-pgdg main" > /etc/apt/sources.list.d/pgdg.list
@@ -122,7 +126,8 @@ COPY --chmod=755 --chown=root:root --from=wait-builder /work/wait /usr/local/bin
 
 # Create tomcat system user, disable crons, and clean up
 RUN <<EOF
-set -eux
+#!/usr/bin/env bash
+set -euxo pipefail
 adduser --system --disabled-password --group tomcat
 echo 'tomcat' >> /etc/cron.deny
 echo 'tomcat' >> /etc/at.deny
@@ -131,7 +136,8 @@ EOF
 
 # Set Tomcat permissions for tomcat user and group and clean up
 RUN <<EOF
-set -eux
+#!/usr/bin/env bash
+set -euxo pipefail
 for TOMCAT_DIR in 'conf/Catalina' 'logs' 'temp' 'work'; do
   mkdir --verbose --parents "/usr/local/tomcat/$TOMCAT_DIR"
   chmod --changes 0750 "/usr/local/tomcat/$TOMCAT_DIR"
@@ -150,7 +156,8 @@ COPY --chmod=644 --chown=root:root ./tomcat/server.xml /usr/local/tomcat/conf/
 
 # Create DHIS2_HOME and set ownership for tomcat user and group (DHIS2 throws an error if /opt/dhis2 is not writable)
 RUN <<EOF
-set -eux
+#!/usr/bin/env bash
+set -euxo pipefail
 mkdir --verbose --parents /opt/dhis2
 chown --changes tomcat:tomcat /opt/dhis2
 EOF
@@ -166,7 +173,7 @@ COPY --chmod=755 --chown=root:root ./helpers/* /usr/local/bin/
 COPY --chmod=644 --chown=root:root ./remco/config.toml /etc/remco/config
 COPY --chmod=644 --chown=root:root ./remco/onetime.toml /etc/remco/onetime.toml
 COPY --chmod=644 --chown=root:root ./remco/templates/* /etc/remco/templates/
-# Initialize empty remco log file for the tomcat user
+# Initialize empty remco log file for the tomcat user (the "EOF" on the next line is not a typo)
 COPY --chmod=644 --chown=tomcat:tomcat <<EOF /var/log/remco.log
 EOF
 
