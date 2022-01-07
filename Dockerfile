@@ -107,7 +107,7 @@ FROM "$BASE_IMAGE" as dhis2
 RUN <<EOF
 set -eux
 apt-get update
-apt-get install --yes --no-install-recommends bind9-dnsutils curl gpg netcat-traditional unzip wget
+apt-get install --yes --no-install-recommends bind9-dnsutils curl gpg netcat-traditional unzip wget zip
 echo "deb http://apt.postgresql.org/pub/repos/apt $( awk -F'=' '/^VERSION_CODENAME/ {print $NF}' /etc/os-release )-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 curl --silent https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg
 apt-get update
@@ -170,9 +170,6 @@ COPY --chmod=644 --chown=root:root ./remco/templates/* /etc/remco/templates/
 COPY --chmod=644 --chown=tomcat:tomcat <<EOF /var/log/remco.log
 EOF
 
-# Mitigation for CVE-2021-44228 "Log4Shell"
-ENV LOG4J_FORMAT_MSG_NO_LOOKUPS=true
-
 # Add our own entrypoint for initialization
 COPY --chmod=755 --chown=root:root docker-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["docker-entrypoint.sh"]
@@ -180,10 +177,25 @@ ENTRYPOINT ["docker-entrypoint.sh"]
 # Same value is copied from the FROM image. If not specified, the CMD in this image would be "null"
 CMD ["catalina.sh", "run"]
 
-# Extract the contents of dhis.war to webapps/ROOT/, and its build.properties to /opt/dhis2/
+# Extract the dhis.war file alongside this Dockerfile, and mitigate Log4Shell on old versions
 RUN --mount=type=bind,source=dhis.war,target=dhis.war <<EOF
-set -eux
-umask 0022
+#!/usr/bin/env bash
+set -euxo pipefail
+# Extract the contents of dhis.war to webapps/ROOT/
 unzip -qq dhis.war -d /usr/local/tomcat/webapps/ROOT
+# Extract build.properties to /opt/dhis2/
 find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; | tee /opt/dhis2/build.properties
+# Remove vulnerable JndiLookup.class to mitigate Log4Shell
+shopt -s globstar nullglob  # bash 4 required (SC2044)
+for JAR in /usr/local/tomcat/webapps/**/log4j-core-2.*.jar ; do
+  JAR_POM_PROPERTIES="$( unzip -p "$JAR" 'META-INF/maven/org.apache.logging.log4j/log4j-core/pom.properties' )"
+  JAR_LOG4J_VERSION="$( awk -F'=' '/^version=/ {print $NF}' <<<"$JAR_POM_PROPERTIES" )"
+  if [ "2.16.0" != "$( echo -e "2.16.0\n$JAR_LOG4J_VERSION" | sort --version-sort | head --lines='1' )" ]; then
+    set +o pipefail
+    if unzip -l "$JAR" | grep --quiet 'JndiLookup.class' ; then
+      zip --delete "$JAR" 'org/apache/logging/log4j/core/lookup/JndiLookup.class' | grep --invert-match 'zip warning'
+    fi
+    set -o pipefail
+  fi
+done
 EOF
