@@ -138,8 +138,7 @@ RUN <<EOF
 EOF
 
 # Tomcat Lifecycle Listener to shutdown catalina on startup failures (https://github.com/ascheman/tomcat-lifecyclelistener)
-ADD https://repo.maven.apache.org/maven2/net/aschemann/tomcat/tomcat-lifecyclelistener/1.0.1/tomcat-lifecyclelistener-1.0.1.jar /usr/local/tomcat/lib/tomcat-lifecyclelistener.jar
-RUN chmod --changes 0644 /usr/local/tomcat/lib/tomcat-lifecyclelistener.jar
+ADD --chmod=644 https://repo.maven.apache.org/maven2/net/aschemann/tomcat/tomcat-lifecyclelistener/1.0.1/tomcat-lifecyclelistener-1.0.1.jar /usr/local/tomcat/lib/tomcat-lifecyclelistener.jar
 COPY ./tomcat/context.xml /usr/local/tomcat/conf/
 COPY ./tomcat/setenv.sh /usr/local/tomcat/bin/
 
