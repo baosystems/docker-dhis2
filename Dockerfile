@@ -10,23 +10,6 @@ ARG BASE_IMAGE="docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye"
 ################################################################################
 
 
-# DHIS2 from provided dhis.war
-# NOTE: Using rust:bullseye instead of debian:bullseye for gpg, unzip, wget preinstalled
-FROM docker.io/library/rust:1.57.0-bullseye as dhis2-builder
-WORKDIR /work
-COPY --chown=root:root ./dhis.war /work/dhis.war
-RUN <<EOF
-set -eux
-umask 0022
-unzip -qq dhis.war -d ROOT
-rm -v -f dhis.war
-find ROOT/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; | tee build.properties
-EOF
-
-
-################################################################################
-
-
 # gosu for easy step-down from root - https://github.com/tianon/gosu/releases
 # NOTE: Using rust:bullseye instead of debian:bullseye for gpg, unzip, wget preinstalled
 FROM docker.io/library/rust:1.57.0-bullseye as gosu-builder
@@ -182,8 +165,10 @@ ENV LOG4J_FORMAT_MSG_NO_LOOKUPS=true
 # Value is copied from the FROM image. If not specified, the CMD in this image would be "null"
 CMD ["catalina.sh", "run"]
 
-# Add contents of the extracted dhis.war
-COPY --chown=root:root --from=dhis2-builder /work/ROOT/ /usr/local/tomcat/webapps/ROOT/
-
-# Add extracted build.properties to DHIS2_HOME
-COPY --chown=root:root --from=dhis2-builder /work/build.properties /opt/dhis2/build.properties
+# Extract the contents of a dhis.war file to webapps/ROOT/, and its build.properties to /opt/dhis2/
+RUN --mount=type=bind,source=dhis.war,target=dhis.war <<EOF
+set -eux
+umask 0022
+unzip -qq dhis.war -d /usr/local/tomcat/webapps/ROOT
+find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; | tee /opt/dhis2/build.properties
+EOF
