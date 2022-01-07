@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.3-labs
+
 #
 # Note: This is a multi-stage build
 #
@@ -17,11 +19,13 @@ ARG BASE_IMAGE="docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye"
 FROM docker.io/library/rust:1.57.0-bullseye as dhis2-builder
 WORKDIR /work
 COPY --chown=root:root ./dhis.war /work/dhis.war
-RUN set -eux; \
-  umask 0022; \
-  unzip -qq dhis.war -d ROOT; \
-  rm -v -f dhis.war; \
-  find ROOT/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; | tee build.properties
+RUN <<EOF
+set -eux
+umask 0022
+unzip -qq dhis.war -d ROOT
+rm -v -f dhis.war
+find ROOT/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; | tee build.properties
+EOF
 
 
 ################################################################################
