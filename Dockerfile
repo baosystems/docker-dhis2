@@ -1,15 +1,14 @@
 # syntax=docker/dockerfile:1.3-labs
-# Using syntax 1.3-labs is required for here-documents.
-# See: https://github.com/moby/buildkit/blob/87e1fa7/frontend/dockerfile/docs/syntax.md
+# Using syntax 1.3-labs is required for here-documents; see: https://github.com/moby/buildkit/blob/87e1fa7/frontend/dockerfile/docs/syntax.md
 
 
 ################################################################################
 
 
 # Setting "ARG"s before the first "FROM" allows for the values to be used in any "FROM" value below.
-# ARG values can be overridden with command line arguments.
+# ARG values can be overridden with command line arguments at build time.
 #
-# Default for dhis2 image if not provided at build time
+# Default for dhis2 image.
 ARG BASE_IMAGE="docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye"
 
 
@@ -17,55 +16,55 @@ ARG BASE_IMAGE="docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye"
 
 
 # gosu for easy step-down from root - https://github.com/tianon/gosu/releases
-# NOTE: Using rust:bullseye (same as wait-builder stage) instead of debian:bullseye to have gpg, unzip, and wget preinstalled.
+# Using rust:bullseye (same as wait-builder stage) to have gpg, unzip, and wget preinstalled.
 FROM docker.io/library/rust:1.57.0-bullseye as gosu-builder
 ARG GOSU_VERSION=1.14
 WORKDIR /work
 RUN <<EOF
-  set -eux
-  dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
-  wget --quiet -O gosu "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}"
-  wget --quiet -O gosu.asc "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}.asc"
-  gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4
-  gpg --batch --verify gosu.asc gosu
-  chmod --changes 0755 gosu
-  ./gosu --version
-  ./gosu nobody true
+set -eux
+dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
+wget --no-verbose --output-document=gosu "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}"
+wget --no-verbose --output-document=gosu.asc "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}.asc"
+gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4
+gpg --batch --verify gosu.asc gosu
+chmod --changes 0755 gosu
+./gosu --version
+./gosu nobody true
 EOF
 
 
 ################################################################################
 
 
-# remco for building template files and controlling Tomcat - https://github.com/HeavyHorst/remco
+# remco for building template files - https://github.com/HeavyHorst/remco
 # Using same verion of golang as shown in the output of `remco -version` from the released 0.12.1 binary.
 # The 0.12.1 git tag has a typo in the Makefile.
 FROM docker.io/library/golang:1.15.2-buster as remco-builder
 ARG REMCO_VERSION=0.12.1
 WORKDIR /work
 RUN <<EOF
-  set -eux
-  dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
-  if [ "$dpkgArch" = "amd64" ]; then
-    apt-get update
-    apt-get install -y --no-install-recommends unzip
-    rm -r -f /var/lib/apt/lists/*
-    wget --quiet -O remco_linux.zip "https://github.com/HeavyHorst/remco/releases/download/v${REMCO_VERSION}/remco_${REMCO_VERSION}_linux_${dpkgArch}.zip"
-    unzip remco_linux.zip
-    mv --verbose remco_linux remco
-    chmod --changes 0755 remco
-  else
-    git clone https://github.com/HeavyHorst/remco.git source
-    cd source
-    git checkout "v${REMCO_VERSION}"
-    if [ "$REMCO_VERSION" = "0.12.1" ]; then
-      sed -e "/^VERSION/ s/0.12.0/0.12.1/" -i Makefile
-    fi
-    make
-    install -v -m 0755 ./bin/remco ..
-    cd ..
+set -eux
+dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
+if [ "$dpkgArch" = "amd64" ]; then
+  apt-get update
+  apt-get install --yes --no-install-recommends unzip
+  rm --recursive --force /var/lib/apt/lists/*
+  wget --no-verbose --output-document=remco_linux.zip "https://github.com/HeavyHorst/remco/releases/download/v${REMCO_VERSION}/remco_${REMCO_VERSION}_linux_${dpkgArch}.zip"
+  unzip remco_linux.zip
+  mv --verbose remco_linux remco
+  chmod --changes 0755 remco
+else
+  git clone https://github.com/HeavyHorst/remco.git source
+  cd source
+  git checkout "v${REMCO_VERSION}"
+  if [ "$REMCO_VERSION" = "0.12.1" ]; then
+    sed --expression="/^VERSION/ s/0.12.0/0.12.1/" --in-place Makefile
   fi
-  ./remco -version
+  make
+  install --verbose --mode=0755 ./bin/remco ..
+  cd ..
+fi
+./remco -version
 EOF
 
 
@@ -78,23 +77,23 @@ FROM docker.io/library/rust:1.57.0-bullseye as wait-builder
 ARG WAIT_VERSION=2.9.0
 WORKDIR /work
 RUN <<EOF
-  set -eux
-  dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
-  if [ "$dpkgArch" = "amd64" ]; then
-    wget "https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait"
-    chmod --changes 0755 wait
-  else
-    git clone https://github.com/ufoscout/docker-compose-wait.git source
-    cd source
-    git checkout "$WAIT_VERSION"
-    R_TARGET="$( rustup target list --installed | grep -- '-gnu' | tail -1 | awk '{print $1}'| sed 's/gnu/musl/' )"
-    rustup target add "$R_TARGET"
-    cargo build --release --target="$R_TARGET"
-    strip ./target/"$R_TARGET"/release/wait
-    install -v -m 0755 ./target/"$R_TARGET"/release/wait ..
-    cd ..
-  fi
-  ./wait
+set -eux
+dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
+if [ "$dpkgArch" = "amd64" ]; then
+  wget --no-verbose "https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait"
+  chmod --changes 0755 wait
+else
+  git clone https://github.com/ufoscout/docker-compose-wait.git source
+  cd source
+  git checkout "$WAIT_VERSION"
+  R_TARGET="$( rustup target list --installed | grep -- '-gnu' | tail -1 | awk '{print $1}'| sed 's/gnu/musl/' )"
+  rustup target add "$R_TARGET"
+  cargo build --release --target="$R_TARGET"
+  strip ./target/"$R_TARGET"/release/wait
+  install --verbose --mode=0755 ./target/"$R_TARGET"/release/wait ..
+  cd ..
+fi
+./wait
 EOF
 
 
@@ -106,14 +105,14 @@ FROM "$BASE_IMAGE" as dhis2
 
 # Install dependencies for dhis2-init.sh tasks, docker-entrypoint.sh, and general debugging
 RUN <<EOF
-  set -eux
-  apt-get update
-  apt-get install -y --no-install-recommends bind9-dnsutils curl gpg netcat-traditional unzip wget
-  echo "deb http://apt.postgresql.org/pub/repos/apt $( awk -F'=' '/^VERSION_CODENAME/ {print $NF}' /etc/os-release )-pgdg main" > /etc/apt/sources.list.d/pgdg.list
-  curl --silent https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg
-  apt-get update
-  apt-get install -y --no-install-recommends postgresql-client
-  rm -r -f /var/lib/apt/lists/*
+set -eux
+apt-get update
+apt-get install --yes --no-install-recommends bind9-dnsutils curl gpg netcat-traditional unzip wget
+echo "deb http://apt.postgresql.org/pub/repos/apt $( awk -F'=' '/^VERSION_CODENAME/ {print $NF}' /etc/os-release )-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+curl --silent https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg
+apt-get update
+apt-get install --yes --no-install-recommends postgresql-client
+rm --recursive --force /var/lib/apt/lists/*
 EOF
 
 # Add tools from other build stages
@@ -121,24 +120,24 @@ COPY --chown=root:root --from=gosu-builder /work/gosu /usr/local/bin/
 COPY --chown=root:root --from=remco-builder /work/remco /usr/local/bin/
 COPY --chown=root:root --from=wait-builder /work/wait /usr/local/bin/
 
-# Create and clean up tomcat system user, disable crons
+# Create tomcat system user, disable crons, and clean up
 RUN <<EOF
-  set -eux
-  adduser --system --disabled-password --group tomcat
-  echo 'tomcat' >> /etc/cron.deny
-  echo 'tomcat' >> /etc/at.deny
-  rm -r -f '/etc/.pwd.lock' '/etc/group-' '/etc/gshadow-' '/etc/passwd-' '/etc/shadow-'
+set -eux
+adduser --system --disabled-password --group tomcat
+echo 'tomcat' >> /etc/cron.deny
+echo 'tomcat' >> /etc/at.deny
+rm --verbose --force '/etc/.pwd.lock' '/etc/group-' '/etc/gshadow-' '/etc/passwd-' '/etc/shadow-'
 EOF
 
-# Set Tomcat permissions for tomcat user and group, cleanup
+# Set Tomcat permissions for tomcat user and group and clean up
 RUN <<EOF
-  set -eux
-  for TOMCAT_DIR in 'conf/Catalina' 'logs' 'temp' 'work'; do
-    mkdir -p "/usr/local/tomcat/$TOMCAT_DIR"
-    chmod 0750 "/usr/local/tomcat/$TOMCAT_DIR"
-    chown -R tomcat:tomcat "/usr/local/tomcat/$TOMCAT_DIR"
-  done
-  rm -r -f /tmp/hsperfdata_root /usr/local/tomcat/temp/safeToDelete.tmp
+set -eux
+for TOMCAT_DIR in 'conf/Catalina' 'logs' 'temp' 'work'; do
+  mkdir --verbose --parents "/usr/local/tomcat/$TOMCAT_DIR"
+  chmod --changes 0750 "/usr/local/tomcat/$TOMCAT_DIR"
+  chown --recursive tomcat:tomcat "/usr/local/tomcat/$TOMCAT_DIR"
+done
+rm --verbose --recursive --force /tmp/hsperfdata_root /usr/local/tomcat/temp/safeToDelete.tmp
 EOF
 
 # Tomcat Lifecycle Listener to shutdown catalina on startup failures (https://github.com/ascheman/tomcat-lifecyclelistener)
@@ -151,9 +150,9 @@ COPY ./tomcat/server.xml /usr/local/tomcat/conf/
 
 # Create DHIS2_HOME and set ownership for tomcat user and group (DHIS2 throws an error if /opt/dhis2 is not writable)
 RUN <<EOF
-  set -eux
-  mkdir -v -p /opt/dhis2
-  chown --changes tomcat:tomcat /opt/dhis2
+set -eux
+mkdir --verbose --parents /opt/dhis2
+chown --changes tomcat:tomcat /opt/dhis2
 EOF
 
 # Add dhis2-init.sh and bundled scripts
@@ -181,10 +180,10 @@ ENTRYPOINT ["docker-entrypoint.sh"]
 # Same value is copied from the FROM image. If not specified, the CMD in this image would be "null"
 CMD ["catalina.sh", "run"]
 
-# Extract the contents of a dhis.war file to webapps/ROOT/, and its build.properties to /opt/dhis2/
+# Extract the contents of dhis.war to webapps/ROOT/, and its build.properties to /opt/dhis2/
 RUN --mount=type=bind,source=dhis.war,target=dhis.war <<EOF
-  set -eux
-  umask 0022
-  unzip -qq dhis.war -d /usr/local/tomcat/webapps/ROOT
-  find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; | tee /opt/dhis2/build.properties
+set -eux
+umask 0022
+unzip -qq dhis.war -d /usr/local/tomcat/webapps/ROOT
+find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; | tee /opt/dhis2/build.properties
 EOF
