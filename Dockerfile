@@ -116,9 +116,9 @@ rm --recursive --force /var/lib/apt/lists/*
 EOF
 
 # Add tools from other build stages
-COPY --chown=root:root --from=gosu-builder /work/gosu /usr/local/bin/
-COPY --chown=root:root --from=remco-builder /work/remco /usr/local/bin/
-COPY --chown=root:root --from=wait-builder /work/wait /usr/local/bin/
+COPY --chmod=755 --chown=root:root --from=gosu-builder /work/gosu /usr/local/bin/
+COPY --chmod=755 --chown=root:root --from=remco-builder /work/remco /usr/local/bin/
+COPY --chmod=755 --chown=root:root --from=wait-builder /work/wait /usr/local/bin/
 
 # Create tomcat system user, disable crons, and clean up
 RUN <<EOF
@@ -141,12 +141,12 @@ rm --verbose --recursive --force /tmp/hsperfdata_root /usr/local/tomcat/temp/saf
 EOF
 
 # Tomcat Lifecycle Listener to shutdown catalina on startup failures (https://github.com/ascheman/tomcat-lifecyclelistener)
-ADD --chmod=644 https://repo.maven.apache.org/maven2/net/aschemann/tomcat/tomcat-lifecyclelistener/1.0.1/tomcat-lifecyclelistener-1.0.1.jar /usr/local/tomcat/lib/tomcat-lifecyclelistener.jar
-COPY ./tomcat/context.xml /usr/local/tomcat/conf/
-COPY ./tomcat/setenv.sh /usr/local/tomcat/bin/
+ADD --chmod=644 --chown=root:root https://repo.maven.apache.org/maven2/net/aschemann/tomcat/tomcat-lifecyclelistener/1.0.1/tomcat-lifecyclelistener-1.0.1.jar /usr/local/tomcat/lib/tomcat-lifecyclelistener.jar
+COPY --chmod=644 --chown=root:root ./tomcat/context.xml /usr/local/tomcat/conf/
+COPY --chmod=644 --chown=root:root ./tomcat/setenv.sh /usr/local/tomcat/bin/
 
 # Tomcat server configuration
-COPY ./tomcat/server.xml /usr/local/tomcat/conf/
+COPY --chmod=644 --chown=root:root ./tomcat/server.xml /usr/local/tomcat/conf/
 
 # Create DHIS2_HOME and set ownership for tomcat user and group (DHIS2 throws an error if /opt/dhis2 is not writable)
 RUN <<EOF
@@ -156,17 +156,17 @@ chown --changes tomcat:tomcat /opt/dhis2
 EOF
 
 # Add dhis2-init.sh and bundled scripts
-COPY ./dhis2-init.sh /usr/local/bin/
-COPY ./dhis2-init.d/* /usr/local/share/dhis2-init.d/
+COPY --chmod=755 --chown=root:root ./dhis2-init.sh /usr/local/bin/
+COPY --chmod=755 --chown=root:root ./dhis2-init.d/* /usr/local/share/dhis2-init.d/
 
 # Add image helper scripts
-COPY ./helpers/* /usr/local/bin/
+COPY --chmod=755 --chown=root:root ./helpers/* /usr/local/bin/
 
 # remco configurations and templates
-COPY ./remco/config.toml /etc/remco/config
-COPY ./remco/onetime.toml /etc/remco/onetime.toml
-COPY ./remco/templates/* /etc/remco/templates/
-# initialize empty remco log file for the tomcat user
+COPY --chmod=644 --chown=root:root ./remco/config.toml /etc/remco/config
+COPY --chmod=644 --chown=root:root ./remco/onetime.toml /etc/remco/onetime.toml
+COPY --chmod=644 --chown=root:root ./remco/templates/* /etc/remco/templates/
+# Initialize empty remco log file for the tomcat user
 COPY --chmod=644 --chown=tomcat:tomcat <<EOF /var/log/remco.log
 EOF
 
@@ -174,7 +174,7 @@ EOF
 ENV LOG4J_FORMAT_MSG_NO_LOOKUPS=true
 
 # Add our own entrypoint for initialization
-COPY docker-entrypoint.sh /usr/local/bin/
+COPY --chmod=755 --chown=root:root docker-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Same value is copied from the FROM image. If not specified, the CMD in this image would be "null"

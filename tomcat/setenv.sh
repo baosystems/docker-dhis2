@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 # check to see if this file is being run or sourced from another script
 _is_sourced() {
   # https://unix.stackexchange.com/a/215279
