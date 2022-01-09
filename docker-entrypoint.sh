@@ -135,7 +135,6 @@ _main() {
   fi
 
   # If not running remco or catalina.sh, do nothing else and run the command with exec so it can proceed as pid 1
-  echo "[INFO] $SELF: running: $*"
   exec "$@"
 
 }

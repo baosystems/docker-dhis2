@@ -358,8 +358,8 @@ changes to increase the liklihood of being imported on other systems.
 # Stop Tomcat
 docker compose stop dhis2
 
-# Run db-export.sh without the default entrypoint and compress the exported database with gzip
-docker compose run --rm --entrypoint db-export.sh dhis2_init | gzip > output.sql.gz
+# Export the database using the db-export.sh helper script and compress with gzip
+docker compose run --rm dhis2_init db-export.sh | gzip > export.sql.gz
 
 # Start Tomcat
 docker compose start dhis2
