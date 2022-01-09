@@ -43,7 +43,7 @@ if [[ ! -d "$( dirname "$STATUS_FILE" )" ]]; then
 fi
 
 if [[ "${DHIS2_INIT_FORCE:-0}" == "1" ]]; then
-  echo "[DEBUG] $SELF: DHIS2_INIT_FORCE=1; delete \"$STATUS_FILE\"..."
+  echo "[DEBUG] $SELF: DHIS2_INIT_FORCE=1; delete \"$STATUS_FILE\"..." >&2
   rm -v -f "$STATUS_FILE"
 fi
 

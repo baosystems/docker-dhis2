@@ -71,7 +71,8 @@ export WAIT_BEFORE='0'
 # - PGPASSWORD or contents in PGPASSWORD_FILE (required for PGUSER in most PostgreSQL installations)
 
 
-echo "[INFO] $SELF: Exporting database \"$DATABASE_DBNAME\":" >&2  # Using stderr for info messages
+# Using stderr for log output in this script to avoid being in a stdout-captured file
+echo "[INFO] $SELF: Exporting database \"$DATABASE_DBNAME\":" >&2
 
 pg_dump \
   "$DATABASE_DBNAME" \
@@ -98,4 +99,5 @@ pg_dump \
 
 
 # Output script progess
-echo "$SELF: COMPLETED" >&2  # Using stderr for info messages
+# Using stderr for log output in this script to avoid being in a stdout-captured file
+echo "$SELF: COMPLETED" >&2

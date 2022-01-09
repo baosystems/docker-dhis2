@@ -32,25 +32,25 @@ _main() {
     # Set contents of DATABASE_PASSWORD_FILE to DATABASE_PASSWORD
     if [ -z "${DATABASE_PASSWORD:-}" ] && [ -r "${DATABASE_PASSWORD_FILE:-}" ]; then
       export DATABASE_PASSWORD="$(<"${DATABASE_PASSWORD_FILE}")"
-      echo "[DEBUG] $SELF: set DATABASE_PASSWORD=redacted"
+      echo "[DEBUG] $SELF: set DATABASE_PASSWORD=redacted" >&2
     fi
 
     # Set contents of REDIS_PASSWORD_FILE to REDIS_PASSWORD
     if [ -z "${REDIS_PASSWORD:-}" ] && [ -r "${REDIS_PASSWORD_FILE:-}" ]; then
       export REDIS_PASSWORD="$(<"${REDIS_PASSWORD_FILE}")"
-      echo "[DEBUG] $SELF: set REDIS_PASSWORD=redacted"
+      echo "[DEBUG] $SELF: set REDIS_PASSWORD=redacted" >&2
     fi
 
     # Set SYSTEM_FQDN as hostname
     if [ -z "${SYSTEM_FQDN:-}" ]; then
       export SYSTEM_FQDN="$(hostname --fqdn)"
-      echo "[DEBUG] $SELF: set SYSTEM_FQDN=$SYSTEM_FQDN"
+      echo "[DEBUG] $SELF: set SYSTEM_FQDN=$SYSTEM_FQDN" >&2
     fi
 
     # Set SYSTEM_IP to the internal IP address
     if [ -z "${SYSTEM_IP:-}" ]; then
       export SYSTEM_IP="$(hostname --ip-address)"
-      echo "[DEBUG] $SELF: set SYSTEM_IP=$SYSTEM_IP"
+      echo "[DEBUG] $SELF: set SYSTEM_IP=$SYSTEM_IP" >&2
     fi
 
   fi
@@ -81,7 +81,7 @@ _main() {
     )
     for VAR in "${VARS[@]}"; do
       if [ -n "${!VAR:-}" ]; then
-        echo "[DEBUG] $SELF: environment $VAR=${!VAR}"
+        echo "[DEBUG] $SELF: environment $VAR=${!VAR}" >&2
       fi
     done
 
@@ -89,7 +89,7 @@ _main() {
 
     # If WAIT_HOSTS is empty or null and DATABASE_HOST is provided, set WAIT_HOSTS to DATABASE_HOST:DATABASE_PORT
     if [ -z "${WAIT_HOSTS:-}" ] && [ -n "${DATABASE_HOST:-}" ]; then
-      echo "[DEBUG] $SELF: set WAIT_HOSTS=${DATABASE_HOST}:${DATABASE_PORT:-5432}"
+      echo "[DEBUG] $SELF: set WAIT_HOSTS=${DATABASE_HOST}:${DATABASE_PORT:-5432}" >&2
       export WAIT_HOSTS="${DATABASE_HOST}:${DATABASE_PORT:-5432}"
     fi
 
@@ -106,7 +106,7 @@ _main() {
     # If environment variable FORCE_HEALTHCHECK_WAIT=1, run netcat as a webserver
     # before proceeding (nc will stop listening after a single request is received).
     if [ "${FORCE_HEALTHCHECK_WAIT:-}" = '1' ]; then
-      echo "[DEBUG] $SELF: match FORCE_HEALTHCHECK_WAIT=1"
+      echo "[DEBUG] $SELF: match FORCE_HEALTHCHECK_WAIT=1" >&2
       echo -n -e "HTTP/1.1 200 OK\r\nContent-Length: 0\r\nContent-Type: text/plain\r\n\r\n" | nc -l -q 1 -p 8080
       echo "[INFO] $SELF: health check received, continuing"
     fi
