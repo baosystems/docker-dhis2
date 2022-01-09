@@ -164,15 +164,18 @@ EOF
 
 # Add dhis2-init.sh and bundled scripts
 COPY --chmod=755 --chown=root:root ./dhis2-init.sh /usr/local/bin/
-COPY --chmod=755 --chown=root:root ./dhis2-init.d/* /usr/local/share/dhis2-init.d/
+COPY --chmod=755 --chown=root:root ./dhis2-init.d/10_dhis2-database.sh /usr/local/share/dhis2-init.d/
+COPY --chmod=755 --chown=root:root ./dhis2-init.d/15_pgstatstatements.sh /usr/local/share/dhis2-init.d/
+COPY --chmod=755 --chown=root:root ./dhis2-init.d/20_dhis2-initwar.sh /usr/local/share/dhis2-init.d/
 
 # Add image helper scripts
-COPY --chmod=755 --chown=root:root ./helpers/* /usr/local/bin/
+COPY --chmod=755 --chown=root:root ./helpers/db-empty.sh /usr/local/bin/
+COPY --chmod=755 --chown=root:root ./helpers/db-export.sh /usr/local/bin/
 
 # remco configurations and templates
 COPY --chmod=644 --chown=root:root ./remco/config.toml /etc/remco/config
-COPY --chmod=644 --chown=root:root ./remco/onetime.toml /etc/remco/onetime.toml
-COPY --chmod=644 --chown=root:root ./remco/templates/* /etc/remco/templates/
+COPY --chmod=644 --chown=root:root ./remco/onetime.toml /etc/remco/
+COPY --chmod=644 --chown=root:root ./remco/templates/dhis.conf.tmpl /etc/remco/templates/
 # Initialize empty remco log file for the tomcat user (the "EOF" on the next line is not a typo)
 COPY --chmod=644 --chown=tomcat:tomcat <<EOF /var/log/remco.log
 EOF
