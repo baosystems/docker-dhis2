@@ -335,7 +335,7 @@ wget -nc -O dhis2-db-sierra-leone-2.37.sql.gz https://databases.dhis2.org/sierra
 # Stop Tomcat
 docker compose stop dhis2
 
-# Drop and re-create the database using a helper script in the container image
+# Drop and re-create the database using the db-empty.sh helper script
 docker compose run --rm dhis2_init db-empty.sh
 
 # Import the database backup into the empty database
