@@ -16,7 +16,7 @@
     <Connector port="8080"
                protocol="org.apache.coyote.http11.Http11Nio2Protocol"
                URIEncoding="UTF-8"
-               relaxedQueryChars='\ { } | [ ]'/>
+               relaxedQueryChars="\ { } | [ ]"
                />
 
     <Engine name="Catalina" defaultHost="localhost">
