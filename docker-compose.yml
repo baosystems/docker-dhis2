@@ -124,7 +124,6 @@ services:
     environment:
       DATABASE_HOST: database
       DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
-      LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
       WAIT_PATHS: /dhis2-init.progress/dhis2-init_status.txt  # Allow for dhis2_init to complete (necessary in some cases where dhis2_init may not run again)
       WAIT_TIMEOUT: 300  # Allow for dhis2_init to complete (default is 30)
     command:
