@@ -39,7 +39,7 @@ services:
     depends_on:
       pass_init:
         condition: service_completed_successfully
-    restart: on-failure
+    restart: unless-stopped
     volumes:
       - type: volume
         source: pass_pg_postgres
@@ -105,7 +105,7 @@ services:
     depends_on:
       dhis2_init:
         condition: service_completed_successfully
-    restart: unless-stopped  # Don't use "on-failure" b/c a Tomcat "SHUTDOWN" might "exit 0" even if a listener failed to start
+    restart: unless-stopped
     working_dir: /opt/dhis2/logs
     volumes:
       - type: volume
