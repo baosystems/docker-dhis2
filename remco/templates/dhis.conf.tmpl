@@ -222,7 +222,9 @@ cluster.members ={{ printf("%s", " ") }}{% for ip in lookupIP(getv("/service/nam
 {% endif %}
 
 # Node identifier, optional, useful in clusters; default is unset
-{% if exists("/system/fqdn") %}
+{% if exists("/dhis2/node/id") %}
+node.id = {{ getv("/dhis2/node/id") }}
+{% elif exists("/system/fqdn") %}
 node.id = {{ getv("/system/fqdn") }}
 {% else %}
 #node.id =
