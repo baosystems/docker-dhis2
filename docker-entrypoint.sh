@@ -116,6 +116,26 @@ _main() {
   # or, "catalina.sh" for a full command of "docker-entrypoint.sh catalina.sh run -security"
   if [ "$1" = 'remco' ] || [ "$1" = 'catalina.sh' ]; then
 
+    # If DATABASE_HOST is provided, ensure DATABASE_HOST:DATABASE_PORT is in WAIT_HOSTS
+    if [ -n "${DATABASE_HOST:-}" ] && [[ "$WAIT_HOSTS" != *"${DATABASE_HOST:-}:${DATABASE_PORT:-5432}"* ]]; then
+      echo "[DEBUG] $SELF: add $DATABASE_HOST:${DATABASE_PORT:-5432} to WAIT_HOSTS" >&2
+      export WAIT_HOSTS="$DATABASE_HOST:${DATABASE_PORT:-5432},${WAIT_HOSTS:-}"
+    fi
+
+    # If DHIS2_REDIS_ENABLED is "true", ensure $DHIS2_REDIS_HOST:DHIS2_REDIS_PORT is in WAIT_HOSTS
+    if [ "${DHIS2_REDIS_ENABLED:-}" = "true" ] && [[ "$WAIT_HOSTS" != *"${DHIS2_REDIS_HOST:-}:${DHIS2_REDIS_PORT:-6379}"* ]]; then
+      echo "[DEBUG] $SELF: add $DHIS2_REDIS_HOST:${DHIS2_REDIS_PORT:-6379} to WAIT_HOSTS" >&2
+      export WAIT_HOSTS="$DHIS2_REDIS_HOST:${DHIS2_REDIS_PORT:-6379},${WAIT_HOSTS:-}"
+    fi
+
+    # Ensure there are no trailing commas for WAIT_HOSTS or WAIT_PATHS
+    if [ -n "${WAIT_HOSTS:-}" ]; then
+      export WAIT_HOSTS="${WAIT_HOSTS%,}"
+    fi
+    if [ -n "${WAIT_PATHS:-}" ]; then
+      export WAIT_PATHS="${WAIT_PATHS%,}"
+    fi
+
     # Print some environment variables for debugging purposes if values are set
     VARS=(
       DHIS2_BUILD_MAJOR
@@ -143,12 +163,6 @@ _main() {
     unset VARS
 
     ########
-
-    # If WAIT_HOSTS is empty or null and DATABASE_HOST is provided, set WAIT_HOSTS to DATABASE_HOST:DATABASE_PORT
-    if [ -z "${WAIT_HOSTS:-}" ] && [ -n "${DATABASE_HOST:-}" ]; then
-      echo "[DEBUG] $SELF: set WAIT_HOSTS=${DATABASE_HOST}:${DATABASE_PORT:-5432}" >&2
-      export WAIT_HOSTS="${DATABASE_HOST}:${DATABASE_PORT:-5432}"
-    fi
 
     # Wait for hosts specified in the environment variable WAIT_HOSTS and/or paths in WAIT_PATHS.
     # If it times out (default is 30s) before the targets are available, it will exit with a

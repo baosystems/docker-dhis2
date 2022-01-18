@@ -31,6 +31,7 @@ _remco_ or _catalina.sh_:
   wait for other hosts or file paths before proceeding. If none are provided, `wait` will exit with
   code 0 immediately and the container will proceed. If `WAIT_HOSTS` is not set and `DATABASE_HOST`
   is provided, `WAIT_HOSTS` will be set as `WAIT_HOSTS=${DATABASE_HOST}:${DATABASE_PORT:-5432}`.
+  Similarly, if Redis is enabled, the host and port will be added to `WAIT_HOSTS`.
 
 * If `FORCE_HEALTHCHECK_WAIT` is set to `1`, netcat will listen on port 8080 and respond to a single
   http request with "200 OK" and an empty body. This is to allow a new container to be marked as
