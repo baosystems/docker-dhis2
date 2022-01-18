@@ -73,15 +73,15 @@ if [[ ! -f "$HISTORY_FILE" ]]; then
   echo "build.version,build.revision,build.time,status,datelog" > "$HISTORY_FILE"
 fi
 
-# Lookup information about the deployed version of DHIS2
-export BUILD_PROPERTIES="$( unzip -q -p "$( find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib -maxdepth 1 -type f -name "dhis-service-core-2.*.jar" )" build.properties )"
-export BUILD_REVISION="$( echo "$BUILD_PROPERTIES" | awk -F'=' '/^build\.revision/ {gsub(/ /, "", $NF); print $NF}' )"
-export BUILD_VERSION="$( echo "$BUILD_PROPERTIES" | awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' )"
-export BUILD_TIME="$( echo "$BUILD_PROPERTIES" | awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' )"
+# Set DHIS2 build information (logic also used in docker-entrypoint.sh)
+DHIS2_BUILD_PROPERTIES="$( unzip -q -p "$( find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib -maxdepth 1 -type f -name "dhis-service-core-2.*.jar" )" build.properties )"
+DHIS2_BUILD_VERSION="$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+DHIS2_BUILD_REVISION="$( awk -F'=' '/^build\.revision/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+DHIS2_BUILD_TIME="$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
 
 # Skip if history file contains status message written at the end and DHIS2_INIT_FORCE is not equal to "1"
-if [[ "${DHIS2_INIT_FORCE:-0}" != "1" ]] && { tail -1 "$HISTORY_FILE" | grep -q "${BUILD_VERSION},${BUILD_REVISION},${BUILD_TIME},success" ; } ; then
-  echo "[INFO] $SELF: script has already run for ${BUILD_VERSION},${BUILD_REVISION}, skipping..."
+if [[ "${DHIS2_INIT_FORCE:-0}" != "1" ]] && { tail -1 "$HISTORY_FILE" | grep -q "${DHIS2_BUILD_VERSION},${DHIS2_BUILD_REVISION},${DHIS2_BUILD_TIME},success" ; } ; then
+  echo "[INFO] $SELF: script has already run for ${DHIS2_BUILD_VERSION},${DHIS2_BUILD_REVISION}, skipping..."
   exit 0
 fi
 
@@ -115,7 +115,7 @@ then
   echo "[INFO] $SELF: DHIS2 login screen accessed"
 else
   echo "[ERROR] $SELF: Unable to access DHIS2 login screen, exiting..." >&2
-  echo "${BUILD_VERSION},${BUILD_REVISION},${BUILD_TIME},failed,$(date '+%F %T')" >> "$HISTORY_FILE"
+  echo "${DHIS2_BUILD_VERSION},${DHIS2_BUILD_REVISION},${DHIS2_BUILD_TIME},failed,$(date '+%F %T')" >> "$HISTORY_FILE"
   exit 1
 fi
 
@@ -130,5 +130,5 @@ gosu tomcat \
 
 # Record script progess
 echo "[INFO] $SELF: Add to history file ${HISTORY_FILE}:"
-echo "${BUILD_VERSION},${BUILD_REVISION},${BUILD_TIME},success,$(date '+%F %T')" | tee -a "$HISTORY_FILE"
+echo "${DHIS2_BUILD_VERSION},${DHIS2_BUILD_REVISION},${DHIS2_BUILD_TIME},success,$(date '+%F %T')" | tee -a "$HISTORY_FILE"
 echo "$SELF: COMPLETED" | tee "$STATUS_FILE"

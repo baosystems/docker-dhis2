@@ -208,8 +208,6 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 
 * `DHIS2_CHANGELOG_TRACKER`: Value of _changelog.tracker_.
 
-* `DHIS2_SYSTEM_AUDIT_ENABLED`: Value of _system.audit.enabled_.
-
 * `DHIS2_AUDIT_LOGGER`: Value of _audit.logger_.
 
 * `DHIS2_AUDIT_DATABASE`: Value of _audit.database_.
@@ -241,6 +239,10 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 * `DHIS2_FILESTORE_IDENTITY`: Value of _filestore.identity_.
 
 * `DHIS2_FILESTORE_SECRET`: Value of _filestore.secret_.
+
+### 2.36 and up
+
+* `DHIS2_SYSTEM_AUDIT_ENABLED`: Value of _system.audit.enabled_.
 
 
 # Example: Docker Compose

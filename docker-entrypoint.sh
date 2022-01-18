@@ -53,6 +53,14 @@ _main() {
       echo "[DEBUG] $SELF: set SYSTEM_IP=$SYSTEM_IP" >&2
     fi
 
+    # Set DHIS2 build information (logic also used in 20_dhis2-initwar.sh)
+    DHIS2_BUILD_PROPERTIES="$( unzip -q -p "$( find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib -maxdepth 1 -type f -name "dhis-service-core-2.*.jar" )" build.properties )"
+    export DHIS2_BUILD_VERSION="$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+    export DHIS2_BUILD_MAJOR="$( cut -c1-4 <<< "$DHIS2_BUILD_VERSION" )"
+    export DHIS2_BUILD_REVISION="$( awk -F'=' '/^build\.revision/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+    export DHIS2_BUILD_TIME="$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+    export DHIS2_BUILD_DATE="$( grep --only-matching --extended-regexp '20[0-9]{2}-[0-9]{2}-[0-9]{2}' <<< "$DHIS2_BUILD_TIME" )"
+
   fi
 
   ########
@@ -65,8 +73,11 @@ _main() {
     # Print some environment variables for debugging purposes if values are set
     VARS=(
       CATALINA_OPTS
-      DHIS2_MAJOR
-      DHIS2_VERSION
+      DHIS2_BUILD_MAJOR
+      DHIS2_BUILD_VERSION
+      DHIS2_BUILD_REVISION
+      DHIS2_BUILD_DATE
+      DHIS2_BUILD_TIME
       FORCE_HEALTHCHECK_WAIT
       GOSU_VERSION
       JAVA_OPTS
