@@ -1,13 +1,13 @@
 ## DO NOT EDIT
 ## Template managed by Remco.
 
-## DHIS 2.36 Configuration File
-## Reference: https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#install_dhis2_configuration_reference
+## DHIS 2.37 Configuration File
+## Reference: https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-237/installation.html#install_dhis2_configuration_reference
 
 
 # ----------------------------------------------------------------------
 # Server
-# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#install_database_configuration
+# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-237/installation.html#install_database_configuration
 # ----------------------------------------------------------------------
 
 # Base URL to the DHIS 2 instance; default is unset
@@ -27,7 +27,7 @@ server.https = {{ getv("/dhis2/server/https") }}
 
 # ----------------------------------------------------------------------
 # Database connection for PostgreSQL
-# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#install_database_configuration
+# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-237/installation.html#install_database_configuration
 # ----------------------------------------------------------------------
 
 # Hibernate SQL dialect; default is unset
@@ -78,7 +78,7 @@ connection.pool.max_size = {{ getv("/dhis2/connection/pool/maxsize") }}
 
 # ----------------------------------------------------------------------
 # Redis caching
-# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#install_cluster_configuration_redis
+# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-237/installation.html#install_cluster_configuration_redis
 # ----------------------------------------------------------------------
 
 # Use or disable Redis; default is 'false'
@@ -127,7 +127,7 @@ leader.time.to.live.minutes = {{ getv("/redis/leaderttl") }}
 
 # ----------------------------------------------------------------------
 # Encryption
-# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#install_encryption_configuration
+# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-237/installation.html#install_encryption_configuration
 # ----------------------------------------------------------------------
 
 # Encryption password (sensitive); default is unset
@@ -140,7 +140,7 @@ encryption.password = {{ getv("/dhis2/encryption/password") }}
 
 # ----------------------------------------------------------------------
 # File store
-# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#install_file_store_configuration
+# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-237/installation.html#install_file_store_configuration
 # ----------------------------------------------------------------------
 
 # File store provider, currently 'filesystem' and 'aws-s3' are supported; default is 'filesystem'
@@ -183,7 +183,7 @@ filestore.secret = {{ getv("/dhis2/filestore/secret") }}
 
 # ----------------------------------------------------------------------
 # Clustering
-# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#install_cluster_configuration
+# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-237/installation.html#install_cluster_configuration
 # ----------------------------------------------------------------------
 
 # Hostname for this web server; default is unset
@@ -229,7 +229,7 @@ node.id = {{ getv("/system/fqdn") }}
 
 # ----------------------------------------------------------------------
 # Log file configuration
-# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#log-configuration
+# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-237/installation.html#log-configuration
 # ----------------------------------------------------------------------
 
 # Max size for log files; default is '100MB'
@@ -249,7 +249,7 @@ logging.file.max_archives = {{ getv("/dhis2/logging/file/maxarchives") }}
 
 # ----------------------------------------------------------------------
 # Monitoring
-# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#monitoring
+# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-237/installation.html#monitoring
 # ----------------------------------------------------------------------
 
 # DHIS2 API monitoring; default is 'off'
@@ -323,7 +323,7 @@ system.monitoring.password = {{ getv("/dhis2/system/monitoring/password") }}
 
 # ----------------------------------------------------------------------
 # Changelog
-# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#install_changelog
+# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-237/installation.html#install_changelog
 # ----------------------------------------------------------------------
 
 # Aggregate changelog; default is 'on'

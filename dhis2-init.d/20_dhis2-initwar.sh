@@ -114,13 +114,13 @@ if timeout --signal=SIGINT 900s bash -c "until curl --output /dev/null --silent 
 then
   echo "[INFO] $SELF: DHIS2 login screen accessed"
 else
-  echo "$SELF: [ERROR] Unable to access DHIS2 login screen, exiting..." >&2
+  echo "[ERROR] $SELF: Unable to access DHIS2 login screen, exiting..." >&2
   echo "${BUILD_VERSION},${BUILD_REVISION},${BUILD_TIME},failed,$(date '+%F %T')" >> "$HISTORY_FILE"
   exit 1
 fi
 
 # Stop the background Tomcat process
-echo "[INFO] $SELF: Stop Tomcat: CATALINA_PID=$CATALINA_PID catalina.sh stop 90 -force"
+echo "[INFO] $SELF: Stop Tomcat: CATALINA_PID=$CATALINA_PID catalina.sh stop -force"
 gosu tomcat \
   catalina.sh stop 90 -force
 
