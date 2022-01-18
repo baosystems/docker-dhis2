@@ -172,8 +172,8 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
   `DHIS2_CLUSTER_MEMBERS` is not provided. `SYSTEM_IP` must also be set as it is removed from the
   DNS query result to build _cluster.members_.
 
-* `SYSTEM_FQDN`: Value of _node.id_. Note that this is distict from _server.base.url_. This should
-  not be set by the operator but instead populated in `docker-entrypoint.sh`.
+* `DHIS2_NODE_ID`: Value of _node.id_. If not provided, _node.id_ is set by `SYSTEM_FQDN`, which is
+  provided by the entry point.
 
 * `DHIS2_LOGGING_FILE_MAXSIZE`: Value of _logging.file.max_size_.
 
