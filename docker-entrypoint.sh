@@ -82,23 +82,22 @@ _main() {
 
     # Print some environment variables for debugging purposes if values are set
     VARS=(
-      CATALINA_OPTS
       DHIS2_BUILD_MAJOR
       DHIS2_BUILD_VERSION
       DHIS2_BUILD_REVISION
       DHIS2_BUILD_DATE
       DHIS2_BUILD_TIME
       FORCE_HEALTHCHECK_WAIT
-      GOSU_VERSION
-      JAVA_OPTS
-      REMCO_VERSION
-      TOMCAT_MAJOR
-      TOMCAT_VERSION
       WAIT_BEFORE
       WAIT_HOSTS
       WAIT_PATHS
       WAIT_TIMEOUT
-      WAIT_VERSION
+      JAVA_MAJOR
+      JAVA_VERSION
+      JAVA_OPTS
+      TOMCAT_MAJOR
+      TOMCAT_VERSION
+      CATALINA_OPTS
     )
     for VAR in "${VARS[@]}"; do
       if [ -n "${!VAR:-}" ]; then
