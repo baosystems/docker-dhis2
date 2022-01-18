@@ -356,12 +356,14 @@ changelog.tracker = {{ getv("/dhis2/changelog/tracker") }}
 # ----------------------------------------------------------------------
 # Auditing
 # ----------------------------------------------------------------------
-
+{% if getv("/dhis2/build/major", "")|cut:"." >= "236" %}
+{# The system.audit.enabled option was added in 2.36 #}
 # Default is 'true'
 {% if exists("/dhis2/system/audit/enabled") %}
 system.audit.enabled = {{ getv("/dhis2/system/audit/enabled") }}
 {% else %}
 #system.audit.enabled = true
+{% endif %}
 {% endif %}
 
 # Default is 'false'
