@@ -50,7 +50,6 @@ dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
 if [ "$dpkgArch" = "amd64" ]; then
   apt-get update
   apt-get install --yes --no-install-recommends unzip
-  rm --recursive --force /var/lib/apt/lists/*
   wget --no-verbose --output-document=remco_linux.zip "https://github.com/HeavyHorst/remco/releases/download/v${REMCO_VERSION}/remco_${REMCO_VERSION}_linux_${dpkgArch}.zip"
   unzip remco_linux.zip
   mv --verbose remco_linux remco
