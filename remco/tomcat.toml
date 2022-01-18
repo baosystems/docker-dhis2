@@ -1,0 +1,23 @@
+################################################################
+# Global configuration
+################################################################
+log_format = "text"
+log_level = "debug"
+
+
+
+################################################################
+# Resource configuration
+################################################################
+[[resource]]
+  name = "tomcat"
+
+  [[resource.template]]
+    src = "/etc/remco/templates/tomcat/server.xml.tmpl"
+    dst = "/usr/local/tomcat/conf/server.xml"
+
+  [resource.backend]
+    [resource.backend.env]
+      onetime = true
+      interval = 1
+      keys = ["/tomcat/"]

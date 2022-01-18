@@ -111,6 +111,9 @@ argument is _remco_:
 * `DHIS2_REDIS_PASSWORD_FILE`: if `DHIS2_REDIS_PASSWORD` is empty or not set, the contents of
   `DHIS2_REDIS_PASSWORD_FILE` will be set in `DHIS2_REDIS_PASSWORD`.
 
+* `DISABLE_TOMCAT_TEMPLATES`: If set to **1**, the templates for Tomcat configuration files will not
+  be generated.
+
 The following **OPTIONAL** environment variables are used in `docker-entrypoint.sh` and the first
 argument is _remco_ or _catalina.sh_:
 
@@ -286,6 +289,17 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 
 * `DHIS2_DEBEZIUM_SHUTDOWN_ON_CONNECTOR_STOP`: Value of _debezium.shutdown_on.connector_stop_;
   default is 'off'.
+
+## Generating Tomcat server.xml with Remco
+
+The following environment variables can be used to create Tomcat's _server.xml_ when using the
+`remco` command.
+
+* `TOMCAT_CONNECTOR_PROXYPORT`: For the primary Connector, value of _proxyPort_.
+
+* `TOMCAT_CONNECTOR_SCHEME`: For the primary Connector, value of _scheme_.
+
+* `TOMCAT_CONNECTOR_SECURE`: For the primary Connector, value of _secure_.
 
 
 # Example: Docker Compose
