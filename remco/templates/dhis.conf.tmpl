@@ -160,21 +160,21 @@ filestore.container = {{ getv("/dhis2/filestore/container") }}
 # The following configuration is applicable to cloud storage only (AWS S3)
 
 # Datacenter location / AWS Region (not required); default is unset
-{% if exists("/dhis2/filestore/container") and getv("/dhis2/filestore/container") == "bucket" and exists("/dhis2/filestore/location") %}
+{% if exists("/dhis2/filestore/location") %}
 filestore.location = {{ getv("/dhis2/filestore/location") }}
 {% else %}
 #filestore.location =
 {% endif %}
 
 # Public identity / AWS IAM Access Key ID / username; default is unset
-{% if exists("/dhis2/filestore/container") and getv("/dhis2/filestore/container") == "bucket" and exists("/dhis2/filestore/identity") %}
+{% if exists("/dhis2/filestore/identity") %}
 filestore.identity = {{ getv("/dhis2/filestore/identity") }}
 {% else %}
 #filestore.identity =
 {% endif %}
 
 # Secret key / AWS IAM Secret Access Key / password (sensitive); default is unset
-{% if exists("/dhis2/filestore/container") and getv("/dhis2/filestore/container") == "bucket" and exists("/dhis2/filestore/secret") %}
+{% if exists("/dhis2/filestore/secret") %}
 filestore.secret = {{ getv("/dhis2/filestore/secret") }}
 {% else %}
 #filestore.secret =
