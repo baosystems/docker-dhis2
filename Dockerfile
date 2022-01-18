@@ -110,7 +110,7 @@ RUN <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
 apt-get update
-apt-get install --yes --no-install-recommends bind9-dnsutils curl gpg netcat-traditional unzip wget zip
+apt-get install --yes --no-install-recommends bind9-dnsutils curl gpg netcat-traditional python3 unzip wget zip
 echo "deb http://apt.postgresql.org/pub/repos/apt $( awk -F'=' '/^VERSION_CODENAME/ {print $NF}' /etc/os-release )-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 curl --silent https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg
 apt-get update
@@ -170,6 +170,7 @@ COPY --chmod=755 --chown=root:root ./dhis2-init.d/20_dhis2-initwar.sh /usr/local
 # Add image helper scripts
 COPY --chmod=755 --chown=root:root ./helpers/db-empty.sh /usr/local/bin/
 COPY --chmod=755 --chown=root:root ./helpers/db-export.sh /usr/local/bin/
+COPY --chmod=755 --chown=root:root ./helpers/port-from-url.py /usr/local/bin/
 
 # remco configurations and templates
 COPY --chmod=644 --chown=root:root ./remco/config.toml /etc/remco/config

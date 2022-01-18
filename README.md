@@ -295,7 +295,9 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 The following environment variables can be used to create Tomcat's _server.xml_ when using the
 `remco` command.
 
-* `TOMCAT_CONNECTOR_PROXYPORT`: For the primary Connector, value of _proxyPort_.
+* `TOMCAT_CONNECTOR_PROXYPORT`: For the primary Connector, value of _proxyPort_. If not provided and
+  `DHIS2_SERVER_BASEURL` is set, the value will be derived from the URL port in
+  `DHIS2_SERVER_BASEURL`.
 
 * `TOMCAT_CONNECTOR_SCHEME`: For the primary Connector, value of _scheme_. If not provided and
   `DHIS2_SERVER_BASEURL` begins with "https://", the value will be "https".

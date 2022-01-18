@@ -69,6 +69,12 @@ _main() {
       echo "[DEBUG] $SELF: set DHIS2_SERVER_HTTPS=$DHIS2_SERVER_HTTPS" >&2
     fi
 
+    # Set TOMCAT_CONNECTOR_PROXYPORT if not set to value dervied from DHIS2_SERVER_BASEURL if set
+    if [ -z "${TOMCAT_CONNECTOR_PROXYPORT:-}" ] && [ -n "${DHIS2_SERVER_BASEURL:-}" ]; then
+      export TOMCAT_CONNECTOR_PROXYPORT="$( port-from-url.py "$DHIS2_SERVER_BASEURL" )"
+      echo "[DEBUG] $SELF: set TOMCAT_CONNECTOR_PROXYPORT=$TOMCAT_CONNECTOR_PROXYPORT" >&2
+    fi
+
     # Set TOMCAT_CONNECTOR_SCHEME to "https" if not set and DHIS2_SERVER_BASEURL begins with "https://"
     if [ -z "${TOMCAT_CONNECTOR_SCHEME:-}" ] && [[ "${DHIS2_SERVER_BASEURL:-}" =~ ^https:// ]]; then
       export TOMCAT_CONNECTOR_SCHEME="https"
