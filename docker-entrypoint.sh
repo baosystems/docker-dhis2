@@ -28,11 +28,11 @@ _main() {
   if [ "$1" = 'remco' ]; then
 
     # Set environment variables for using remco to generate dhis.conf:
-    
+
     # Set contents of DATABASE_PASSWORD_FILE to DATABASE_PASSWORD
     if [ -z "${DATABASE_PASSWORD:-}" ] && [ -r "${DATABASE_PASSWORD_FILE:-}" ]; then
       export DATABASE_PASSWORD="$(<"${DATABASE_PASSWORD_FILE}")"
-      echo "[DEBUG] $SELF: set DATABASE_PASSWORD=redacted" >&2
+      echo "[DEBUG] $SELF: set DATABASE_PASSWORD from DATABASE_PASSWORD_FILE" >&2
     fi
 
     # Set contents of REDIS_PASSWORD_FILE to REDIS_PASSWORD
@@ -62,7 +62,7 @@ _main() {
   # or, "catalina.sh" for a full command of "docker-entrypoint.sh catalina.sh run -security"
   if [ "$1" = 'remco' ] || [ "$1" = 'catalina.sh' ]; then
 
-    # Print some environment variables
+    # Print some environment variables for debugging purposes if values are set
     VARS=(
       CATALINA_OPTS
       DHIS2_MAJOR
@@ -84,6 +84,7 @@ _main() {
         echo "[DEBUG] $SELF: environment $VAR=${!VAR}" >&2
       fi
     done
+    unset VARS
 
     ########
 
@@ -97,8 +98,8 @@ _main() {
     # If it times out (default is 30s) before the targets are available, it will exit with a
     # non-0 code, and this script will exit because of the bash options set at the top.
     if [ -n "${WAIT_HOSTS:-}" ] || [ -n "${WAIT_PATHS:-}" ]; then
-      echo "[INFO] $SELF: running /usr/local/bin/wait"
-      /usr/local/bin/wait
+      echo "[DEBUG] $SELF: running /usr/local/bin/wait" >&2
+      /usr/local/bin/wait >&2
     fi
 
     ########
@@ -108,7 +109,7 @@ _main() {
     if [ "${FORCE_HEALTHCHECK_WAIT:-}" = '1' ]; then
       echo "[DEBUG] $SELF: match FORCE_HEALTHCHECK_WAIT=1" >&2
       echo -n -e "HTTP/1.1 200 OK\r\nContent-Length: 0\r\nContent-Type: text/plain\r\n\r\n" | nc -l -q 1 -p 8080
-      echo "[INFO] $SELF: health check received, continuing"
+      echo "[DEBUG] $SELF: health check received, continuing" >&2
     fi
 
     ########
@@ -119,22 +120,22 @@ _main() {
       # The paths below might be mounts, so ensure that tomcat is the owner and can write
       for dir in /opt/dhis2/files /opt/dhis2/logs /usr/local/tomcat/logs ; do
         if [ -d "$dir" ]; then
-          echo "[INFO] $SELF: setting $dir ownership and permissions"
+          echo "[DEBUG] $SELF: setting $dir ownership and permissions" >&2
           chmod --changes u=rwX "$dir"
           chown --changes tomcat "$dir"
         fi
       done
 
-      # Run the passed command as the tomcat user.
+      # Run the arguments of this script as a command as the tomcat user.
       # NOTE: The script will not continue beyond this point.
-      echo "[INFO] $SELF: running as tomcat: $*"
       exec gosu tomcat "$@"
 
     fi
 
   fi
 
-  # If not running remco or catalina.sh, do nothing else and run the command with exec so it can proceed as pid 1
+  # Run the arguments of this script as a command.
+  # NOTE: The script will not continue beyond this point.
   exec "$@"
 
 }
