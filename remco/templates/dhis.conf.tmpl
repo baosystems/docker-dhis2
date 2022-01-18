@@ -45,17 +45,25 @@ connection.driver_class = org.postgresql.Driver
 {% endif %}
 
 # Database connection URL; default is unset
-{% if exists("/database/host") %}
+{% if exists("/dhis2/connection/url") %}
+connection.url = {{ getv("/dhis2/connection/url") }}
+{% elif exists("/database/host") %}
 connection.url = jdbc:postgresql://{{ getv("/database/host") }}:{{ getv("/database/port", "5432") }}/{{ getv("/database/dbname", "dhis2") }}
 {% else %}
 connection.url = jdbc:postgresql:{{ getv("/database/dbname", "dhis2") }}
 {% endif %}
 
 # Database username; default is unset
+{% if exists("/dhis2/connection/username") %}
+connection.username = {{ getv("/dhis2/connection/username") }}
+{% else %}
 connection.username = {{ getv("/database/username", "dhis") }}
+{% endif %}
 
 # Database password (sensitive); default is unset
-{% if exists("/database/password") %}
+{% if exists("/dhis2/connection/password") %}
+connection.password = {{ getv("/dhis2/connection/password") }}
+{% elif exists("/database/password") %}
 connection.password = {{ getv("/database/password") }}
 {% else %}
 #connection.password =
