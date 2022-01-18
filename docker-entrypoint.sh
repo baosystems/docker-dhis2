@@ -23,6 +23,16 @@ _main() {
 
   ########
 
+  # Deprecated logic
+
+  # Set value of the deprecated REDIS_PASSWORD_FILE variable to DHIS2_REDIS_PASSWORD_FILE
+  if [ -z "${DHIS2_REDIS_PASSWORD_FILE:-}" ] && [ -n "${REDIS_PASSWORD_FILE:-}" ]; then
+    export DHIS2_REDIS_PASSWORD_FILE="$REDIS_PASSWORD_FILE"
+    echo "[DEBUG] $SELF: copy deprecated REDIS_PASSWORD_FILE to DHIS2_REDIS_PASSWORD_FILE" >&2
+  fi
+
+  ########
+
   # Match first argument to this script.
   # Example: "remco" for a full command of "docker-entrypoint.sh remco -config /etc/remco/config"
   if [ "$1" = 'remco' ]; then
@@ -35,10 +45,10 @@ _main() {
       echo "[DEBUG] $SELF: set DATABASE_PASSWORD from DATABASE_PASSWORD_FILE" >&2
     fi
 
-    # Set contents of REDIS_PASSWORD_FILE to REDIS_PASSWORD
-    if [ -z "${REDIS_PASSWORD:-}" ] && [ -r "${REDIS_PASSWORD_FILE:-}" ]; then
-      export REDIS_PASSWORD="$(<"${REDIS_PASSWORD_FILE}")"
-      echo "[DEBUG] $SELF: set REDIS_PASSWORD=redacted" >&2
+    # Set contents of DHIS2_REDIS_PASSWORD_FILE to DHIS2_REDIS_PASSWORD
+    if [ -z "${DHIS2_REDIS_PASSWORD:-}" ] && [ -r "${DHIS2_REDIS_PASSWORD_FILE:-}" ]; then
+      export DHIS2_REDIS_PASSWORD="$(<"${DHIS2_REDIS_PASSWORD_FILE}")"
+      echo "[DEBUG] $SELF: set DHIS2_REDIS_PASSWORD from DHIS2_REDIS_PASSWORD_FILE" >&2
     fi
 
     # Set SYSTEM_FQDN as hostname

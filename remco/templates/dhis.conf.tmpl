@@ -90,35 +90,45 @@ connection.pool.max_size = {{ getv("/dhis2/connection/pool/maxsize") }}
 # ----------------------------------------------------------------------
 
 # Use or disable Redis; default is 'false'
-{% if gets("/redis/*") %}
+{% if exists("/dhis2/redis/enabled") %}
+redis.enabled = {{ getv("/dhis2/redis/enabled") }}
+{% elif gets("/redis/*") %}
 redis.enabled = true
 {% else %}
 #redis.enabled = false
 {% endif %}
 
 # Specifies where the redis server is running; default is 'localhost'
-{% if exists("/redis/host") %}
+{% if exists("/dhis2/redis/host") %}
+redis.host = {{ getv("/dhis2/redis/host") }}
+{% elif exists("/redis/host") %}
 redis.host = {{ getv("/redis/host") }}
 {% else %}
 #redis.host = localhost
 {% endif %}
 
 # Specifies the port in which the redis server is listening; default is '6379'
-{% if exists("/redis/port") %}
-redis.port = {{ getv("/redis/port", "6379") }}
+{% if exists("/dhis2/redis/port") %}
+redis.port = {{ getv("/dhis2/redis/port") }}
+{% elif exists("/redis/port") %}
+redis.port = {{ getv("/redis/port") }}
 {% else %}
 #redis.port = 6379
 {% endif %}
 
 # Specifies the authentication password; default is unset
-{% if exists("/redis/password") %}
+{% if exists("/dhis2/redis/password") %}
+redis.password = {{ getv("/dhis2/redis/password") }}
+{% elif exists("/redis/password") %}
 redis.password = {{ getv("/redis/password") }}
 {% else %}
 #redis.password =
 {% endif %}
 
 # Specifies whether the Redis server has SSL enabled; default is 'false'
-{% if exists("/redis/usessl") %}
+{% if exists("/dhis2/redis/use/ssl") %}
+redis.use.ssl = {{ getv("/dhis2/redis/use/ssl") }}
+{% elif exists("/redis/usessl") %}
 redis.use.ssl = true
 {% else %}
 #redis.use.ssl = false
@@ -126,7 +136,9 @@ redis.use.ssl = true
 
 # Set how frequently the leader election needs to occur and how long it would take for another instance
 # to take over as the leader after the previous leader has become unavailable; default is '2'
-{% if exists("/redis/leaderttl") %}
+{% if exists("/dhis2/leader/time/to/live/minutes") %}
+leader.time.to.live.minutes = {{ getv("/dhis2/leader/time/to/live/minutes") }}
+{% elif exists("/redis/leaderttl") %}
 leader.time.to.live.minutes = {{ getv("/redis/leaderttl") }}
 {% else %}
 #leader.time.to.live.minutes = 2
