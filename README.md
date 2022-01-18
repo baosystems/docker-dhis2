@@ -345,6 +345,9 @@ gunzip -c dhis2-db-sierra-leone-2.37.sql.gz | docker compose exec -T database ps
 #docker cp dhis2-db-sierra-leone-2.37.sql.gz "$( docker compose ps -q 'database' | head -n1 )":/tmp/db.sql.gz
 #docker compose exec database bash -c "gunzip -c /tmp/db.sql.gz | psql -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2' && rm -v /tmp/db.sql.gz"
 
+# Re-initialize DHIS2
+docker compose run --rm --env 'DHIS2_INIT_FORCE=1' dhis2_init
+
 # Start Tomcat
 docker compose start dhis2
 ```
