@@ -174,7 +174,9 @@ COPY --chmod=755 --chown=root:root ./helpers/db-export.sh /usr/local/bin/
 # remco configurations and templates
 COPY --chmod=644 --chown=root:root ./remco/config.toml /etc/remco/config
 COPY --chmod=644 --chown=root:root ./remco/onetime.toml /etc/remco/
+COPY --chmod=644 --chown=root:root ./remco/tomcat.toml /etc/remco/
 COPY --chmod=644 --chown=root:root ./remco/templates/dhis.conf.tmpl /etc/remco/templates/
+COPY --chmod=644 --chown=root:root ./remco/templates/tomcat/server.xml.tmpl /etc/remco/templates/tomcat/
 # Initialize empty remco log file for the tomcat user (the "EOF" on the next line is not a typo)
 COPY --chmod=644 --chown=tomcat:tomcat <<EOF /var/log/remco.log
 EOF

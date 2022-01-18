@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Keep the shutdown port (disabling it could prevent shutdown.sh and catalina.sh from stopping gracefully)
+  Reference: https://tomcat.apache.org/tomcat-9.0-doc/config/server.html
+-->
+<Server port="8005" shutdown="SHUTDOWN">
+
+  <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+  <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+  <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+  <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+
+  <Service name="Catalina">
+
+    <Connector protocol="org.apache.coyote.http11.Http11Nio2Protocol"
+               port="8080"
+               {% if getv("/tomcat/connector/proxyport", "8080") != "8080" %}
+               proxyPort="{{ getv("/tomcat/connector/proxyport") }}"
+               {% endif %}
+               {% if exists("/tomcat/connector/scheme") %}
+               scheme="{{ getv("/tomcat/connector/scheme") }}"
+               {% endif %}
+               {% if exists("/tomcat/connector/secure") %}
+               secure="{{ getv("/tomcat/connector/secure") }}"
+               {% endif %}
+               URIEncoding="UTF-8"
+               relaxedQueryChars="\ { } | [ ]"
+               />
+
+    <Engine name="Catalina" defaultHost="localhost">
+      <Host name="localhost" appBase="webapps" unpackWARs="false" autoDeploy="false">
+
+        <!-- Add real user IP address behind localhost proxy -->
+        <Valve className="org.apache.catalina.valves.RemoteIpValve"
+               remoteIpHeader="X-Forwarded-For"
+               requestAttributesEnabled="true"
+               internalProxies="127.0.0.1" />
+
+        <!-- Combined access log format with "X-Forwarded-For" added -->
+        <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+               prefix="localhost_access_log" suffix=".txt"
+               pattern="%h %l %u %t &quot;%r&quot; %s %b &quot;%{Referer}i&quot; &quot;%{User-Agent}i&quot; &quot;%{X-Forwarded-For}i&quot;" />
+
+      </Host>
+    </Engine>
+
+  </Service>
+</Server>

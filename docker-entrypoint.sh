@@ -77,6 +77,18 @@ _main() {
     export DHIS2_BUILD_TIME="$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
     export DHIS2_BUILD_DATE="$( grep --only-matching --extended-regexp '20[0-9]{2}-[0-9]{2}-[0-9]{2}' <<< "$DHIS2_BUILD_TIME" )"
 
+    ########
+
+    # Steps to perform if the running user is root.
+    if [ "$(id -u)" = '0' ]; then
+
+      if [ "${DISABLE_TOMCAT_TEMPLATES:-}" = '1' ]; then
+        # Configure tomcat server.xml as root as a "onetime" remco action.
+        remco -config /etc/remco/tomcat.toml
+      fi
+
+    fi
+
   fi
 
   ########
