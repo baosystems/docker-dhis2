@@ -207,38 +207,115 @@ filestore.secret = {{ getv("/dhis2/filestore/secret") }}
 # ----------------------------------------------------------------------
 
 # Hostname for this web server; default is unset
-{% if exists("/dhis2/cluster/hostname") %}
+{% if exists("/dhis2/cluster/hostname") and getv("/dhis2/debezium/enabled", "off") != "on" %}
 cluster.hostname = {{ getv("/dhis2/cluster/hostname") }}
-{% elif exists("/service/name") and exists("/system/ip") %}
+{% elif exists("/service/name") and exists("/system/ip") and getv("/dhis2/debezium/enabled", "off") != "on" %}
 cluster.hostname = {{ getv("/system/ip") }}
 {% else %}
 #cluster.hostname =
 {% endif %}
 
 # Port for cache listener; default is '4001'
-{% if exists("/dhis2/cluster/cache/port") %}
+{% if exists("/dhis2/cluster/cache/port") and getv("/dhis2/debezium/enabled", "off") != "on" %}
 cluster.cache.port = {{ getv("/dhis2/cluster/cache/port") }}
 {% else %}
 #cluster.cache.port = 4001
 {% endif %}
 
 # Port for remote object cache listener; default is '0'
-{% if exists("/cluster/cache/remote/object/port") %}
+{% if exists("/cluster/cache/remote/object/port") and getv("/dhis2/debezium/enabled", "off") != "on" %}
 cluster.cache.remote.object.port = {{ getv("/cluster/cache/remote/object/port") }}
-{% elif exists("/dhis2/cluster/hostname") or (exists("/service/name") and exists("/system/ip")) %}
+{% elif (exists("/dhis2/cluster/hostname") or (exists("/service/name") and exists("/system/ip"))) and getv("/dhis2/debezium/enabled", "off") != "on" %}
 cluster.cache.remote.object.port = 5001
 {% else %}
 #cluster.cache.remote.object.port = 0
 {% endif %}
 
 # List of Host:port participating in the cluster; default is unset
-{% if exists("/dhis2/cluster/members") %}
+{% if exists("/dhis2/cluster/members") and getv("/dhis2/debezium/enabled", "off") != "on" %}
 cluster.members = {{ getv("/dhis2/cluster/members") }}
-{% elif exists("/service/name") and exists("/system/ip") %}
+{% elif exists("/service/name") and exists("/system/ip") and getv("/dhis2/debezium/enabled", "off") != "on" %}
 cluster.members ={{ printf("%s", " ") }}{% for ip in lookupIP(getv("/service/name")) %}{% if ip != getv("/system/ip") %}{{ ip }}:{{ getv("/dhis2/cluster/cache/port", "4001") }},{% endif %}{% endfor %}
 
 {% else %}
 #cluster.members =
+{% endif %}
+{% if getv("/dhis2/build/major", "")|cut:"." >= "237" %}
+{# The debezium options were added in 2.37 #}
+# Application cache invalidation by listening for updates made by other instances; default is 'off'
+{% if exists("/dhis2/debezium/enabled") %}
+debezium.enabled = {{ getv("/dhis2/debezium/enabled") }}
+{% else %}
+#debezium.enabled = off
+{% endif %}
+
+# Cache invalidation database host name; default is unset
+{% if exists("/dhis2/debezium/db/hostname") %}
+debezium.db.hostname = {{ getv("/dhis2/debezium/db/hostname") }}
+{% elif getv("/dhis2/debezium/enabled", "off") == "on" and exists("/database/host") %}
+debezium.db.hostname = {{ getv("/database/host") }}
+{% else %}
+#debezium.db.hostname =
+{% endif %}
+
+# Cache invalidation database host port; default is unset
+{% if exists("/dhis2/debezium/db/port") %}
+debezium.db.port = {{ getv("/dhis2/debezium/db/port") }}
+{% elif getv("/dhis2/debezium/enabled", "off") == "on" %}
+debezium.db.port = {{ getv("/database/port", "5432") }}
+{% else %}
+#debezium.db.port =
+{% endif %}
+
+# Cache invalidation database name; default is unset
+{% if exists("/dhis2/debezium/db/name") %}
+debezium.db.name = {{ getv("/dhis2/debezium/db/name") }}
+{% elif getv("/dhis2/debezium/enabled", "off") == "on" %}
+debezium.db.name = {{ getv("/database/dbname", "dhis2") }}
+{% else %}
+#debezium.db.name =
+{% endif %}
+
+# Cache invalidation database username; default is unset
+{% if exists("/dhis2/debezium/connection/username") %}
+debezium.connection.username = {{ getv("/dhis2/debezium/connection/username") }}
+{% elif getv("/dhis2/debezium/enabled", "off") == "on" %}
+debezium.connection.username = {{ getv("/database/username", "dhis") }}
+{% else %}
+#debezium.connection.username =
+{% endif %}
+
+# Cache invalidation database password; default is unset
+{% if exists("/dhis2/debezium/connection/password") %}
+debezium.connection.password = {{ getv("/dhis2/debezium/connection/password") }}
+{% elif getv("/dhis2/debezium/enabled", "off") == "on" and exists("/database/password") %}
+debezium.connection.password = {{ getv("/database/password") }}
+{% else %}
+#debezium.connection.password =
+{% endif %}
+
+# Additional string used in the middle of the build replication slot name; default is unset
+# If set, the full slot name would resolve to: 'dhis2_[EPOCH_SECONDS]_[DEBEZIUM_SLOT_NAME]_[UUID4]'
+# If not set, the full slot name would resolve to: 'dhis2_[EPOCH_SECONDS]_[UUID4]'
+{% if exists("/dhis2/debezium/slot/name") %}
+debezium.slot.name = {{ getv("/dhis2/debezium/slot/name") }}
+{% else %}
+#debezium.slot.name =
+{% endif %}
+
+# Comma-separated string of additional database tables to not listen for updates; default is unset
+{% if exists("/dhis2/debezium/exclude/list") %}
+debezium.exclude.list = {{ getv("/dhis2/debezium/exclude/list") }}
+{% else %}
+#debezium.exclude.list =
+{% endif %}
+
+# Shutdown the Tomcat process if the replication connection is lost ; default is 'off'
+{% if exists("/dhis2/debezium/shutdown/on/connector/stop") %}
+debezium.shutdown_on.connector_stop = {{ getv("/dhis2/debezium/shutdown/on/connector/stop") }}
+{% else %}
+#debezium.shutdown_on.connector_stop = off
+{% endif %}
 {% endif %}
 
 # Node identifier, optional, useful in clusters; default is unset

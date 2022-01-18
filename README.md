@@ -171,25 +171,27 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
     * `REDIS_LEADERTTL` **[DEPRECATED]**: Same as `DHIS2_LEADER_TIME_TO_LIVE_MINUTES`.
 
 * `DHIS2_CLUSTER_HOSTNAME`: Value of _cluster.hostname_. If not provided and both `SERVICE_NAME` and
-  `SYSTEM_IP` are provided, _cluster.hostname_ will be set as the value of `SYSTEM_IP`
+  `SYSTEM_IP` are provided by the entry point, _cluster.hostname_ will be set as the value of
+  `SYSTEM_IP`. **NOTE:** If running DHIS2 2.37 or higher and any `DEBEZIUM_*` option is set, this
+  option will be ignored.
 
-* `SYSTEM_IP`: Value of _cluster.hostname_ if `DHIS2_CLUSTER_HOSTNAME` is not provided and
-  `SERVICE_NAME` is provided. This should not be set by the operator but instead populated in
-  `docker-entrypoint.sh`.
-
-* `DHIS2_CLUSTER_CACHE_PORT`: Value of _cluster.cache.port_.
+* `DHIS2_CLUSTER_CACHE_PORT`: Value of _cluster.cache.port_. **NOTE:** If running DHIS2 2.37 or
+  higher and any `DEBEZIUM_*` option is set, this option will be ignored.
 
 * `DHIS2_CLUSTER_CACHE_REMOTE_OBJECT_PORT`: Value of _cluster.cache.remote.object.port_; default is
   "5001" if unset and `DHIS2_CLUSTER_HOSTNAME` is set, or if unset and `SERVICE_NAME` and
-  `SYSTEM_IP` are both provided by the entry point.
+  `SYSTEM_IP` are both provided by the entry point. **NOTE:** If running DHIS2 2.37 or higher and
+  any `DEBEZIUM_*` option is set, this option will be ignored.
 
 * `DHIS2_CLUSTER_MEMBERS`: Value of _cluster.members_. If not provided and both `SERVICE_NAME` and
   `SYSTEM_IP` are provided, _cluster.members_ will be set as a list of the IP addresses from a DNS
-  query of `SERVICE_NAME` with `SYSTEM_ID` removed and _cluster.cache.port_ added.
+  query of `SERVICE_NAME` with `SYSTEM_ID` removed and _cluster.cache.port_ added. **NOTE:** If
+  running DHIS2 2.37 or higher and any `DEBEZIUM_*` option is set, this option will be ignored.
 
 * `SERVICE_NAME`: DNS hostname used to generate the value of _cluster.members_ if
   `DHIS2_CLUSTER_MEMBERS` is not provided. `SYSTEM_IP` must also be set as it is removed from the
-  DNS query result to build _cluster.members_.
+  DNS query result to build _cluster.members_. **NOTE:** If running DHIS2 2.37 or higher and any
+  `DEBEZIUM_*` option is set, this option will be ignored.
 
 * `DHIS2_NODE_ID`: Value of _node.id_. If not provided, _node.id_ is set by `SYSTEM_FQDN`, which is
   provided by the entry point.
@@ -255,6 +257,34 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 ### 2.36 and up
 
 * `DHIS2_SYSTEM_AUDIT_ENABLED`: Value of _system.audit.enabled_.
+
+### 2.37 and up
+
+* `DHIS2_DEBEZIUM_ENABLED`: Value of _debezium.enabled_; default is 'off'.
+
+* `DHIS2_DEBEZIUM_DB_HOSTNAME`: Value of _debezium.db.hostname_. If `DHIS2_DEBEZIUM_ENABLED` is set
+  to "on" and this value is not set, the value of `DATABASE_HOST` will be used.
+
+* `DHIS2_DEBEZIUM_DB_PORT`: Value of _debezium.db.port_. If `DHIS2_DEBEZIUM_ENABLED` is set to "on"
+  and this value is not set, the value of `DATABASE_PORT` will be used.
+
+* `DHIS2_DEBEZIUM_DB_NAME`: Value of _debezium.db.name_. If `DHIS2_DEBEZIUM_ENABLED` is set to "on"
+  and this value is not set, the value of `DATABASE_DBNAME` will be used.
+
+* `DHIS2_DEBEZIUM_CONNECTION_USERNAME`: Value of _debezium.connection.username_. If
+  `DHIS2_DEBEZIUM_ENABLED` is set to "on" and this value is not set, the value of
+  `DATABASE_USERNAME` will be used.
+
+* `DHIS2_DEBEZIUM_CONNECTION_PASSWORD`: Value of _debezium.connection.password_. If
+  `DHIS2_DEBEZIUM_ENABLED` is set to "on" and this value is not set, the value of
+  `DATABASE_PASSWORD` will be used.
+
+* `DHIS2_DEBEZIUM_SLOT_NAME`: Value of _debezium.slot.name_.
+
+* `DHIS2_DEBEZIUM_EXCLUDE_LIST`: Value of _debezium.exclude.list_.
+
+* `DHIS2_DEBEZIUM_SHUTDOWN_ON_CONNECTOR_STOP`: Value of _debezium.shutdown_on.connector_stop_;
+  default is 'off'.
 
 
 # Example: Docker Compose
