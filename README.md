@@ -16,8 +16,8 @@ _remco_:
 * If `DATABASE_PASSWORD` is empty or not set, the contents of `DATABASE_PASSWORD_FILE` will be set
   in `DATABASE_PASSWORD`.
 
-* If `REDIS_PASSWORD` is empty or not set, the contents of `REDIS_PASSWORD_FILE` will be set in
-  `REDIS_PASSWORD`.
+* If `DHIS2_REDIS_PASSWORD` is empty or not set, the contents of `DHIS2_REDIS_PASSWORD_FILE` will be set in
+  `DHIS2_REDIS_PASSWORD`.
 
 * If `SYSTEM_FQDN` is empty or not set, it will be exported as the output of `hostname --fqdn`.
 
@@ -108,8 +108,8 @@ argument is _remco_:
 * `DATABASE_PASSWORD_FILE`: if `DATABASE_PASSWORD` is empty or not set, the contents of
   `DATABASE_PASSWORD_FILE` will be set in `DATABASE_PASSWORD`.
 
-* `REDIS_PASSWORD_FILE`: if `REDIS_PASSWORD` is empty or not set, the contents of
-  `REDIS_PASSWORD_FILE` will be set in `REDIS_PASSWORD`.
+* `DHIS2_REDIS_PASSWORD_FILE`: if `DHIS2_REDIS_PASSWORD` is empty or not set, the contents of
+  `DHIS2_REDIS_PASSWORD_FILE` will be set in `DHIS2_REDIS_PASSWORD`.
 
 The following **OPTIONAL** environment variables are used in `docker-entrypoint.sh` and the first
 argument is _remco_ or _catalina.sh_:
@@ -147,16 +147,28 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 
 * `DHIS2_SERVER_HTTPS`: Value of _server.https_.
 
-* `REDIS_HOST`: Value of _redis.host_.
+* `DHIS2_REDIS_ENABLED`: Value of _redis.enabled_.
 
-* `REDIS_PORT`: Value of _redis.port_; default is "6379".
+* `DHIS2_REDIS_HOST`: Value of _redis.host_.
 
-* `REDIS_PASSWORD`: Value of _redis.password_.
+    * `REDIS_HOST` **[DEPRECATED]**: Same as `DHIS2_REDIS_HOST`.
 
-* `REDIS_USESSL`: If set and any value is provided, the value of _redis.use.ssl_ will be set to
-  "true".
+* `DHIS2_REDIS_PORT`: Value of _redis.port_.
 
-* `REDIS_LEADERTTL`: Value of _leader.time.to.live.minutes_.
+    * `REDIS_PORT` **[DEPRECATED]**: Same as `DHIS2_REDIS_PORT`.
+
+* `DHIS2_REDIS_PASSWORD`: Value of _redis.password_.
+
+    * `REDIS_PASSWORD` **[DEPRECATED]**: Same as `DHIS2_REDIS_PASSWORD`.
+
+* `DHIS2_REDIS_USE_SSL`: Value of _redis.use.ssl_.
+
+    * `REDIS_USESSL` **[DEPRECATED]**: If set and any value is provided, the value of
+      _redis.use.ssl_ will be set to "true".
+
+* `DHIS2_LEADER_TIME_TO_LIVE_MINUTES`: Value of _leader.time.to.live.minutes_.
+
+    * `REDIS_LEADERTTL` **[DEPRECATED]**: Same as `DHIS2_LEADER_TIME_TO_LIVE_MINUTES`.
 
 * `DHIS2_CLUSTER_HOSTNAME`: Value of _cluster.hostname_. If not provided and both `SERVICE_NAME` and
   `SYSTEM_IP` are provided, _cluster.hostname_ will be set as the value of `SYSTEM_IP`
