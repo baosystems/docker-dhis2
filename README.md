@@ -160,6 +160,10 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 
 * `DHIS2_CLUSTER_CACHE_PORT`: Value of _cluster.cache.port_.
 
+* `DHIS2_CLUSTER_CACHE_REMOTE_OBJECT_PORT`: Value of _cluster.cache.remote.object.port_; default is
+  "5001" if unset and `DHIS2_CLUSTER_HOSTNAME` is set, or if unset and `SERVICE_NAME` and
+  `SYSTEM_IP` are both provided by the entry point.
+
 * `DHIS2_CLUSTER_MEMBERS`: Value of _cluster.members_. If not provided and both `SERVICE_NAME` and
   `SYSTEM_IP` are provided, _cluster.members_ will be set as a list of the IP addresses from a DNS
   query of `SERVICE_NAME` with `SYSTEM_ID` removed and _cluster.cache.port_ added.
@@ -230,9 +234,6 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 * `DHIS2_FILESTORE_IDENTITY`: Value of _filestore.identity_.
 
 * `DHIS2_FILESTORE_SECRET`: Value of _filestore.secret_.
-
-Note: if `DHIS2_CLUSTER_HOSTNAME` is set, or if `SERVICE_NAME` and `SYSTEM_IP` are set,
-_cluster.cache.remote.object.port_ will be set to "5001".
 
 
 # Example: Docker Compose

@@ -203,7 +203,9 @@ cluster.cache.port = {{ getv("/dhis2/cluster/cache/port") }}
 {% endif %}
 
 # Port for remote object cache listener; default is '0'
-{% if exists("/dhis2/cluster/hostname") or exists("/service/name") and exists("/system/ip") %}
+{% if exists("/cluster/cache/remote/object/port") %}
+cluster.cache.remote.object.port = {{ getv("/cluster/cache/remote/object/port") }}
+{% elif exists("/dhis2/cluster/hostname") or (exists("/service/name") and exists("/system/ip")) %}
 cluster.cache.remote.object.port = 5001
 {% else %}
 #cluster.cache.remote.object.port = 0
