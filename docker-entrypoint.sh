@@ -63,6 +63,12 @@ _main() {
       echo "[DEBUG] $SELF: set SYSTEM_IP=$SYSTEM_IP" >&2
     fi
 
+    # Set DHIS2_SERVER_HTTPS to "on" if not set and DHIS2_SERVER_BASEURL begins with "https://"
+    if [ -z "${DHIS2_SERVER_HTTPS:-}" ] && [[ "${DHIS2_SERVER_BASEURL:-}" =~ ^https:// ]]; then
+      export DHIS2_SERVER_HTTPS="on"
+      echo "[DEBUG] $SELF: set DHIS2_SERVER_HTTPS=$DHIS2_SERVER_HTTPS" >&2
+    fi
+
     # Set DHIS2 build information (logic also used in 20_dhis2-initwar.sh)
     DHIS2_BUILD_PROPERTIES="$( unzip -q -p "$( find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib -maxdepth 1 -type f -name "dhis-service-core-2.*.jar" )" build.properties )"
     export DHIS2_BUILD_VERSION="$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"

@@ -145,7 +145,8 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 
 * `DHIS2_SERVER_BASEURL`: Value of _server.base.url_.
 
-* `DHIS2_SERVER_HTTPS`: Value of _server.https_.
+* `DHIS2_SERVER_HTTPS`: Value of _server.https_. If this is not set and `DHIS2_SERVER_BASEURL`
+  begins with "https://", this will be set to "on".
 
 * `DHIS2_REDIS_ENABLED`: Value of _redis.enabled_.
 
