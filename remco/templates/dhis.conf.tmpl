@@ -366,18 +366,18 @@ system.audit.enabled = {{ getv("/dhis2/system/audit/enabled") }}
 {% endif %}
 {% endif %}
 
-# Default is 'false'
+# Default is 'off'
 {% if exists("/dhis2/audit/logger") %}
 audit.logger = {{ getv("/dhis2/audit/logger") }}
 {% else %}
-#audit.logger = false
+#audit.logger = off
 {% endif %}
 
-# Default is 'true'
+# Default is 'on'
 {% if exists("/dhis2/audit/database") %}
 audit.database = {{ getv("/dhis2/audit/database") }}
 {% else %}
-#audit.database = true
+#audit.database = on
 {% endif %}
 
 # Default is unset
