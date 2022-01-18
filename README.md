@@ -297,9 +297,11 @@ The following environment variables can be used to create Tomcat's _server.xml_ 
 
 * `TOMCAT_CONNECTOR_PROXYPORT`: For the primary Connector, value of _proxyPort_.
 
-* `TOMCAT_CONNECTOR_SCHEME`: For the primary Connector, value of _scheme_.
+* `TOMCAT_CONNECTOR_SCHEME`: For the primary Connector, value of _scheme_. If not provided and
+  `DHIS2_SERVER_BASEURL` begins with "https://", the value will be "https".
 
-* `TOMCAT_CONNECTOR_SECURE`: For the primary Connector, value of _secure_.
+* `TOMCAT_CONNECTOR_SECURE`: For the primary Connector, value of _secure_. If not provided and
+  `DHIS2_SERVER_HTTPS` is "on", the value will be "true".
 
 
 # Example: Docker Compose

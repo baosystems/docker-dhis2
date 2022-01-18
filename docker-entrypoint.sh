@@ -69,6 +69,18 @@ _main() {
       echo "[DEBUG] $SELF: set DHIS2_SERVER_HTTPS=$DHIS2_SERVER_HTTPS" >&2
     fi
 
+    # Set TOMCAT_CONNECTOR_SCHEME to "https" if not set and DHIS2_SERVER_BASEURL begins with "https://"
+    if [ -z "${TOMCAT_CONNECTOR_SCHEME:-}" ] && [[ "${DHIS2_SERVER_BASEURL:-}" =~ ^https:// ]]; then
+      export TOMCAT_CONNECTOR_SCHEME="https"
+      echo "[DEBUG] $SELF: set TOMCAT_CONNECTOR_SCHEME=$TOMCAT_CONNECTOR_SCHEME" >&2
+    fi
+
+    # Set TOMCAT_CONNECTOR_SECURE to "true" if not set and DHIS2_SERVER_HTTPS is "on"
+    if [ -z "${TOMCAT_CONNECTOR_SECURE:-}" ] && [ "${DHIS2_SERVER_HTTPS:-}" = "on" ]; then
+      export TOMCAT_CONNECTOR_SECURE="true"
+      echo "[DEBUG] $SELF: set TOMCAT_CONNECTOR_SECURE=$TOMCAT_CONNECTOR_SECURE" >&2
+    fi
+
     # Set DHIS2 build information (logic also used in 20_dhis2-initwar.sh)
     DHIS2_BUILD_PROPERTIES="$( unzip -q -p "$( find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib -maxdepth 1 -type f -name "dhis-service-core-2.*.jar" )" build.properties )"
     export DHIS2_BUILD_VERSION="$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
