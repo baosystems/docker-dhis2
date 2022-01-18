@@ -225,14 +225,11 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 
 * `DHIS2_FILESTORE_CONTAINER`: Value of _filestore.container_.
 
-* `DHIS2_FILESTORE_LOCATION`: Value of _filestore.location_. Only used if
-  `DHIS2_FILESTORE_CONTAINER` is set to "bucket".
+* `DHIS2_FILESTORE_LOCATION`: Value of _filestore.location_.
 
-* `DHIS2_FILESTORE_IDENTITY`: Value of _filestore.identity_. Only used if
-  `DHIS2_FILESTORE_CONTAINER` is set to "bucket".
+* `DHIS2_FILESTORE_IDENTITY`: Value of _filestore.identity_.
 
-* `DHIS2_FILESTORE_SECRET`: Value of _filestore.secret_. Only used if `DHIS2_FILESTORE_CONTAINER` is
-  set to "bucket".
+* `DHIS2_FILESTORE_SECRET`: Value of _filestore.secret_.
 
 Note: if `DHIS2_CLUSTER_HOSTNAME` is set, or if `SERVICE_NAME` and `SYSTEM_IP` are set,
 _cluster.cache.remote.object.port_ will be set to "5001".
