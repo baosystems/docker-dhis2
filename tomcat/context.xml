@@ -29,7 +29,7 @@
     <Manager pathname="" />
     -->
 
-    <!-- 
+    <!--
       Stop on failed deployments:
         - Set "force" to just perform a "System.exit" of the server JVM
         - Otherwise enable call to shutdown port, optionally
