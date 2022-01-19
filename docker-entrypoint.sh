@@ -100,7 +100,7 @@ _main() {
     # Steps to perform if the running user is root.
     if [ "$(id -u)" = '0' ]; then
 
-      if [ "${DISABLE_TOMCAT_TEMPLATES:-}" = '1' ]; then
+      if [ "${DISABLE_TOMCAT_TEMPLATES:-}" != '1' ]; then
         # Configure tomcat server.xml as root as a "onetime" remco action.
         remco -config /etc/remco/tomcat.toml
       fi
