@@ -506,6 +506,18 @@ audit.aggregate = {{ getv("/dhis2/audit/aggregate") }}
 
 
 # ----------------------------------------------------------------------
+# Performance
+# ----------------------------------------------------------------------
+
+# Analytics server-side cache expiration in seconds; default is '0'
+{% if exists("/dhis2/analytics/cache/expiration") %}
+analytics.cache.expiration = {{ getv("/dhis2/analytics/cache/expiration") }}
+{% else %}
+#analytics.cache.expiration = 0
+{% endif %}
+
+
+# ----------------------------------------------------------------------
 # End of template
 # ----------------------------------------------------------------------
 

@@ -263,6 +263,8 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 
 * `DHIS2_FILESTORE_SECRET`: Value of _filestore.secret_.
 
+* `DHIS2_ANALYTICS_CACHE_EXPIRATION`: Value of _analytics.cache.expiration_.
+
 ### 2.36 and up
 
 * `DHIS2_SYSTEM_AUDIT_ENABLED`: Value of _system.audit.enabled_.
