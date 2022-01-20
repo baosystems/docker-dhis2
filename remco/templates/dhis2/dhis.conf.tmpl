@@ -24,6 +24,13 @@ server.https = {{ getv("/dhis2/server/https") }}
 #server.https = off
 {% endif %}
 
+# System mode for database read operations only; default is 'off'
+{% if exists("/dhis2/system/read/only/mode") %}
+system.read_only_mode = {{ getv("/dhis2/system/read/only/mode") }}
+{% else %}
+#system.read_only_mode = off
+{% endif %}
+
 
 # ----------------------------------------------------------------------
 # Database connection for PostgreSQL
