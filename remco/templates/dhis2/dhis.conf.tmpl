@@ -24,6 +24,13 @@ server.https = {{ getv("/dhis2/server/https") }}
 #server.https = off
 {% endif %}
 
+# Session timeout in seconds; default is '3600'
+{% if exists("/dhis2/system/session/timeout") %}
+system.session.timeout = {{ getv("/dhis2/system/session/timeout") }}
+{% else %}
+#system.session.timeout = 3600
+{% endif %}
+
 # System mode for database read operations only; default is 'off'
 {% if exists("/dhis2/system/read/only/mode") %}
 system.read_only_mode = {{ getv("/dhis2/system/read/only/mode") }}
