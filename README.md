@@ -299,6 +299,8 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 * `DHIS2_DEBEZIUM_SHUTDOWN_ON_CONNECTOR_STOP`: Value of _debezium.shutdown_on.connector_stop_;
   default is 'off'.
 
+* `DHIS2_SYSTEM_CACHE_CAP_PERCENTAGE`: Value of _system.cache.cap.percentage_.
+
 ## Generating Tomcat server.xml with Remco
 
 The following environment variables can be used to create Tomcat's _server.xml_ when using the

@@ -524,6 +524,15 @@ system.cache.max_size.factor = {{ getv("/dhis2/system/cache/max/size/factor") }}
 #system.cache.max_size.factor = 0.5
 {% endif %}
 {% endif %}
+{% if getv("/dhis2/build/major", "")|cut:"." >= "237" %}
+{# The system.cache.cap.percentage option was added in 2.37 #}
+# Percentage cap limit for all cache memory usages. If set to 0, no limit is set; default is '0'
+{% if exists("/dhis2/system/cache/cap/percentage") %}
+system.cache.cap.percentage = {{ getv("/dhis2/system/cache/cap/percentage") }}
+{% else %}
+#system.cache.cap.percentage = 0
+{% endif %}
+{% endif %}
 
 
 # ----------------------------------------------------------------------
