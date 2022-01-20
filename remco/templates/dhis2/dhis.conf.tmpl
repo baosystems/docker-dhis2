@@ -461,7 +461,7 @@ changelog.tracker = {{ getv("/dhis2/changelog/tracker") }}
 # ----------------------------------------------------------------------
 {% if getv("/dhis2/build/major", "")|cut:"." >= "236" %}
 {# The system.audit.enabled option was added in 2.36 #}
-# Default is 'true'
+# Allows enabling/disabling audits system-wide (without configuring the audit matrix); default is 'true'
 {% if exists("/dhis2/system/audit/enabled") %}
 system.audit.enabled = {{ getv("/dhis2/system/audit/enabled") }}
 {% else %}
@@ -484,21 +484,22 @@ audit.database = {{ getv("/dhis2/audit/database") }}
 #audit.database ={% if getv("/dhis2/build/major", "")|cut:"." >= "238" %} off{% else %} on{% endif %}
 {% endif %}
 
-# Default is unset
+
+# Sets the audit matrix for metadata; default is unset
 {% if exists("/dhis2/audit/metadata") %}
 audit.metadata = {{ getv("/dhis2/audit/metadata") }}
 {% else %}
 #audit.metadata =
 {% endif %}
 
-# Default is unset
+# Sets the audit matrix for tracker; default is unset
 {% if exists("/dhis2/audit/tracker") %}
 audit.tracker = {{ getv("/dhis2/audit/tracker") }}
 {% else %}
 #audit.tracker =
 {% endif %}
 
-# Default is unset
+# Sets the audit matrix for aggregate; default is unset
 {% if exists("/dhis2/audit/aggregate") %}
 audit.aggregate = {{ getv("/dhis2/audit/aggregate") }}
 {% else %}
