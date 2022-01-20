@@ -269,6 +269,8 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 
 * `DHIS2_SYSTEM_AUDIT_ENABLED`: Value of _system.audit.enabled_.
 
+* `DHIS2_SYSTEM_CACHE_MAX_SIZE_FACTOR`: Value of _system.cache.max_size.factor_.
+
 ### 2.37 and up
 
 * `DHIS2_DEBEZIUM_ENABLED`: Value of _debezium.enabled_; default is 'off'.

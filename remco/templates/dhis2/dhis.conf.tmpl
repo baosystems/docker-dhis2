@@ -515,6 +515,15 @@ analytics.cache.expiration = {{ getv("/dhis2/analytics/cache/expiration") }}
 {% else %}
 #analytics.cache.expiration = 0
 {% endif %}
+{% if getv("/dhis2/build/major", "")|cut:"." >= "236" %}
+{# The system.cache.max_size.factor option was added in 2.36 #}
+# Set the maximum size for the cache instance to be built. If set to 0, no caching will take place; default is '0.5'
+{% if exists("/dhis2/system/cache/max/size/factor") %}
+system.cache.max_size.factor = {{ getv("/dhis2/system/cache/max/size/factor") }}
+{% else %}
+#system.cache.max_size.factor = 0.5
+{% endif %}
+{% endif %}
 
 
 # ----------------------------------------------------------------------
