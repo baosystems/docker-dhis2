@@ -469,18 +469,19 @@ system.audit.enabled = {{ getv("/dhis2/system/audit/enabled") }}
 {% endif %}
 {% endif %}
 
-# Default is 'off'
+# Send audits to "logs/dhis-audit.log"; default is '{% if getv("/dhis2/build/major", "")|cut:"." >= "238" %}on{% else %}off{% endif %}'
 {% if exists("/dhis2/audit/logger") %}
 audit.logger = {{ getv("/dhis2/audit/logger") }}
 {% else %}
-#audit.logger = off
+#audit.logger ={% if getv("/dhis2/build/major", "")|cut:"." >= "238" %} on{% else %} off{% endif %}
 {% endif %}
 
-# Default is 'on'
+
+# Save audits to database table "audit"; default is '{% if getv("/dhis2/build/major", "")|cut:"." >= "238" %}off{% else %}on{% endif %}'
 {% if exists("/dhis2/audit/database") %}
 audit.database = {{ getv("/dhis2/audit/database") }}
 {% else %}
-#audit.database = on
+#audit.database ={% if getv("/dhis2/build/major", "")|cut:"." >= "238" %} off{% else %} on{% endif %}
 {% endif %}
 
 # Default is unset
