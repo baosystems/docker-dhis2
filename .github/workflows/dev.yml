@@ -323,6 +323,8 @@ jobs:
           timeout 300s bash -c 'until grep -q healthy <( docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 'docker-dhis2-dhis2-1' ); do sleep 3; done'
 
       - name: Generate analytics
+        continue-on-error: ${{ endsWith(matrix.dhis2_version, 'dev') }}  # don't block the remaining actions if it fails on dev versions
+        timeout-minutes: 30
         run: |
           set -x
           export STATUS_URI="$(
