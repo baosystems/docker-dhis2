@@ -347,6 +347,7 @@ jobs:
             start dhis2
 
           # Wait for service to be healthy
+          set +x
           until grep -q healthy <( docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 'docker-dhis2-dhis2-1' ); do
             sleep 3
           done
