@@ -309,6 +309,7 @@ jobs:
               exec -T database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
 
       - name: Start DHIS2 container
+        timeout-minutes: 15
         run: |
           set -x
 
@@ -319,8 +320,10 @@ jobs:
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
             start dhis2
 
-          # Wait 300s for service to be healthy (https://stackoverflow.com/a/58759974)
-          timeout 300s bash -c 'until grep -q healthy <( docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 'docker-dhis2-dhis2-1' ); do sleep 3; done'
+          # Wait for service to be healthy
+          until grep -q healthy <( docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 'docker-dhis2-dhis2-1' ); do
+            sleep 3
+          done
 
       - name: Generate analytics
         continue-on-error: ${{ endsWith(matrix.dhis2_version, 'dev') }}  # don't block the remaining actions if it fails on dev versions
