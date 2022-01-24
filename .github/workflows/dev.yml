@@ -104,7 +104,6 @@ jobs:
         id: get_war
         run: |
           set -x
-
           # Trims full version like "2.36.1" or "2.36-dev" to "2.36" from job matrix
           DHIS2_MAJOR="$( cut -c1-4 <<< "${{ matrix.dhis2_version }}" )"
 
@@ -134,7 +133,6 @@ jobs:
         id: versions_helper
         run: |
           set -x
-
           # Trims full version like "2.36.1" or "2.36.7-SNAPSHOT" to "2.36" from war file build properties
           DHIS2_MAJOR="$( cut -c1-4 <<< "${{ steps.get_war.outputs.build_version }}" )"
           echo "::set-output name=dhis2_major::$DHIS2_MAJOR"
@@ -234,7 +232,6 @@ jobs:
       - name: Use image from local registry in Compose
         run: |
           set -x
-
           sed \
             --regexp-extended \
             --expression="/^\s+image:/ s,ghcr\.io/baosystems/dhis2[^\"]+,${{ fromJSON(steps.image_build.outputs.metadata)['image.name'] }},g" \
@@ -244,7 +241,6 @@ jobs:
       - name: Pull Compose stack images
         run: |
           set -x
-
           docker compose \
             --project-name 'docker-dhis2' \
             --project-directory 'source' \
@@ -255,7 +251,6 @@ jobs:
       - name: Create and start DHIS2 Compose stack
         run: |
           set -x
-
           docker compose \
             --project-name 'docker-dhis2' \
             --project-directory 'source' \
@@ -266,7 +261,6 @@ jobs:
       - name: Stop DHIS2 container
         run: |
           set -x
-
           docker compose \
             --project-name 'docker-dhis2' \
             --project-directory 'source' \
@@ -277,7 +271,6 @@ jobs:
       - name: Empty the database
         run: |
           set -x
-
           docker compose \
             --project-name 'docker-dhis2' \
             --project-directory 'source' \
@@ -288,7 +281,6 @@ jobs:
       - name: Import sample data
         run: |
           set -x
-
           if [[ "${{ matrix.dhis2_version }}" =~ ^2\.[0-9]{2}-dev$ ]]; then
             DHIS2_DB_URL="https://databases.dhis2.org/sierra-leone/${{ steps.versions_helper.outputs.dhis2_major }}/dhis2-db-sierra-leone.sql.gz"
           else
@@ -312,7 +304,6 @@ jobs:
         timeout-minutes: 15
         run: |
           set -x
-
           docker compose \
             --project-name 'docker-dhis2' \
             --project-directory 'source' \
