@@ -101,11 +101,11 @@ fi
 
 
 # The following section requires the following environment variables set:
-# - PGDATABASE (default: "postgres")
-# - PGHOST or DATABASE_HOST (default: "localhost")
-# - PGPORT (default: "5432")
-# - PGUSER (default: "postgres", must be a PostgreSQL superuser)
-# - PGPASSWORD or contents in PGPASSWORD_FILE (required for PGUSER in most PostgreSQL installations)
+# - PGDATABASE
+# - PGHOST
+# - PGPORT
+# - PGUSER
+# - PGPASSWORD
 
 # Check if pg_stat_statements is available to PostgreSQL
 PGSTATSTATEMENTS_AVAILABLE="$( psql -At -c "SELECT 1 FROM pg_available_extensions WHERE name = 'pg_stat_statements';" )"

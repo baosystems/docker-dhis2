@@ -109,13 +109,13 @@ fi
 
 
 # The following section requires the following environment variables set:
-# - DATABASE_DBNAME (default: "dhis2")
-# - DATABASE_USERNAME (default: "dhis")
-# - DATABASE_PASSWORD or contents in DATABASE_PASSWORD_FILE (optional, but strongly recommended)
-# - PGHOST or DATABASE_HOST (default: "localhost")
-# - PGPORT (default: "5432")
-# - PGUSER (default: "postgres", must be a PostgreSQL superuser)
-# - PGPASSWORD or contents in PGPASSWORD_FILE (required for PGUSER in most PostgreSQL installations)
+# - DATABASE_DBNAME
+# - DATABASE_USERNAME
+# - DATABASE_PASSWORD (optional, but strongly recommended)
+# - PGHOST
+# - PGPORT
+# - PGUSER
+# - PGPASSWORD
 
 psql --echo-all --echo-hidden -v ON_ERROR_STOP=1 <<- EOSQL
 -- Create role if not exists (https://stackoverflow.com/a/8099557)

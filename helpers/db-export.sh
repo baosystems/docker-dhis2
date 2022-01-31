@@ -64,11 +64,11 @@ export WAIT_BEFORE='0'
 
 
 # The following section requires the following environment variables set:
-# - DATABASE_DBNAME (default: "dhis2")
-# - PGHOST or DATABASE_HOST (default: "localhost")
-# - PGPORT (default: "5432")
-# - PGUSER (default: "postgres", must be a PostgreSQL superuser)
-# - PGPASSWORD or contents in PGPASSWORD_FILE (required for PGUSER in most PostgreSQL installations)
+# - DATABASE_DBNAME
+# - PGHOST
+# - PGPORT
+# - PGUSER
+# - PGPASSWORD
 
 
 # Using stderr for log output in this script to avoid being in a stdout-captured file
