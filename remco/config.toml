@@ -2,7 +2,7 @@
 # Global configuration
 ################################################################
 log_format = "json"
-log_level = "debug"
+log_level = "error"
 log_file = "/var/log/remco.log"
 
 
