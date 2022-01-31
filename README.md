@@ -13,11 +13,11 @@ variables and then run `catalina.sh run`.
 The following occur when using _docker-entrypoint.sh_ as the entry point and the command starts with
 _remco_:
 
-* If `DATABASE_PASSWORD` is empty or not set, the contents of `DATABASE_PASSWORD_FILE` will be set
-  in `DATABASE_PASSWORD`.
+* If `DHIS2_DATABASE_PASSWORD` is empty or not set, the contents of `DHIS2_DATABASE_PASSWORD_FILE`
+  will be set in `DHIS2_DATABASE_PASSWORD`.
 
-* If `DHIS2_REDIS_PASSWORD` is empty or not set, the contents of `DHIS2_REDIS_PASSWORD_FILE` will be set in
-  `DHIS2_REDIS_PASSWORD`.
+* If `DHIS2_REDIS_PASSWORD` is empty or not set, the contents of `DHIS2_REDIS_PASSWORD_FILE` will be
+  set in `DHIS2_REDIS_PASSWORD`.
 
 * If `SYSTEM_FQDN` is empty or not set, it will be exported as the output of `hostname --fqdn`.
 
@@ -66,32 +66,33 @@ dhis2-init, only one instance of a script will be performed at a time. Environme
 initiated and ready to be used by DHIS2.
 
 * `10_dhis2-database.sh`: Create and initialize a PostgreSQL database with PostGIS. If `WAIT_HOSTS`
-  is empty or null, it will be set to `PGHOST`/`DATABASE_HOST`:`PGPORT`/"5432" and the script will
-  proceed once the database service is ready. The script requires the following environment
+  is empty or null, it will be set to `PGHOST`/`DHIS2_DATABASE_HOST`:`PGPORT`/"5432" and the script
+  will proceed once the database service is ready. The script requires the following environment
   variables set:
 
-    * `DATABASE_DBNAME` (default: "dhis2")
-    * `DATABASE_USERNAME` (default: "dhis")
-    * `DATABASE_PASSWORD` or contents in `DATABASE_PASSWORD_FILE` (optional, but strongly
-      recommended)
-    * `PGHOST` or `DATABASE_HOST` (default: "localhost")
+    * `DHIS2_DATABASE_NAME` (default: "dhis2")
+    * `DHIS2_DATABASE_USERNAME` (default: "dhis")
+    * `DHIS2_DATABASE_PASSWORD`, or contents in `DHIS2_DATABASE_PASSWORD_FILE` (optional, but
+      strongly recommended)
+    * `PGHOST`, or `DHIS2_DATABASE_HOST` (default: "localhost")
     * `PGPORT` (default: "5432")
     * `PGUSER` (default: "postgres", must be a PostgreSQL superuser)
-    * `PGPASSWORD` or contents in `PGPASSWORD_FILE` (required for `PGUSER` in most PostgreSQL
-      installations)
+    * `PGPASSWORD` (required for `PGUSER` in most PostgreSQL installations), or contents in
+      `PGPASSWORD_FILE` (optional, but strongly recommended)
 
 * `15_pgstatstatements.sh`: Add the
   [pg_stat_statements](https://www.postgresql.org/docs/current/pgstatstatements.html) extension to
   the `PGDATABASE`. This module is included in the PostGIS container image. If `WAIT_HOSTS` is empty
-  or null, it will be set to `PGHOST`/`DATABASE_HOST`:`PGPORT`/"5432" and the script will proceed
-  once the database service is ready. The script requires the following environment variables set:
+  or null, it will be set to `PGHOST`/`DHIS2_DATABASE_HOST`:`PGPORT`/"5432" and the script will
+  proceed once the database service is ready. The script requires the following environment
+  variables set:
 
     * `PGDATABASE` (default: "postgres")
-    * `PGHOST` or `DATABASE_HOST` (default: "localhost")
+    * `PGHOST`, or `DHIS2_DATABASE_HOST` (default: "localhost")
     * `PGPORT` (default: "5432")
     * `PGUSER` (default: "postgres", must be a PostgreSQL superuser)
-    * `PGPASSWORD` or contents in `PGPASSWORD_FILE` (required for `PGUSER` in most PostgreSQL
-      installations)
+    * `PGPASSWORD` (required for `PGUSER` in most PostgreSQL installations), or contents in
+      `PGPASSWORD_FILE` (optional, but strongly recommended)
 
 * `20_dhis2-initwar.sh`: If the last line in _/dhis2-init.progress/20_dhis2-initwar_history.csv_
   does not contain a line stating that the current DHIS2 version and build revision started
@@ -106,8 +107,8 @@ initiated and ready to be used by DHIS2.
 The following **OPTIONAL** environment variables are used in `docker-entrypoint.sh` and the first
 argument is _remco_:
 
-* `DATABASE_PASSWORD_FILE`: if `DATABASE_PASSWORD` is empty or not set, the contents of
-  `DATABASE_PASSWORD_FILE` will be set in `DATABASE_PASSWORD`.
+* `DHIS2_DATABASE_PASSWORD_FILE`: if `DHIS2_DATABASE_PASSWORD` is empty or not set, the contents of
+  `DHIS2_DATABASE_PASSWORD_FILE` will be set in `DHIS2_DATABASE_PASSWORD`.
 
 * `DHIS2_REDIS_PASSWORD_FILE`: if `DHIS2_REDIS_PASSWORD` is empty or not set, the contents of
   `DHIS2_REDIS_PASSWORD_FILE` will be set in `DHIS2_REDIS_PASSWORD`.
@@ -130,22 +131,38 @@ See the [DHIS2
 documentation](https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html)
 for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value is provided:_
 
-* `DATABASE_HOST`: Database hostname used to set the jdbc value in _connection.url_. If not
-  provided, _connection.url_ will be set to _jdbc:postgresql:${DATABASE_DBNAME:-dhis2}_. **NOTE:**
-  If `DHIS2_CONNECTION_URL` is provided, it will take precedent.
+* `DHIS2_DATABASE_HOST`: Database hostname used to set the jdbc value in _connection.url_. If not
+  provided, _connection.url_ will be set to _jdbc:postgresql:${DHIS2_DATABASE_NAME:-dhis2}_.
+  **NOTE:** If `DHIS2_CONNECTION_URL` is provided, it will take precedent.
 
-* `DATABASE_PORT`: If this and `DATABASE_HOST` are provided, used to set the jdbc value in
-  _connection.url_; default is "5432". **NOTE:** If `DHIS2_CONNECTION_URL` is provided, it will take
-  precedent.
+    * `DATABASE_HOST` **[DEPRECATED]**: Same as `DHIS2_DATABASE_HOST`.
 
-* `DATABASE_DBNAME`: Database name used to set the jdbc value in _connection.url_; default is
+* `DHIS2_DATABASE_PORT`: If this and `DHIS2_DATABASE_HOST` are provided, used to set the jdbc value
+  in _connection.url_; default is "5432". **NOTE:** If `DHIS2_CONNECTION_URL` is provided, it will
+  take precedent.
+
+    * `DATABASE_PORT` **[DEPRECATED]**: Same as `DHIS2_DATABASE_PORT`.
+
+* `DHIS2_DATABASE_NAME`: Database name used to set the jdbc value in _connection.url_; default is
   "dhis2". **NOTE:** If `DHIS2_CONNECTION_URL` is provided, it will take precedent.
 
-* `DATABASE_USERNAME`: Value of _connection.username_; default is "dhis". **NOTE:** If
+    * `DATABASE_DBNAME` **[DEPRECATED]**: Same as `DHIS2_DATABASE_NAME`.
+
+* `DHIS2_DATABASE_USERNAME`: Value of _connection.username_; default is "dhis". **NOTE:** If
   `DHIS2_CONNECTION_USERNAME` is provided, it will take precedent.
 
-* `DATABASE_PASSWORD`: Value of _connection.password_. **NOTE:** If `DHIS2_CONNECTION_PASSWORD` is
-  provided, it will take precedent.
+    * `DATABASE_USERNAME` **[DEPRECATED]**: Same as `DHIS2_DATABASE_USERNAME`.
+
+* `DHIS2_DATABASE_PASSWORD`: Value of _connection.password_. **NOTE:** If
+  `DHIS2_CONNECTION_PASSWORD` is provided, it will take precedent.
+
+    * `DATABASE_PASSWORD` **[DEPRECATED]**: Same as `DHIS2_DATABASE_PASSWORD`.
+
+* `DHIS2_DATABASE_PASSWORD_FILE`: Value of _connection.password_ will be set as the content of
+  the path provided. **NOTE:** If `DHIS2_CONNECTION_PASSWORD` or `DHIS2_DATABASE_PASSWORD` provided,
+  they will take precedent.
+
+    * `DATABASE_PASSWORD_FILE` **[DEPRECATED]**: Same as `DHIS2_DATABASE_PASSWORD_FILE`.
 
 * `DHIS2_SERVER_BASEURL`: Value of _server.base.url_.
 
@@ -276,21 +293,21 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 * `DHIS2_DEBEZIUM_ENABLED`: Value of _debezium.enabled_; default is 'off'.
 
 * `DHIS2_DEBEZIUM_DB_HOSTNAME`: Value of _debezium.db.hostname_. If `DHIS2_DEBEZIUM_ENABLED` is set
-  to "on" and this value is not set, the value of `DATABASE_HOST` will be used.
+  to "on" and this value is not set, the value of `DHIS2_DATABASE_HOST` will be used.
 
 * `DHIS2_DEBEZIUM_DB_PORT`: Value of _debezium.db.port_. If `DHIS2_DEBEZIUM_ENABLED` is set to "on"
-  and this value is not set, the value of `DATABASE_PORT` will be used.
+  and this value is not set, the value of `DHIS2_DATABASE_PORT` will be used.
 
 * `DHIS2_DEBEZIUM_DB_NAME`: Value of _debezium.db.name_. If `DHIS2_DEBEZIUM_ENABLED` is set to "on"
-  and this value is not set, the value of `DATABASE_DBNAME` will be used.
+  and this value is not set, the value of `DHIS2_DATABASE_NAME` will be used.
 
 * `DHIS2_DEBEZIUM_CONNECTION_USERNAME`: Value of _debezium.connection.username_. If
   `DHIS2_DEBEZIUM_ENABLED` is set to "on" and this value is not set, the value of
-  `DATABASE_USERNAME` will be used.
+  `DHIS2_DATABASE_USERNAME` will be used.
 
 * `DHIS2_DEBEZIUM_CONNECTION_PASSWORD`: Value of _debezium.connection.password_. If
   `DHIS2_DEBEZIUM_ENABLED` is set to "on" and this value is not set, the value of
-  `DATABASE_PASSWORD` will be used.
+  `DHIS2_DATABASE_PASSWORD` will be used.
 
 * `DHIS2_DEBEZIUM_SLOT_NAME`: Value of _debezium.slot.name_.
 

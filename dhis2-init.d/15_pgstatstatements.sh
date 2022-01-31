@@ -57,14 +57,24 @@ fi
 ################################################################################
 
 
+# Deprecated logic
+
+# Set value of the deprecated DATABASE_HOST variable to DHIS2_DATABASE_HOST
+if [ -z "${DHIS2_DATABASE_HOST:-}" ] && [ -n "${DATABASE_HOST:-}" ]; then
+  export DHIS2_DATABASE_HOST="$DATABASE_HOST"
+  echo "[DEBUG] $SELF: copy deprecated DATABASE_HOST to DHIS2_DATABASE_HOST" >&2
+fi
+
+########
+
 # If PGPASSWORD is empty or null, set it to the contents of PGPASSWORD_FILE
 if [[ -z "${PGPASSWORD:-}" ]] && [[ -r "${PGPASSWORD_FILE:-}" ]]; then
   export PGPASSWORD="$(<"${PGPASSWORD_FILE}")"
 fi
 
-# If PGHOST is empty or null, set it to DATABASE_HOST if provided
-if [[ -z "${PGHOST:-}" ]] && [[ -n "${DATABASE_HOST:-}" ]]; then
-  export PGHOST="${DATABASE_HOST:-}"
+# If PGHOST is empty or null, set it to DHIS2_DATABASE_HOST if provided
+if [[ -z "${PGHOST:-}" ]] && [[ -n "${DHIS2_DATABASE_HOST:-}" ]]; then
+  export PGHOST="${DHIS2_DATABASE_HOST:-}"
 fi
 
 # Set default values if not provided in the environment

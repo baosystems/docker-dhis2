@@ -17,19 +17,29 @@ echo "[INFO] $SELF: started..." >&2  # Using stderr for info messages
 ################################################################################
 
 
+# Deprecated logic
+
+# Set value of the deprecated DATABASE_HOST variable to DHIS2_DATABASE_HOST
+if [ -z "${DHIS2_DATABASE_HOST:-}" ] && [ -n "${DATABASE_HOST:-}" ]; then
+  export DHIS2_DATABASE_HOST="$DATABASE_HOST"
+  echo "[DEBUG] $SELF: copy deprecated DATABASE_HOST to DHIS2_DATABASE_HOST" >&2
+fi
+
+########
+
 # If PGPASSWORD is empty or null, set it to the contents of PGPASSWORD_FILE
 if [[ -z "${PGPASSWORD:-}" ]] && [[ -r "${PGPASSWORD_FILE:-}" ]]; then
   export PGPASSWORD="$(<"${PGPASSWORD_FILE}")"
 fi
 
-# If PGHOST is empty or null, set it to DATABASE_HOST if provided
-if [[ -z "${PGHOST:-}" ]] && [[ -n "${DATABASE_HOST:-}" ]]; then
-  export PGHOST="${DATABASE_HOST:-}"
+# If PGHOST is empty or null, set it to DHIS2_DATABASE_HOST if provided
+if [[ -z "${PGHOST:-}" ]] && [[ -n "${DHIS2_DATABASE_HOST:-}" ]]; then
+  export PGHOST="${DHIS2_DATABASE_HOST:-}"
 fi
 
 # Set default values if not provided in the environment
-if [[ -z "${DATABASE_DBNAME:-}" ]]; then
-  export DATABASE_DBNAME='dhis2'
+if [[ -z "${DHIS2_DATABASE_NAME:-}" ]]; then
+  export DHIS2_DATABASE_NAME='dhis2'
 fi
 if [[ -z "${PGHOST:-}" ]]; then
   export PGHOST='localhost'
@@ -64,7 +74,7 @@ export WAIT_BEFORE='0'
 
 
 # The following section requires the following environment variables set:
-# - DATABASE_DBNAME
+# - DHIS2_DATABASE_NAME
 # - PGHOST
 # - PGPORT
 # - PGUSER
@@ -72,10 +82,10 @@ export WAIT_BEFORE='0'
 
 
 # Using stderr for log output in this script to avoid being in a stdout-captured file
-echo "[INFO] $SELF: Exporting database \"$DATABASE_DBNAME\":" >&2
+echo "[INFO] $SELF: Exporting database \"$DHIS2_DATABASE_NAME\":" >&2
 
 pg_dump \
-  "$DATABASE_DBNAME" \
+  "$DHIS2_DATABASE_NAME" \
   --format='plain' \
   --no-owner \
   --no-privileges \

@@ -25,6 +25,42 @@ _main() {
 
   # Deprecated logic
 
+  # Set value of the deprecated DATABASE_HOST variable to DHIS2_DATABASE_HOST
+  if [ -z "${DHIS2_DATABASE_HOST:-}" ] && [ -n "${DATABASE_HOST:-}" ]; then
+    export DHIS2_DATABASE_HOST="$DATABASE_HOST"
+    echo "[DEBUG] $SELF: copy deprecated DATABASE_HOST to DHIS2_DATABASE_HOST" >&2
+  fi
+
+  # Set value of the deprecated DATABASE_PORT variable to DHIS2_DATABASE_PORT
+  if [ -z "${DHIS2_DATABASE_PORT:-}" ] && [ -n "${DATABASE_PORT:-}" ]; then
+    export DHIS2_DATABASE_PORT="$DATABASE_PORT"
+    echo "[DEBUG] $SELF: copy deprecated DATABASE_PORT to DHIS2_DATABASE_PORT" >&2
+  fi
+
+  # Set value of the deprecated DATABASE_DBNAME variable to DHIS2_DATABASE_NAME
+  if [ -z "${DHIS2_DATABASE_NAME:-}" ] && [ -n "${DATABASE_DBNAME:-}" ]; then
+    export DHIS2_DATABASE_NAME="$DATABASE_DBNAME"
+    echo "[DEBUG] $SELF: copy deprecated DATABASE_DBNAME to DHIS2_DATABASE_NAME" >&2
+  fi
+
+  # Set value of the deprecated DATABASE_USERNAME variable to DHIS2_DATABASE_USERNAME
+  if [ -z "${DHIS2_DATABASE_USERNAME:-}" ] && [ -n "${DATABASE_USERNAME:-}" ]; then
+    export DHIS2_DATABASE_USERNAME="$DATABASE_USERNAME"
+    echo "[DEBUG] $SELF: copy deprecated DATABASE_USERNAME to DHIS2_DATABASE_USERNAME" >&2
+  fi
+
+  # Set value of the deprecated DATABASE_PASSWORD variable to DHIS2_DATABASE_PASSWORD
+  if [ -z "${DHIS2_DATABASE_PASSWORD:-}" ] && [ -n "${DATABASE_PASSWORD:-}" ]; then
+    export DHIS2_DATABASE_PASSWORD="$DATABASE_PASSWORD"
+    echo "[DEBUG] $SELF: copy deprecated DATABASE_PASSWORD to DHIS2_DATABASE_PASSWORD" >&2
+  fi
+
+  # Set value of the deprecated DATABASE_PASSWORD_FILE variable to DHIS2_DATABASE_PASSWORD_FILE
+  if [ -z "${DHIS2_DATABASE_PASSWORD_FILE:-}" ] && [ -n "${DATABASE_PASSWORD_FILE:-}" ]; then
+    export DHIS2_DATABASE_PASSWORD_FILE="$DATABASE_PASSWORD_FILE"
+    echo "[DEBUG] $SELF: copy deprecated DATABASE_PASSWORD_FILE to DHIS2_DATABASE_PASSWORD_FILE" >&2
+  fi
+
   # Set value of the deprecated REDIS_PASSWORD_FILE variable to DHIS2_REDIS_PASSWORD_FILE
   if [ -z "${DHIS2_REDIS_PASSWORD_FILE:-}" ] && [ -n "${REDIS_PASSWORD_FILE:-}" ]; then
     export DHIS2_REDIS_PASSWORD_FILE="$REDIS_PASSWORD_FILE"
@@ -39,10 +75,10 @@ _main() {
 
     # Set environment variables for using remco to generate dhis.conf:
 
-    # Set contents of DATABASE_PASSWORD_FILE to DATABASE_PASSWORD
-    if [ -z "${DATABASE_PASSWORD:-}" ] && [ -r "${DATABASE_PASSWORD_FILE:-}" ]; then
-      export DATABASE_PASSWORD="$(<"${DATABASE_PASSWORD_FILE}")"
-      echo "[DEBUG] $SELF: set DATABASE_PASSWORD from DATABASE_PASSWORD_FILE" >&2
+    # Set contents of DHIS2_DATABASE_PASSWORD_FILE to DHIS2_DATABASE_PASSWORD
+    if [ -z "${DHIS2_DATABASE_PASSWORD:-}" ] && [ -r "${DHIS2_DATABASE_PASSWORD_FILE:-}" ]; then
+      export DHIS2_DATABASE_PASSWORD="$(<"${DHIS2_DATABASE_PASSWORD_FILE}")"
+      echo "[DEBUG] $SELF: set DHIS2_DATABASE_PASSWORD from DHIS2_DATABASE_PASSWORD_FILE" >&2
     fi
 
     # Set contents of DHIS2_REDIS_PASSWORD_FILE to DHIS2_REDIS_PASSWORD
@@ -116,10 +152,10 @@ _main() {
   # or, "catalina.sh" for a full command of "docker-entrypoint.sh catalina.sh run -security"
   if [ "$1" = 'remco' ] || [ "$1" = 'catalina.sh' ]; then
 
-    # If DATABASE_HOST is provided, ensure DATABASE_HOST:DATABASE_PORT is in WAIT_HOSTS
-    if [ -n "${DATABASE_HOST:-}" ] && [[ "$WAIT_HOSTS" != *"${DATABASE_HOST:-}:${DATABASE_PORT:-5432}"* ]]; then
-      echo "[DEBUG] $SELF: add $DATABASE_HOST:${DATABASE_PORT:-5432} to WAIT_HOSTS" >&2
-      export WAIT_HOSTS="$DATABASE_HOST:${DATABASE_PORT:-5432},${WAIT_HOSTS:-}"
+    # If DHIS2_DATABASE_HOST is provided, ensure DHIS2_DATABASE_HOST:DHIS2_DATABASE_PORT is in WAIT_HOSTS
+    if [ -n "${DHIS2_DATABASE_HOST:-}" ] && [[ "$WAIT_HOSTS" != *"${DHIS2_DATABASE_HOST:-}:${DHIS2_DATABASE_PORT:-5432}"* ]]; then
+      echo "[DEBUG] $SELF: add $DHIS2_DATABASE_HOST:${DHIS2_DATABASE_PORT:-5432} to WAIT_HOSTS" >&2
+      export WAIT_HOSTS="$DHIS2_DATABASE_HOST:${DHIS2_DATABASE_PORT:-5432},${WAIT_HOSTS:-}"
     fi
 
     # If DHIS2_REDIS_ENABLED is "true", ensure $DHIS2_REDIS_HOST:DHIS2_REDIS_PORT is in WAIT_HOSTS

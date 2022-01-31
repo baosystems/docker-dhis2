@@ -57,9 +57,49 @@ fi
 ################################################################################
 
 
-# If DATABASE_PASSWORD is empty or null, set it to the contents of DATABASE_PASSWORD_FILE
-if [[ -z "${DATABASE_PASSWORD:-}" ]] && [[ -r "${DATABASE_PASSWORD_FILE:-}" ]]; then
-  export DATABASE_PASSWORD="$(<"${DATABASE_PASSWORD_FILE}")"
+# Deprecated logic
+
+# Set value of the deprecated DATABASE_HOST variable to DHIS2_DATABASE_HOST
+if [ -z "${DHIS2_DATABASE_HOST:-}" ] && [ -n "${DATABASE_HOST:-}" ]; then
+  export DHIS2_DATABASE_HOST="$DATABASE_HOST"
+  echo "[DEBUG] $SELF: copy deprecated DATABASE_HOST to DHIS2_DATABASE_HOST" >&2
+fi
+
+# Set value of the deprecated DATABASE_PORT variable to DHIS2_DATABASE_PORT
+if [ -z "${DHIS2_DATABASE_PORT:-}" ] && [ -n "${DATABASE_PORT:-}" ]; then
+  export DHIS2_DATABASE_PORT="$DATABASE_PORT"
+  echo "[DEBUG] $SELF: copy deprecated DATABASE_PORT to DHIS2_DATABASE_PORT" >&2
+fi
+
+# Set value of the deprecated DATABASE_DBNAME variable to DHIS2_DATABASE_NAME
+if [ -z "${DHIS2_DATABASE_NAME:-}" ] && [ -n "${DATABASE_DBNAME:-}" ]; then
+  export DHIS2_DATABASE_NAME="$DATABASE_DBNAME"
+  echo "[DEBUG] $SELF: copy deprecated DATABASE_DBNAME to DHIS2_DATABASE_NAME" >&2
+fi
+
+# Set value of the deprecated DATABASE_USERNAME variable to DHIS2_DATABASE_USERNAME
+if [ -z "${DHIS2_DATABASE_USERNAME:-}" ] && [ -n "${DATABASE_USERNAME:-}" ]; then
+  export DHIS2_DATABASE_USERNAME="$DATABASE_USERNAME"
+  echo "[DEBUG] $SELF: copy deprecated DATABASE_USERNAME to DHIS2_DATABASE_USERNAME" >&2
+fi
+
+# Set value of the deprecated DATABASE_PASSWORD variable to DHIS2_DATABASE_PASSWORD
+if [ -z "${DHIS2_DATABASE_PASSWORD:-}" ] && [ -n "${DATABASE_PASSWORD:-}" ]; then
+  export DHIS2_DATABASE_PASSWORD="$DATABASE_PASSWORD"
+  echo "[DEBUG] $SELF: copy deprecated DATABASE_PASSWORD to DHIS2_DATABASE_PASSWORD" >&2
+fi
+
+# Set value of the deprecated DATABASE_PASSWORD_FILE variable to DHIS2_DATABASE_PASSWORD_FILE
+if [ -z "${DHIS2_DATABASE_PASSWORD_FILE:-}" ] && [ -n "${DATABASE_PASSWORD_FILE:-}" ]; then
+  export DHIS2_DATABASE_PASSWORD_FILE="$DATABASE_PASSWORD_FILE"
+  echo "[DEBUG] $SELF: copy deprecated DATABASE_PASSWORD_FILE to DHIS2_DATABASE_PASSWORD_FILE" >&2
+fi
+
+########
+
+# If DHIS2_DATABASE_PASSWORD is empty or null, set it to the contents of DHIS2_DATABASE_PASSWORD_FILE
+if [[ -z "${DHIS2_DATABASE_PASSWORD:-}" ]] && [[ -r "${DHIS2_DATABASE_PASSWORD_FILE:-}" ]]; then
+  export DHIS2_DATABASE_PASSWORD="$(<"${DHIS2_DATABASE_PASSWORD_FILE}")"
 fi
 
 # If PGPASSWORD is empty or null, set it to the contents of PGPASSWORD_FILE
@@ -67,17 +107,17 @@ if [[ -z "${PGPASSWORD:-}" ]] && [[ -r "${PGPASSWORD_FILE:-}" ]]; then
   export PGPASSWORD="$(<"${PGPASSWORD_FILE}")"
 fi
 
-# If PGHOST is empty or null, set it to DATABASE_HOST if provided
-if [[ -z "${PGHOST:-}" ]] && [[ -n "${DATABASE_HOST:-}" ]]; then
-  export PGHOST="${DATABASE_HOST:-}"
+# If PGHOST is empty or null, set it to DHIS2_DATABASE_HOST if provided
+if [[ -z "${PGHOST:-}" ]] && [[ -n "${DHIS2_DATABASE_HOST:-}" ]]; then
+  export PGHOST="${DHIS2_DATABASE_HOST:-}"
 fi
 
 # Set default values if not provided in the environment
-if [[ -z "${DATABASE_USERNAME:-}" ]]; then
-  export DATABASE_USERNAME='dhis'
+if [[ -z "${DHIS2_DATABASE_USERNAME:-}" ]]; then
+  export DHIS2_DATABASE_USERNAME='dhis'
 fi
-if [[ -z "${DATABASE_DBNAME:-}" ]]; then
-  export DATABASE_DBNAME='dhis2'
+if [[ -z "${DHIS2_DATABASE_NAME:-}" ]]; then
+  export DHIS2_DATABASE_NAME='dhis2'
 fi
 if [[ -z "${PGHOST:-}" ]]; then
   export PGHOST='localhost'
@@ -109,9 +149,9 @@ fi
 
 
 # The following section requires the following environment variables set:
-# - DATABASE_DBNAME
-# - DATABASE_USERNAME
-# - DATABASE_PASSWORD (optional, but strongly recommended)
+# - DHIS2_DATABASE_NAME
+# - DHIS2_DATABASE_USERNAME
+# - DHIS2_DATABASE_PASSWORD (optional, but strongly recommended)
 # - PGHOST
 # - PGPORT
 # - PGUSER
@@ -124,26 +164,26 @@ DO
 BEGIN
   IF NOT EXISTS ( SELECT
                   FROM pg_roles
-                  WHERE rolname = '$DATABASE_USERNAME') THEN
-    CREATE ROLE $DATABASE_USERNAME ;
+                  WHERE rolname = '$DHIS2_DATABASE_USERNAME') THEN
+    CREATE ROLE $DHIS2_DATABASE_USERNAME ;
   END IF;
 END
 \$do$;
 
 -- Create database if not exists (https://stackoverflow.com/a/18389184)
-SELECT 'CREATE DATABASE $DATABASE_DBNAME' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$DATABASE_DBNAME')\gexec
+SELECT 'CREATE DATABASE $DHIS2_DATABASE_NAME' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$DHIS2_DATABASE_NAME')\gexec
 
 -- Set database owner
-ALTER DATABASE "$DATABASE_DBNAME" OWNER TO $DATABASE_USERNAME;
+ALTER DATABASE "$DHIS2_DATABASE_NAME" OWNER TO $DHIS2_DATABASE_USERNAME;
 
 -- Grant all to specified role
-GRANT ALL PRIVILEGES ON DATABASE $DATABASE_DBNAME TO $DATABASE_USERNAME;
+GRANT ALL PRIVILEGES ON DATABASE $DHIS2_DATABASE_NAME TO $DHIS2_DATABASE_USERNAME;
 
--- Connect to database $DATABASE_DBNAME
-\c $DATABASE_DBNAME
+-- Connect to database $DHIS2_DATABASE_NAME
+\c $DHIS2_DATABASE_NAME
 
 -- public schema permissions
-ALTER SCHEMA public OWNER TO $DATABASE_USERNAME;
+ALTER SCHEMA public OWNER TO $DHIS2_DATABASE_USERNAME;
 REVOKE ALL ON SCHEMA public FROM public;
 
 -- public schema existing object ownership, excluding PostGIS objects
@@ -151,21 +191,21 @@ DO \$\$DECLARE r record;
 BEGIN
   FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename != 'spatial_ref_sys'
   LOOP
-    EXECUTE 'ALTER TABLE '|| r.tablename ||' OWNER TO $DATABASE_USERNAME;';
+    EXECUTE 'ALTER TABLE '|| r.tablename ||' OWNER TO $DHIS2_DATABASE_USERNAME;';
   END LOOP;
 END\$\$;
 DO \$\$DECLARE r record;
 BEGIN
   FOR r IN SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public'
   LOOP
-    EXECUTE 'ALTER SEQUENCE '|| r.sequence_name ||' OWNER TO $DATABASE_USERNAME;';
+    EXECUTE 'ALTER SEQUENCE '|| r.sequence_name ||' OWNER TO $DHIS2_DATABASE_USERNAME;';
   END LOOP;
 END\$\$;
 DO \$\$DECLARE r record;
 BEGIN
   FOR r IN SELECT table_name FROM information_schema.views WHERE table_schema = 'public' AND table_name != 'geography_columns' AND table_name != 'geometry_columns'
   LOOP
-    EXECUTE 'ALTER VIEW '|| r.table_name ||' OWNER TO $DATABASE_USERNAME;';
+    EXECUTE 'ALTER VIEW '|| r.table_name ||' OWNER TO $DHIS2_DATABASE_USERNAME;';
   END LOOP;
 END\$\$;
 
@@ -174,11 +214,11 @@ CREATE SCHEMA IF NOT EXISTS postgis AUTHORIZATION $PGUSER;
 ALTER SCHEMA postgis OWNER TO $PGUSER;
 
 -- Set database search_path to include the postgis schema
-ALTER DATABASE "$DATABASE_DBNAME" SET search_path TO public,postgis;
+ALTER DATABASE "$DHIS2_DATABASE_NAME" SET search_path TO public,postgis;
 EOSQL
 
 # Check if PostGIS is installed to the database
-POSTGIS_EXISTS="$( psql --dbname "$DATABASE_DBNAME" -At -c "SELECT 1 FROM pg_extension WHERE extname='postgis';" )"
+POSTGIS_EXISTS="$( psql --dbname "$DHIS2_DATABASE_NAME" -At -c "SELECT 1 FROM pg_extension WHERE extname='postgis';" )"
 # If so, move it to its own schema
 if [[ "${POSTGIS_EXISTS:-0}" = "1" ]]; then
   # Capture the version of PostGIS available to the PostgreSQL host
@@ -187,7 +227,7 @@ if [[ "${POSTGIS_EXISTS:-0}" = "1" ]]; then
   # Check if running in Amazon RDS
   IS_RDS="$( psql --dbname 'template1' -At -c "SELECT 1 FROM pg_stat_activity WHERE usename = 'rdsadmin' LIMIT 1;" )"
   if [[ "${IS_RDS:-0}" != "1" ]]; then
-    psql --dbname "$DATABASE_DBNAME" --echo-all --echo-hidden -v ON_ERROR_STOP=1 <<- EOSQL
+    psql --dbname "$DHIS2_DATABASE_NAME" --echo-all --echo-hidden -v ON_ERROR_STOP=1 <<- EOSQL
 -- If the postgis extension is installed, ensure it is in the postgis schema
 -- (These statements do not work in Amazon RDS)
 UPDATE pg_extension SET extrelocatable = TRUE WHERE extname = 'postgis';
@@ -195,7 +235,7 @@ ALTER EXTENSION postgis SET SCHEMA postgis;
 EOSQL
   fi
 
-  psql --dbname "$DATABASE_DBNAME" --echo-all --echo-hidden -v ON_ERROR_STOP=1 <<- EOSQL
+  psql --dbname "$DHIS2_DATABASE_NAME" --echo-all --echo-hidden -v ON_ERROR_STOP=1 <<- EOSQL
 -- Update PostGIS to the latest version available
 ALTER EXTENSION postgis UPDATE TO '${POSTGIS_VERSION}next';
 ALTER EXTENSION postgis UPDATE TO '${POSTGIS_VERSION}';
@@ -203,11 +243,11 @@ EOSQL
 fi
 
 # Resume database setup
-psql --dbname "$DATABASE_DBNAME" --echo-all --echo-hidden -v ON_ERROR_STOP=1 <<- EOSQL
--- postgis schema default privileges for user "$DATABASE_USERNAME" to use
-ALTER DEFAULT PRIVILEGES IN SCHEMA postgis GRANT SELECT ON TABLES TO $DATABASE_USERNAME;
-ALTER DEFAULT PRIVILEGES IN SCHEMA postgis GRANT SELECT,USAGE ON SEQUENCES TO $DATABASE_USERNAME;
-ALTER DEFAULT PRIVILEGES IN SCHEMA postgis GRANT EXECUTE ON FUNCTIONS TO $DATABASE_USERNAME;
+psql --dbname "$DHIS2_DATABASE_NAME" --echo-all --echo-hidden -v ON_ERROR_STOP=1 <<- EOSQL
+-- postgis schema default privileges for user "$DHIS2_DATABASE_USERNAME" to use
+ALTER DEFAULT PRIVILEGES IN SCHEMA postgis GRANT SELECT ON TABLES TO $DHIS2_DATABASE_USERNAME;
+ALTER DEFAULT PRIVILEGES IN SCHEMA postgis GRANT SELECT,USAGE ON SEQUENCES TO $DHIS2_DATABASE_USERNAME;
+ALTER DEFAULT PRIVILEGES IN SCHEMA postgis GRANT EXECUTE ON FUNCTIONS TO $DHIS2_DATABASE_USERNAME;
 
 -- Create postgis extension in the postgis schema
 CREATE EXTENSION IF NOT EXISTS postgis WITH SCHEMA postgis;
@@ -216,17 +256,17 @@ ALTER EXTENSION postgis UPDATE;
 -- PostGIS 3.x migration action
 DROP EXTENSION IF EXISTS postgis_raster;
 
--- postgis schema effective privileges for user "$DATABASE_USERNAME" to use
-GRANT USAGE ON SCHEMA postgis TO $DATABASE_USERNAME;
-GRANT SELECT ON ALL TABLES IN SCHEMA postgis TO $DATABASE_USERNAME;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA postgis TO $DATABASE_USERNAME;
+-- postgis schema effective privileges for user "$DHIS2_DATABASE_USERNAME" to use
+GRANT USAGE ON SCHEMA postgis TO $DHIS2_DATABASE_USERNAME;
+GRANT SELECT ON ALL TABLES IN SCHEMA postgis TO $DHIS2_DATABASE_USERNAME;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA postgis TO $DHIS2_DATABASE_USERNAME;
 EOSQL
 
-# If DATABASE_PASSWORD is provided, set LOGIN capability and a password for DATABASE_USERNAME
-if [[ -n "${DATABASE_PASSWORD:-}" ]]; then
+# If DHIS2_DATABASE_PASSWORD is provided, set LOGIN capability and a password for DHIS2_DATABASE_USERNAME
+if [[ -n "${DHIS2_DATABASE_PASSWORD:-}" ]]; then
   psql -v ON_ERROR_STOP=1 <<- EOSQL
 -- Set role password and grant login
-ALTER ROLE $DATABASE_USERNAME WITH LOGIN PASSWORD '$DATABASE_PASSWORD';
+ALTER ROLE $DHIS2_DATABASE_USERNAME WITH LOGIN PASSWORD '$DHIS2_DATABASE_PASSWORD';
 EOSQL
 fi
 

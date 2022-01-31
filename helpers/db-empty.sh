@@ -17,19 +17,35 @@ echo "[INFO] $SELF: started..."
 ################################################################################
 
 
+# Deprecated logic
+
+# Set value of the deprecated DATABASE_HOST variable to DHIS2_DATABASE_HOST
+if [ -z "${DHIS2_DATABASE_HOST:-}" ] && [ -n "${DATABASE_HOST:-}" ]; then
+  export DHIS2_DATABASE_HOST="$DATABASE_HOST"
+  echo "[DEBUG] $SELF: copy deprecated DATABASE_HOST to DHIS2_DATABASE_HOST" >&2
+fi
+
+# Set value of the deprecated DATABASE_DBNAME variable to DHIS2_DATABASE_NAME
+if [ -z "${DHIS2_DATABASE_NAME:-}" ] && [ -n "${DATABASE_DBNAME:-}" ]; then
+  export DHIS2_DATABASE_NAME="$DATABASE_DBNAME"
+  echo "[DEBUG] $SELF: copy deprecated DATABASE_DBNAME to DHIS2_DATABASE_NAME" >&2
+fi
+
+########
+
 # If PGPASSWORD is empty or null, set it to the contents of PGPASSWORD_FILE
 if [[ -z "${PGPASSWORD:-}" ]] && [[ -r "${PGPASSWORD_FILE:-}" ]]; then
   export PGPASSWORD="$(<"${PGPASSWORD_FILE}")"
 fi
 
-# If PGHOST is empty or null, set it to DATABASE_HOST if provided
-if [[ -z "${PGHOST:-}" ]] && [[ -n "${DATABASE_HOST:-}" ]]; then
-  export PGHOST="${DATABASE_HOST:-}"
+# If PGHOST is empty or null, set it to DHIS2_DATABASE_HOST if provided
+if [[ -z "${PGHOST:-}" ]] && [[ -n "${DHIS2_DATABASE_HOST:-}" ]]; then
+  export PGHOST="${DHIS2_DATABASE_HOST:-}"
 fi
 
 # Set default values if not provided in the environment
-if [[ -z "${DATABASE_DBNAME:-}" ]]; then
-  export DATABASE_DBNAME='dhis2'
+if [[ -z "${DHIS2_DATABASE_NAME:-}" ]]; then
+  export DHIS2_DATABASE_NAME='dhis2'
 fi
 if [[ -z "${PGHOST:-}" ]]; then
   export PGHOST='localhost'
@@ -64,32 +80,32 @@ export WAIT_BEFORE='0'
 
 
 # The following section requires the following environment variables set:
-# - DATABASE_DBNAME
+# - DHIS2_DATABASE_NAME
 # - PGHOST
 # - PGPORT
 # - PGUSER
 # - PGPASSWORD
 
 
-echo "[INFO] $SELF: Drop database \"${DATABASE_DBNAME}\":"
+echo "[INFO] $SELF: Drop database \"${DHIS2_DATABASE_NAME}\":"
 psql \
   --dbname='template1' \
   --echo-all \
   --echo-hidden \
   -v ON_ERROR_STOP=1 \
-  --command="DROP DATABASE IF EXISTS ${DATABASE_DBNAME};"
+  --command="DROP DATABASE IF EXISTS ${DHIS2_DATABASE_NAME};"
 
-echo "[INFO] $SELF: Create empty database \"${DATABASE_DBNAME}\":"
+echo "[INFO] $SELF: Create empty database \"${DHIS2_DATABASE_NAME}\":"
 psql \
   --dbname='template1' \
   --echo-all \
   --echo-hidden \
   -v ON_ERROR_STOP=1 \
-  --command="CREATE DATABASE ${DATABASE_DBNAME};"
+  --command="CREATE DATABASE ${DHIS2_DATABASE_NAME};"
 
-echo "[INFO] $SELF: Add PostGIS to database \"${DATABASE_DBNAME}\":"
+echo "[INFO] $SELF: Add PostGIS to database \"${DHIS2_DATABASE_NAME}\":"
 psql \
-  --dbname="$DATABASE_DBNAME" \
+  --dbname="$DHIS2_DATABASE_NAME" \
   --echo-all \
   --echo-hidden \
   -v ON_ERROR_STOP=1 \

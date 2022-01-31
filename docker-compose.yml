@@ -88,8 +88,8 @@ services:
         target: /pass_pg_postgres
         read_only: true
     environment:
-      DATABASE_HOST: database
-      DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
+      DHIS2_DATABASE_HOST: database
+      DHIS2_DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
       DHIS2_INIT_SKIP: 20_dhis2-initwar.sh  # String like "item1.sh,item2.sh"; NOTE: Only skip "20_dhis2-initwar.sh" on stacks with a single Tomcat node
       PGPASSWORD_FILE: /pass_pg_postgres/pass_pg_postgres.txt
       WAIT_BEFORE: 10  # Allow time for postgres to initialize itself. Also, 10_dhis2-database.sh will set WAIT_HOSTS to the database host if not specified.
@@ -122,8 +122,8 @@ services:
         target: /pass_pg_dhis
         read_only: true
     environment:
-      DATABASE_HOST: database
-      DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
+      DHIS2_DATABASE_HOST: database
+      DHIS2_DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
       WAIT_PATHS: /dhis2-init.progress/dhis2-init_status.txt  # Allow for dhis2_init to complete (necessary in some cases where dhis2_init may not run again)
       WAIT_TIMEOUT: 300  # Allow for dhis2_init to complete (default is 30)
     command:
