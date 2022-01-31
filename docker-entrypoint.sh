@@ -169,7 +169,7 @@ _main() {
     # non-0 code, and this script will exit because of the bash options set at the top.
     if [ -n "${WAIT_HOSTS:-}" ] || [ -n "${WAIT_PATHS:-}" ]; then
       echo "[DEBUG] $SELF: running /usr/local/bin/wait" >&2
-      /usr/local/bin/wait
+      /usr/local/bin/wait 2> >( sed -r -e 's/^\[(DEBUG|INFO)\s+(wait)\]/[\1] \2:/g' >&2 )
     fi
 
     ########

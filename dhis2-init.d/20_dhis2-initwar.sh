@@ -107,7 +107,7 @@ env \
   WAIT_BEFORE=3 \
   WAIT_HOSTS=localhost:8080 \
   WAIT_TIMEOUT=300 \
-  /usr/local/bin/wait
+  /usr/local/bin/wait 2> >( sed -r -e 's/^\[(DEBUG|INFO)\s+(wait)\]/[\1] \2:/g' >&2 )
 
 # Assume DHIS2 is ready when the login page renders
 if timeout --signal=SIGINT 900s bash -c "until curl --output /dev/null --silent --max-time 3 --fail http://localhost:8080/dhis-web-commons/security/login.action ; do echo [INFO] $SELF: Waiting for DHIS2 login screen... ; sleep 3 ; done"

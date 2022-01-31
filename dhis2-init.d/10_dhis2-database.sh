@@ -102,7 +102,7 @@ fi
 # If it times out before the targets are available, it will exit with a non-0 code,
 # and this script will quit because of the bash option "set -e" above.
 # https://github.com/ufoscout/docker-compose-wait
-/usr/local/bin/wait
+/usr/local/bin/wait 2> >( sed -r -e 's/^\[(DEBUG|INFO)\s+(wait)\]/[\1] \2:/g' >&2 )
 
 
 ################################################################################
