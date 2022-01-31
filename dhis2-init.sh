@@ -23,7 +23,6 @@ ITEMS=(
   shuf
   sleep
   tee
-  /usr/local/bin/wait
 )
 for ITEM in "${ITEMS[@]}"; do
   if ! command -V "$ITEM" &>/dev/null ; then
