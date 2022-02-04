@@ -99,6 +99,175 @@ connection.pool.max_size = {{ getv("/dhis2/connection/pool/maxsize") }}
 
 
 # ----------------------------------------------------------------------
+# Read-replica database configuration
+# https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-237/installation.html#install_read_replica_configuration
+# ----------------------------------------------------------------------
+
+# Read-replica 1 database connection URL; default is unset
+{% if exists("/dhis2/read1/connection/url") %}
+read1.connection.url = {{ getv("/dhis2/read1/connection/url") }}
+{% elif gets("/dhis2/read1/database/*") %}
+{% if exists("/dhis2/read1/database/host") %}
+read1.connection.url = jdbc:postgresql://{{ getv("/dhis2/read1/database/host") }}:{{ getv("/dhis2/read1/database/port", getv("/dhis2/database/port", "5432")) }}/{{ getv("/dhis2/read1/database/name", getv("/dhis2/database/name", "dhis2")) }}
+{% else %}
+read1.connection.url = jdbc:postgresql:{{ getv("/dhis2/read1/database/name") }}
+{% endif %}
+{% else %}
+#read1.connection.url =
+{% endif %}
+
+# Read-replica 1 database username; default is the value of connection.username if read1.connection.url is provided, otherwise is unset
+{% if exists("/dhis2/read1/connection/username") %}
+read1.connection.username = {{ getv("/dhis2/read1/connection/username") }}
+{% elif exists("/dhis2/read1/database/username") %}
+read1.connection.username = {{ getv("/dhis2/read1/database/username") }}
+{% else %}
+#read1.connection.username =
+{% endif %}
+
+# Read-replica 1 database password (sensitive); default is the value of connection.password if read1.connection.url is provided, otherwise is unset
+{% if exists("/dhis2/read1/connection/password") %}
+read1.connection.password = {{ getv("/dhis2/read1/connection/password") }}
+{% elif exists("/dhis2/read1/database/password") %}
+read1.connection.password = {{ getv("/dhis2/read1/database/password") }}
+{% else %}
+#read1.connection.password =
+{% endif %}
+{% if gets("/dhis2/read1/*/*") and gets("/dhis2/read2/*/*") %}
+
+# Read-replica 2 database connection URL; default is unset
+{% if exists("/dhis2/read2/connection/url") %}
+read2.connection.url = {{ getv("/dhis2/read2/connection/url") }}
+{% elif gets("/dhis2/read2/database/*") %}
+{% if exists("/dhis2/read2/database/host") %}
+read2.connection.url = jdbc:postgresql://{{ getv("/dhis2/read2/database/host") }}:{{ getv("/dhis2/read2/database/port", getv("/dhis2/database/port", "5432")) }}/{{ getv("/dhis2/read2/database/name", getv("/dhis2/database/name", "dhis2")) }}
+{% else %}
+read2.connection.url = jdbc:postgresql:{{ getv("/dhis2/read2/database/name") }}
+{% endif %}
+{% else %}
+#read2.connection.url =
+{% endif %}
+
+# Read-replica 2 database username; default is the value of connection.username if read2.connection.url is provided, otherwise is unset
+{% if exists("/dhis2/read2/connection/username") %}
+read2.connection.username = {{ getv("/dhis2/read2/connection/username") }}
+{% elif exists("/dhis2/read2/database/username") %}
+read2.connection.username = {{ getv("/dhis2/read2/database/username") }}
+{% else %}
+#read2.connection.username =
+{% endif %}
+
+# Read-replica 2 database password (sensitive); default is the value of connection.password if read2.connection.url is provided, otherwise is unset
+{% if exists("/dhis2/read2/connection/password") %}
+read2.connection.password = {{ getv("/dhis2/read2/connection/password") }}
+{% elif exists("/dhis2/read2/database/password") %}
+read2.connection.password = {{ getv("/dhis2/read2/database/password") }}
+{% else %}
+#read2.connection.password =
+{% endif %}
+{% if gets("/dhis2/read3/*/*") %}
+
+# Read-replica 3 database connection URL; default is unset
+{% if exists("/dhis2/read3/connection/url") %}
+read3.connection.url = {{ getv("/dhis2/read3/connection/url") }}
+{% elif gets("/dhis2/read3/database/*") %}
+{% if exists("/dhis2/read3/database/host") %}
+read3.connection.url = jdbc:postgresql://{{ getv("/dhis2/read3/database/host") }}:{{ getv("/dhis2/read3/database/port", getv("/dhis2/database/port", "5432")) }}/{{ getv("/dhis2/read3/database/name", getv("/dhis2/database/name", "dhis2")) }}
+{% else %}
+read3.connection.url = jdbc:postgresql:{{ getv("/dhis2/read3/database/name") }}
+{% endif %}
+{% else %}
+#read3.connection.url =
+{% endif %}
+
+# Read-replica 3 database username; default is the value of connection.username if read3.connection.url is provided, otherwise is unset
+{% if exists("/dhis2/read3/connection/username") %}
+read3.connection.username = {{ getv("/dhis2/read3/connection/username") }}
+{% elif exists("/dhis2/read3/database/username") %}
+read3.connection.username = {{ getv("/dhis2/read3/database/username") }}
+{% else %}
+#read3.connection.username =
+{% endif %}
+
+# Read-replica 3 database password (sensitive); default is the value of connection.password if read3.connection.url is provided, otherwise is unset
+{% if exists("/dhis2/read3/connection/password") %}
+read3.connection.password = {{ getv("/dhis2/read3/connection/password") }}
+{% elif exists("/dhis2/read3/database/password") %}
+read3.connection.password = {{ getv("/dhis2/read3/database/password") }}
+{% else %}
+#read3.connection.password =
+{% endif %}
+{% if gets("/dhis2/read4/*/*") %}
+
+# Read-replica 4 database connection URL; default is unset
+{% if exists("/dhis2/read4/connection/url") %}
+read4.connection.url = {{ getv("/dhis2/read4/connection/url") }}
+{% elif gets("/dhis2/read4/database/*") %}
+{% if exists("/dhis2/read4/database/host") %}
+read4.connection.url = jdbc:postgresql://{{ getv("/dhis2/read4/database/host") }}:{{ getv("/dhis2/read4/database/port", getv("/dhis2/database/port", "5432")) }}/{{ getv("/dhis2/read4/database/name", getv("/dhis2/database/name", "dhis2")) }}
+{% else %}
+read4.connection.url = jdbc:postgresql:{{ getv("/dhis2/read4/database/name") }}
+{% endif %}
+{% else %}
+#read4.connection.url =
+{% endif %}
+
+# Read-replica 4 database username; default is the value of connection.username if read4.connection.url is provided, otherwise is unset
+{% if exists("/dhis2/read4/connection/username") %}
+read4.connection.username = {{ getv("/dhis2/read4/connection/username") }}
+{% elif exists("/dhis2/read4/database/username") %}
+read4.connection.username = {{ getv("/dhis2/read4/database/username") }}
+{% else %}
+#read4.connection.username =
+{% endif %}
+
+# Read-replica 4 database password (sensitive); default is the value of connection.password if read4.connection.url is provided, otherwise is unset
+{% if exists("/dhis2/read4/connection/password") %}
+read4.connection.password = {{ getv("/dhis2/read4/connection/password") }}
+{% elif exists("/dhis2/read4/database/password") %}
+read4.connection.password = {{ getv("/dhis2/read4/database/password") }}
+{% else %}
+#read4.connection.password =
+{% endif %}
+{% if gets("/dhis2/read5/*/*") %}
+
+# Read-replica 5 database connection URL; default is unset
+{% if exists("/dhis2/read5/connection/url") %}
+read5.connection.url = {{ getv("/dhis2/read5/connection/url") }}
+{% elif gets("/dhis2/read5/database/*") %}
+{% if exists("/dhis2/read5/database/host") %}
+read5.connection.url = jdbc:postgresql://{{ getv("/dhis2/read5/database/host") }}:{{ getv("/dhis2/read5/database/port", getv("/dhis2/database/port", "5432")) }}/{{ getv("/dhis2/read5/database/name", getv("/dhis2/database/name", "dhis2")) }}
+{% else %}
+read5.connection.url = jdbc:postgresql:{{ getv("/dhis2/read5/database/name") }}
+{% endif %}
+{% else %}
+#read5.connection.url =
+{% endif %}
+
+# Read-replica 5 database username; default is the value of connection.username if read5.connection.url is provided, otherwise is unset
+{% if exists("/dhis2/read5/connection/username") %}
+read5.connection.username = {{ getv("/dhis2/read5/connection/username") }}
+{% elif exists("/dhis2/read5/database/username") %}
+read5.connection.username = {{ getv("/dhis2/read5/database/username") }}
+{% else %}
+#read5.connection.username =
+{% endif %}
+
+# Read-replica 5 database password (sensitive); default is the value of connection.password if read5.connection.url is provided, otherwise is unset
+{% if exists("/dhis2/read5/connection/password") %}
+read5.connection.password = {{ getv("/dhis2/read5/connection/password") }}
+{% elif exists("/dhis2/read5/database/password") %}
+read5.connection.password = {{ getv("/dhis2/read5/database/password") }}
+{% else %}
+#read5.connection.password =
+{% endif %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endif %}
+
+
+# ----------------------------------------------------------------------
 # Redis caching
 # https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-237/installation.html#install_cluster_configuration_redis
 # ----------------------------------------------------------------------
