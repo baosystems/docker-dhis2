@@ -174,7 +174,7 @@ COPY --chmod=755 --chown=root:root ./helpers/port-from-url.py /usr/local/bin/
 
 # remco configurations and templates
 COPY --chmod=644 --chown=root:root ./remco/config.toml /etc/remco/config
-COPY --chmod=644 --chown=root:root ./remco/onetime.toml /etc/remco/
+COPY --chmod=644 --chown=root:root ./remco/dhis2-onetime.toml /etc/remco/
 COPY --chmod=644 --chown=root:root ./remco/tomcat.toml /etc/remco/
 COPY --chmod=644 --chown=root:root ./remco/templates/dhis2/dhis.conf.tmpl /etc/remco/templates/dhis2/
 COPY --chmod=644 --chown=root:root ./remco/templates/tomcat/server.xml.tmpl /etc/remco/templates/tomcat/
