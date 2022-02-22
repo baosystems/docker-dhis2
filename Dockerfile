@@ -38,10 +38,10 @@ EOF
 
 
 # remco for building template files - https://github.com/HeavyHorst/remco
-# Using same verion of golang as shown in the output of `remco -version` from the released 0.12.1 binary.
-# The 0.12.1 git tag has a typo in the Makefile.
+# Using same verion of golang as shown in the output of `remco -version` from the released 0.12.2 binary.
+# The 0.12.2 git tag has a typo in the Makefile.
 FROM docker.io/library/golang:1.15.2-buster as remco-builder
-ARG REMCO_VERSION=0.12.1
+ARG REMCO_VERSION=0.12.2
 WORKDIR /work
 RUN <<EOF
 #!/usr/bin/env bash
@@ -58,8 +58,8 @@ else
   git clone https://github.com/HeavyHorst/remco.git source
   cd source
   git checkout "v${REMCO_VERSION}"
-  if [ "$REMCO_VERSION" = "0.12.1" ]; then
-    sed --expression="/^VERSION/ s/0.12.0/0.12.1/" --in-place Makefile
+  if [ "$REMCO_VERSION" = "0.12.2" ]; then
+    sed --expression="/^VERSION/ s/0.12.1/0.12.2/" --in-place Makefile
   fi
   make
   install --verbose --mode=0755 ./bin/remco ..
