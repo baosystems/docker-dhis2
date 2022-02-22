@@ -92,6 +92,7 @@ jobs:
         latest_overall: [false]
         include:
           - { dhis2_version: "dev", latest_overall: true }
+      fail-fast: false
 
     steps:
 

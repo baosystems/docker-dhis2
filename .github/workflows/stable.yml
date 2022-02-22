@@ -116,6 +116,7 @@ jobs:
 
     strategy:
       matrix: ${{fromJSON(needs.generate_matrix.outputs.dhis2_matrix)}}
+      fail-fast: false
 
     steps:
 
