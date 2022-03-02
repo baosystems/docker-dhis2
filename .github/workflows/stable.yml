@@ -5,7 +5,7 @@ on:
     paths-ignore:
       - '.env.example'
       - '.github/dependabot.yml'
-      - '.github/workflows/notify.yml'
+      - '.github/workflows/dependencies.yml'
       - '.gitignore'
       - 'LICENSE'
       - 'README.md'
