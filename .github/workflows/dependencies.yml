@@ -154,6 +154,9 @@ jobs:
     steps:
 
       - name: Checkout this repository
+        if: |
+          ${{ needs.file_envexample.outputs.dhis2 != needs.image_latest.outputs.dhis2 }}
+          || needs.file_envexample.outputs.tomcat != needs.image_latest.outputs.tomcat }}
         uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
 
       - name: Update version of DHIS2
@@ -226,3 +229,26 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           number: ${{ steps.cpr.outputs.pull-request-number }}
+
+  check:
+    # See https://github.com/re-actors/alls-green for why this is here
+    name: check if all needs jobs passed  # this job is to be used as the single required status check in branch protection
+
+    if: always()
+
+    needs:
+      - file_dockerfile
+      - file_envexample
+      - github_tags
+      - image_latest
+      - notify
+      - pr_envexample
+
+    runs-on: ubuntu-20.04
+
+    steps:
+    - name: Decide whether the needed jobs succeeded or failed
+      uses: re-actors/alls-green@3a2de129f0713010a71314c74e33c0e3ef90e696
+      with:
+        allowed-skips: notify, pr_envexample
+        jobs: ${{ toJSON(needs) }}
