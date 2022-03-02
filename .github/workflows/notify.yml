@@ -3,6 +3,7 @@ name: notify
 on:
   push:
     branches:
+      - gha_prs  # @TODO: Remove before merging
       - main
     paths:
       - '.env.example'
