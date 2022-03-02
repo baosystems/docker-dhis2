@@ -131,6 +131,8 @@ jobs:
           sed \
             -e 's/${{ needs.file_envexample.outputs.tomcat }}/${{ needs.image_latest.outputs.tomcat }}/g' \
             -i .env.example
+          echo '[DEBUG] contents of .env.example:'
+          cat .env.example
 
   notify:
     name: Notify of dependencies that need to be updated
