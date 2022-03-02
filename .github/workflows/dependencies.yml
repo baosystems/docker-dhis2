@@ -155,8 +155,8 @@ jobs:
         with:
           payload: "{\"level\": \":warning: WARNING\", \"message\": \"wait version in Dockerfile (${{ needs.file_dockerfile.outputs.wait }}) does not match the latest tag in github.com/ufoscout/docker-compose-wait (${{ needs.github_tags.outputs.wait }})\"}"
 
-  pr_envexample:
-    name: Update versions in .env.example and create pull request
+  envexample:
+    name: Update versions in .env.example and create auto-merging pull request
 
     if: |
       needs.file_envexample.outputs.dhis2 != needs.image_latest.outputs.dhis2
@@ -234,6 +234,13 @@ jobs:
           pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
           merge-method: rebase
 
+      - name: Auto-approve Pull Request
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        uses: juliangruber/approve-pull-request-action@bc59ae0ae4d25ee8b8f65f7bf40f9ecccb7633b4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ steps.cpr.outputs.pull-request-number }}
+
   check:
     name: Check if all "needs" jobs passed  # this job is to be used as the single required status check in branch protection
 
@@ -245,7 +252,7 @@ jobs:
       - github_tags
       - image_latest
       - notify
-      - pr_envexample
+      - envexample
 
     runs-on: ubuntu-20.04
 
@@ -255,5 +262,5 @@ jobs:
       - name: Decide whether the needed jobs succeeded or failed
         uses: re-actors/alls-green@3a2de129f0713010a71314c74e33c0e3ef90e696
         with:
-          allowed-skips: notify, pr_envexample
+          allowed-skips: notify, envexample
           jobs: ${{ toJSON(needs) }}
