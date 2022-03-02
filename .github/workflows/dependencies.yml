@@ -226,13 +226,6 @@ jobs:
           pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
           merge-method: rebase
 
-      - name: Auto-approve Pull Request
-        if: steps.cpr.outputs.pull-request-operation == 'created'
-        uses: juliangruber/approve-pull-request-action@bc59ae0ae4d25ee8b8f65f7bf40f9ecccb7633b4
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          number: ${{ steps.cpr.outputs.pull-request-number }}
-
   check:
     name: Check if all "needs" jobs passed  # this job is to be used as the single required status check in branch protection
 
