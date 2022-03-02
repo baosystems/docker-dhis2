@@ -159,6 +159,7 @@ jobs:
           cat .env.example
 
       - name: Create Pull Request
+        id: cpr
         if: |
           ${{ needs.file_envexample.outputs.dhis2 != needs.image_latest.outputs.dhis2 }}
           || needs.file_envexample.outputs.tomcat != needs.image_latest.outputs.tomcat }}
@@ -179,9 +180,25 @@ jobs:
             [1]: https://github.com/peter-evans/create-pull-request
           add-paths: |
             .env.example
+          delete-branch: true
           branch: manual-dependencies/envexample
           labels: |
             dependencies
+
+      # - name: Auto-approve Pull Request
+      #   if: steps.cpr.outputs.pull-request-operation == 'created'
+      #   uses: juliangruber/approve-pull-request-action@bc59ae0ae4d25ee8b8f65f7bf40f9ecccb7633b4
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     number: ${{ steps.cpr.outputs.pull-request-number }}
+
+      # - name: Enable Pull Request Automerge
+      #   if: steps.cpr.outputs.pull-request-operation == 'created'
+      #   uses: peter-evans/enable-pull-request-automerge@21d45e1c52f5d111d2019b5d33f953ed2e735c46
+      #   with:
+      #     token: ${{ secrets.PAT }}
+      #     pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+      #     merge-method: rebase
 
   notify:
     name: Notify of dependencies that need to be updated
