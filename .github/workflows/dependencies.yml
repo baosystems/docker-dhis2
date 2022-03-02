@@ -1,4 +1,4 @@
-name: notify
+name: dependencies
 
 on:
   push:
@@ -6,11 +6,11 @@ on:
       - main
     paths:
       - '.env.example'
-      - '.github/workflows/notify.yml'
+      - '.github/workflows/dependencies.yml'
       - 'docker-compose.yml'
       - 'Dockerfile'
   schedule:
-    - cron: '3 5 * * *'
+    - cron: '3 6 * * *'
 
 defaults:
   run:
@@ -112,29 +112,11 @@ jobs:
 
     needs:
       - file_dockerfile
-      - file_envexample
       - github_tags
-      - image_latest
 
     runs-on: ubuntu-20.04
 
     steps:
-
-      - name: Send message to Slack about DHIS2_TAG in .env.example
-        if: ${{ needs.file_envexample.outputs.dhis2 != needs.image_latest.outputs.dhis2 }}
-        uses: slackapi/slack-github-action@410ae57cff5c6b682b106440be0e6c7eb8c98c9d
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        with:
-          payload: "{\"level\": \":warning: WARNING\", \"message\": \"DHIS2_TAG in .env.example (${{ needs.file_envexample.outputs.dhis2 }}) does not match version in ghcr.io/baosystems/dhis2:latest (${{ needs.image_latest.outputs.dhis2 }})\"}"
-
-      - name: Send message to Slack about Tomcat version in .env.example
-        if: ${{ needs.file_envexample.outputs.tomcat != needs.image_latest.outputs.tomcat }}
-        uses: slackapi/slack-github-action@410ae57cff5c6b682b106440be0e6c7eb8c98c9d
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        with:
-          payload: "{\"level\": \":warning: WARNING\", \"message\": \"Tomcat version in .env.example (${{ needs.file_envexample.outputs.tomcat }}) does not match version in ghcr.io/baosystems/dhis2:latest (${{ needs.image_latest.outputs.tomcat }})\"}"
 
       - name: Send message to Slack about gosu version in Dockerfile
         if: ${{ needs.file_dockerfile.outputs.gosu != needs.github_tags.outputs.gosu }}
@@ -159,3 +141,88 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
           payload: "{\"level\": \":warning: WARNING\", \"message\": \"wait version in Dockerfile (${{ needs.file_dockerfile.outputs.wait }}) does not match the latest tag in github.com/ufoscout/docker-compose-wait (${{ needs.github_tags.outputs.wait }})\"}"
+
+  pr_envexample:
+    name: Update versions in .env.example and create pull request
+
+    needs:
+      - file_envexample
+      - image_latest
+
+    runs-on: ubuntu-20.04
+
+    steps:
+
+      - name: Checkout this repository
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
+
+      - name: Update version of DHIS2
+        if: ${{ needs.file_envexample.outputs.dhis2 != needs.image_latest.outputs.dhis2 }}
+        run: |
+          set -x
+
+          echo '[DEBUG] DHIS2_TAG_CURRENT=${{ needs.file_envexample.outputs.dhis2 }}'
+          echo '[DEBUG] DHIS2_TAG_NEXT=${{ needs.image_latest.outputs.dhis2 }}'
+
+          DHIS2_MAJOR_CURRENT="$( cut -c1-4 <<< "${{ needs.file_envexample.outputs.dhis2 }}" )"
+          DHIS2_MAJOR_NEXT="$( cut -c1-4 <<< "${{ needs.image_latest.outputs.dhis2 }}" )"
+          echo "[DEBUG] DHIS2_MAJOR_CURRENT=$DHIS2_MAJOR_CURRENT"
+          echo "[DEBUG] DHIS2_MAJOR_NEXT=$DHIS2_MAJOR_NEXT"
+
+          sed \
+            -e 's/${{ needs.file_envexample.outputs.dhis2 }}/${{ needs.image_latest.outputs.dhis2 }}/g' \
+            -e "s/${DHIS2_MAJOR_CURRENT}/${DHIS2_MAJOR_NEXT}/g" \
+            -i .env.example
+
+          echo '[DEBUG] contents of .env.example:'
+          cat .env.example
+
+      - name: Update version of Tomcat
+        if: ${{ needs.file_envexample.outputs.tomcat != needs.image_latest.outputs.tomcat }}
+        run: |
+          set -x
+
+          echo '[DEBUG] current=${{ needs.file_envexample.outputs.tomcat }}'
+          echo '[DEBUG] next=${{ needs.image_latest.outputs.tomcat }}'
+
+          sed \
+            -e 's/${{ needs.file_envexample.outputs.tomcat }}/${{ needs.image_latest.outputs.tomcat }}/g' \
+            -i .env.example
+
+          echo '[DEBUG] contents of .env.example:'
+          cat .env.example
+
+      - name: Create Pull Request
+        id: cpr
+        if: |
+          ${{ needs.file_envexample.outputs.dhis2 != needs.image_latest.outputs.dhis2 }}
+          || needs.file_envexample.outputs.tomcat != needs.image_latest.outputs.tomcat }}
+        uses: peter-evans/create-pull-request@18f7dc018cc2cd597073088f7c7591b9d1c02672
+        with:
+          # GITHUB_TOKEN does not have "repo" permissions (https://docs.github.com/en/actions/security-guides/automatic-token-authentication)
+          # Personal Access Token with "repo" is necessary to create commits
+          token: ${{ secrets.PAT }}  # Added at https://github.com/baosystems/docker-dhis2/settings/secrets/actions
+          author: baosystems[utility] <100785015+baosystems-utility@users.noreply.github.com>  # Public profile name and private email for the owner of the PAT
+          commit-message: "chore: update dependencies in .env.example"
+          title: Update dependencies in .env.example
+          add-paths: |
+            .env.example
+          delete-branch: true
+          branch: manual-dependencies/envexample
+          labels: |
+            dependencies
+
+      - name: Enable Pull Request Automerge
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        uses: peter-evans/enable-pull-request-automerge@21d45e1c52f5d111d2019b5d33f953ed2e735c46
+        with:
+          token: ${{ secrets.PAT }}
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+          merge-method: rebase
+
+      - name: Auto-approve Pull Request
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        uses: juliangruber/approve-pull-request-action@bc59ae0ae4d25ee8b8f65f7bf40f9ecccb7633b4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ steps.cpr.outputs.pull-request-number }}
