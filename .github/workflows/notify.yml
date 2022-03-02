@@ -123,19 +123,23 @@ jobs:
         uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
 
       - name: Update version of DHIS2
-        # if: ${{ needs.file_envexample.outputs.dhis2 != needs.image_latest.outputs.dhis2 }}
+        if: ${{ needs.file_envexample.outputs.dhis2 != needs.image_latest.outputs.dhis2 }}
         run: |
           set -x
-          echo '[DEBUG] DHIS2_TAG_CURRENT=2.37.2'
+
+          echo '[DEBUG] DHIS2_TAG_CURRENT=${{ needs.file_envexample.outputs.dhis2 }}'
           echo '[DEBUG] DHIS2_TAG_NEXT=${{ needs.image_latest.outputs.dhis2 }}'
-          DHIS2_MAJOR_CURRENT="$( cut -c1-4 <<< "2.37.2" )"
+
+          DHIS2_MAJOR_CURRENT="$( cut -c1-4 <<< "${{ needs.file_envexample.outputs.dhis2 }}" )"
           DHIS2_MAJOR_NEXT="$( cut -c1-4 <<< "${{ needs.image_latest.outputs.dhis2 }}" )"
           echo "[DEBUG] DHIS2_MAJOR_CURRENT=$DHIS2_MAJOR_CURRENT"
           echo "[DEBUG] DHIS2_MAJOR_NEXT=$DHIS2_MAJOR_NEXT"
+
           sed \
-            -e 's/2.37.2/${{ needs.image_latest.outputs.dhis2 }}/g' \
+            -e 's/${{ needs.file_envexample.outputs.dhis2 }}/${{ needs.image_latest.outputs.dhis2 }}/g' \
             -e "s/${DHIS2_MAJOR_CURRENT}/${DHIS2_MAJOR_NEXT}/g" \
             -i .env.example
+
           echo '[DEBUG] contents of .env.example:'
           cat .env.example
 
@@ -143,11 +147,14 @@ jobs:
         if: ${{ needs.file_envexample.outputs.tomcat != needs.image_latest.outputs.tomcat }}
         run: |
           set -x
+
           echo '[DEBUG] current=${{ needs.file_envexample.outputs.tomcat }}'
           echo '[DEBUG] next=${{ needs.image_latest.outputs.tomcat }}'
+
           sed \
             -e 's/${{ needs.file_envexample.outputs.tomcat }}/${{ needs.image_latest.outputs.tomcat }}/g' \
             -i .env.example
+
           echo '[DEBUG] contents of .env.example:'
           cat .env.example
 
@@ -157,8 +164,8 @@ jobs:
           || needs.file_envexample.outputs.tomcat != needs.image_latest.outputs.tomcat }}
         uses: peter-evans/create-pull-request@18f7dc018cc2cd597073088f7c7591b9d1c02672
         with:
-          # GITHUB_TOKEN does not have "repo:write" permissions (https://docs.github.com/en/actions/security-guides/automatic-token-authentication)
-          # Personal Access Token with "repo:write" is necessary to create commits
+          # GITHUB_TOKEN does not have "repo" permissions (https://docs.github.com/en/actions/security-guides/automatic-token-authentication)
+          # Personal Access Token with "repo" is necessary to create commits
           token: ${{ secrets.PAT }}  # Added at https://github.com/baosystems/docker-dhis2/settings/secrets/actions
           committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
