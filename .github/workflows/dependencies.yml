@@ -110,6 +110,11 @@ jobs:
   notify:
     name: Notify of dependencies that need to be updated
 
+    if: |
+      needs.file_dockerfile.outputs.gosu != needs.github_tags.outputs.gosu
+      || needs.file_dockerfile.outputs.remco != needs.github_tags.outputs.remco
+      || needs.file_dockerfile.outputs.wait != needs.github_tags.outputs.wait
+
     needs:
       - file_dockerfile
       - github_tags
