@@ -1,5 +1,5 @@
-from distutils.version import StrictVersion
 import json
+from packaging.version import Version
 
 # Packages not built-in
 import html2text
@@ -36,10 +36,10 @@ line_trimmed = line_raw.removeprefix('DHIS 2 version ').removesuffix(' dev stabl
 dhis2_majors = line_trimmed.split(' ')
 
 # Limit to 2.35 and up (compatible with Java 11)
-dhis2_majors_trimmed=[dhis2_major for dhis2_major in dhis2_majors if StrictVersion(dhis2_major) > StrictVersion('2.34')]
+dhis2_majors_trimmed=[dhis2_major for dhis2_major in dhis2_majors if Version(dhis2_major) > Version('2.34')]
 
 # Sort list of major releases by semver
-dhis2_majors_sorted=sorted(dhis2_majors_trimmed, key=StrictVersion)
+dhis2_majors_sorted=sorted(dhis2_majors_trimmed, key=lambda x: Version(x))
 
 ########
 
@@ -54,6 +54,11 @@ for dhis2_major in dhis2_majors_sorted:
     # Convert the XML response from S3 to a dict
     parsed = xmltodict.parse(s3_response.content)
 
+    # Skip this version if bucket prefix exists for a version without any applicable S3 objects
+    # This first appeared when 2.38 had dev releases but no stable releases
+    if 'Contents' not in parsed['ListBucketResult']:
+        continue
+
     # Within the major release, add all S3 objects where the key (file name) does not contain "-eos"/"-latest"/"-rc" to list
     dhis2_versions = []
     for s3_object in parsed['ListBucketResult']['Contents']:
@@ -67,7 +72,7 @@ for dhis2_major in dhis2_majors_sorted:
     # Remove duplicate entries from the list
     dhis2_versions_distinct = list(set(dhis2_versions))
     # Sort the list by semantic version
-    dhis2_versions_sorted = sorted(dhis2_versions_distinct, key=StrictVersion)
+    dhis2_versions_sorted = sorted(dhis2_versions_distinct, key=lambda x: Version(x))
 
     # Loop each unique version, from oldest to newest
     for dhis2_version in dhis2_versions_sorted:
