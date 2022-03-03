@@ -95,6 +95,7 @@ jobs:
           - 2.35-dev
           - 2.36-dev
           - 2.37-dev
+          - 2.38-dev
         latest_overall: [false]
         include:
           - { dhis2_version: "dev", latest_overall: true }
