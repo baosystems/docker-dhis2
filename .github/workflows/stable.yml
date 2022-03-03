@@ -78,7 +78,7 @@ jobs:
       tomcat_version: ${{ steps.tomcat_query.outputs.tomcat_version }}
 
   generate_matrix:
-    name: Generate matrix of DHIS2 releases
+    name: Generate matrix of DHIS2 stable versions
 
     runs-on: ubuntu-20.04
 
@@ -98,11 +98,11 @@ jobs:
           set -x
           pip3 install --requirement .github/workflows/support/matrix/requirements.txt
 
-      - name: Generate matrix
+      - name: Generate matrix for stable versions
         id: matrix_cmd
         run: |
           set -x
-          DHIS2_MATRIX="$( python3 .github/workflows/support/matrix/matrix.py )"
+          DHIS2_MATRIX="$( python3 .github/workflows/support/matrix/stable_matrix.py )"
           echo "::set-output name=dhis2_matrix::$DHIS2_MATRIX"
 
     outputs:
