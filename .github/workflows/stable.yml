@@ -99,7 +99,8 @@ jobs:
         id: matrix_cmd
         run: |
           set -x
-          echo "::set-output name=dhis2_matrix::$( python3 .github/workflows/support/matrix/matrix.py )"
+          DHIS2_MATRIX="$( python3 .github/workflows/support/matrix/matrix.py )"
+          echo "::set-output name=dhis2_matrix::$DHIS2_MATRIX"
 
     outputs:
       dhis2_matrix: ${{ steps.matrix_cmd.outputs.dhis2_matrix }}
