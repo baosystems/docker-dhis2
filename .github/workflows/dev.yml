@@ -92,7 +92,6 @@ jobs:
         uses: actions/setup-python@0ebf233433c08fb9061af664d501c3f3ff0e9e20
         with:
           python-version: '3.9'
-          cache: 'pip'
 
       - name: Install Python packages
         run: |
