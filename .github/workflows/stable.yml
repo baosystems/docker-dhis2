@@ -2,9 +2,10 @@ name: stable images
 
 on:
   push:
-    branches-ignore:
-      - 'dependabot/*'
-      - 'manual-dependencies/*'
+    branches:
+      - '**'
+      - '!dependabot/*'
+      - '!manual-dependencies/*'
     paths-ignore:
       - '.env.example'
       - '.github/dependabot.yml'

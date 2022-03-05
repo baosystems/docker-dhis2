@@ -3,7 +3,9 @@ name: dependencies
 on:
   push:
     branches:
-      - main
+      - '**'
+      - '!dependabot/*'
+      - '!manual-dependencies/*'
     paths:
       - '.env.example'
       - '.github/workflows/dependencies.yml'
