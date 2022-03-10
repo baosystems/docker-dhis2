@@ -27,7 +27,7 @@ s3 = boto3.client('s3', region_name='eu-west-1', config=Config(signature_version
 ########
 
 # List all top-level folders in S3 bucket (https://stackoverflow.com/a/54834746)
-# DHIS2 versions will start with "2."; capture versions greater that 2.34
+# DHIS2 versions will start with "2."; capture versions greater than 2.34
 
 dhis2_majors=[]
 
@@ -40,7 +40,6 @@ for prefix in pages.search('CommonPrefixes'):
     bucket_folder = prefix['Prefix'].strip("/")
 
     if bucket_folder.startswith('2.') and Version(bucket_folder) > Version('2.34'):
-        # print(f'[DEBUG] bucket_folder={bucket_folder}')
         full_matrix['dhis2_version'].append(f'{bucket_folder}-dev')
 
 # Include "dev" as the overall latest (used for determining type of GHA cache)

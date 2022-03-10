@@ -28,7 +28,7 @@ s3 = boto3.client('s3', region_name='eu-west-1', config=Config(signature_version
 ########
 
 # List all top-level folders in S3 bucket (https://stackoverflow.com/a/54834746)
-# DHIS2 versions will start with "2."; capture versions greater that 2.34
+# DHIS2 versions will start with "2."; capture versions greater than 2.34
 
 dhis2_majors=[]
 
@@ -41,15 +41,10 @@ for prefix in pages.search('CommonPrefixes'):
     bucket_folder = prefix['Prefix'].strip("/")
 
     if bucket_folder.startswith('2.') and Version(bucket_folder) > Version('2.34'):
-        # print(f'[DEBUG] bucket_folder={bucket_folder}')
         dhis2_majors.append(bucket_folder)
-
-# print(f'[DEBUG] dhis2_majors={dhis2_majors}')
 
 # Sort list of major releases by semver
 dhis2_majors_sorted=sorted(dhis2_majors, key=lambda x: Version(x))
-
-# print(f'[DEBUG] dhis2_majors_sorted={dhis2_majors_sorted}')
 
 # Store all versions as dict of lists
 dhis2_versions = {}
@@ -76,12 +71,9 @@ for dhis2_major in dhis2_majors_sorted:
 
     # Sort the list by semantic version
     dhis2_major_versions_sorted = sorted(dhis2_major_versions_distinct, key=lambda x: Version(x))
-    # print(f'[DEBUG] dhis2_{dhis2_major}_versions_sorted={dhis2_major_versions_sorted}')
 
     # Add unique list to dhis2_versions dict
     dhis2_versions[dhis2_major] = dhis2_major_versions_sorted
-
-# print(f'[DEBUG] dhis2_versions={dhis2_versions}')
 
 # Remove major versions that have no stable releases (its of releases is empty)
 # Useful for when a version of DHIS2 is in development with no releases
@@ -91,12 +83,9 @@ for key, values in list(dhis2_versions.items()):
         del dhis2_versions[key]
 
 for major, versions in dhis2_versions.items():
-    # print(f'[DEBUG] major={major}')
-    # print(versions)
 
     # Loop each unique version, from oldest to newest, sort above
     for version in versions:
-        # print(f'[DEBUG] version={version}')
 
         # If the version is the latest within the major release, build a dictionary with non-default properties
         if version == dhis2_versions[major][-1]:
