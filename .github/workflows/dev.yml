@@ -2,10 +2,9 @@ name: dev images
 
 on:
   push:
-    branches:
-      - '**'
-      - '!dependabot/*'
-      - '!manual-dependencies/*'
+    branches-ignore:
+      - 'dependabot/**'
+      - 'manual-dependencies/**'
     paths-ignore:
       - '.env.example'
       - '.github/dependabot.yml'

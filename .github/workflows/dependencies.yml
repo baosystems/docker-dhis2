@@ -2,10 +2,9 @@ name: dependencies
 
 on:
   push:
-    branches:
-      - '**'
-      - '!dependabot/*'
-      - '!manual-dependencies/*'
+    branches-ignore:
+      - 'dependabot/**'
+      - 'manual-dependencies/**'
     paths:
       - '.env.example'
       - '.github/workflows/dependencies.yml'
