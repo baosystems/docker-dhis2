@@ -61,24 +61,24 @@ connection.driver_class = org.postgresql.Driver
 # Database connection URL; default is unset
 {% if exists("/dhis2/connection/url") %}
 connection.url = {{ getv("/dhis2/connection/url") }}
-{% elif exists("/dhis2/database/host") or exists("/database/host") %}
-connection.url = jdbc:postgresql://{{ getv("/dhis2/database/host", getv("/database/host", "")) }}:{{ getv("/dhis2/database/port", getv("/database/port", "5432")) }}/{{ getv("/dhis2/database/name", getv("/database/dbname", "dhis2")) }}
+{% elif exists("/dhis2/database/host") %}
+connection.url = jdbc:postgresql://{{ getv("/dhis2/database/host", "") }}:{{ getv("/dhis2/database/port", "5432") }}/{{ getv("/dhis2/database/name", "dhis2") }}
 {% else %}
-connection.url = jdbc:postgresql:{{ getv("/dhis2/database/name", getv("/database/dbname", "dhis2")) }}
+connection.url = jdbc:postgresql:{{ getv("/dhis2/database/name", "dhis2") }}
 {% endif %}
 
 # Database username; default is unset
 {% if exists("/dhis2/connection/username") %}
 connection.username = {{ getv("/dhis2/connection/username") }}
 {% else %}
-connection.username = {{ getv("/dhis2/database/username", getv("/database/username", "dhis")) }}
+connection.username = {{ getv("/dhis2/database/username", "dhis") }}
 {% endif %}
 
 # Database password (sensitive); default is unset
 {% if exists("/dhis2/connection/password") %}
 connection.password = {{ getv("/dhis2/connection/password") }}
-{% elif exists("/dhis2/database/password") or exists("/database/password") %}
-connection.password = {{ getv("/dhis2/database/password", getv("/database/password", "")) }}
+{% elif exists("/dhis2/database/password") %}
+connection.password = {{ getv("/dhis2/database/password", "") }}
 {% else %}
 #connection.password =
 {% endif %}
@@ -423,8 +423,8 @@ debezium.enabled = {{ getv("/dhis2/debezium/enabled") }}
 # Cache invalidation database host name; default is unset
 {% if exists("/dhis2/debezium/db/hostname") %}
 debezium.db.hostname = {{ getv("/dhis2/debezium/db/hostname") }}
-{% elif getv("/dhis2/debezium/enabled", "off") == "on" and (exists("/dhis2/database/host") or exists("/database/host")) %}
-debezium.db.hostname = {{ getv("/dhis2/database/host", getv("/database/host", "")) }}
+{% elif getv("/dhis2/debezium/enabled", "off") == "on" and exists("/dhis2/database/host") %}
+debezium.db.hostname = {{ getv("/dhis2/database/host", "") }}
 {% else %}
 #debezium.db.hostname =
 {% endif %}
@@ -433,7 +433,7 @@ debezium.db.hostname = {{ getv("/dhis2/database/host", getv("/database/host", ""
 {% if exists("/dhis2/debezium/db/port") %}
 debezium.db.port = {{ getv("/dhis2/debezium/db/port") }}
 {% elif getv("/dhis2/debezium/enabled", "off") == "on" %}
-debezium.db.port = {{ getv("/dhis2/database/port", getv("/database/port", "5432")) }}
+debezium.db.port = {{ getv("/dhis2/database/port", "5432") }}
 {% else %}
 #debezium.db.port =
 {% endif %}
@@ -442,7 +442,7 @@ debezium.db.port = {{ getv("/dhis2/database/port", getv("/database/port", "5432"
 {% if exists("/dhis2/debezium/db/name") %}
 debezium.db.name = {{ getv("/dhis2/debezium/db/name") }}
 {% elif getv("/dhis2/debezium/enabled", "off") == "on" %}
-debezium.db.name = {{ getv("/dhis2/database/name", getv("/database/dbname", "dhis2")) }}
+debezium.db.name = {{ getv("/dhis2/database/name", "dhis2") }}
 {% else %}
 #debezium.db.name =
 {% endif %}
@@ -451,7 +451,7 @@ debezium.db.name = {{ getv("/dhis2/database/name", getv("/database/dbname", "dhi
 {% if exists("/dhis2/debezium/connection/username") %}
 debezium.connection.username = {{ getv("/dhis2/debezium/connection/username") }}
 {% elif getv("/dhis2/debezium/enabled", "off") == "on" %}
-debezium.connection.username = {{ getv("/dhis2/database/username", getv("/database/username", "dhis")) }}
+debezium.connection.username = {{ getv("/dhis2/database/username", "dhis") }}
 {% else %}
 #debezium.connection.username =
 {% endif %}
@@ -459,8 +459,8 @@ debezium.connection.username = {{ getv("/dhis2/database/username", getv("/databa
 # Cache invalidation database password; default is unset
 {% if exists("/dhis2/debezium/connection/password") %}
 debezium.connection.password = {{ getv("/dhis2/debezium/connection/password") }}
-{% elif getv("/dhis2/debezium/enabled", "off") == "on" and (exists("/dhis2/database/password") or exists("/database/password")) %}
-debezium.connection.password = {{ getv("/dhis2/database/password", getv("/database/password", "")) }}
+{% elif getv("/dhis2/debezium/enabled", "off") == "on" and exists("/dhis2/database/password") %}
+debezium.connection.password = {{ getv("/dhis2/database/password", "") }}
 {% else %}
 #debezium.connection.password =
 {% endif %}

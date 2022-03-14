@@ -23,46 +23,6 @@ _main() {
 
   ########
 
-  # Deprecated logic
-
-  # Set value of the deprecated DATABASE_HOST variable to DHIS2_DATABASE_HOST
-  if [ -z "${DHIS2_DATABASE_HOST:-}" ] && [ -n "${DATABASE_HOST:-}" ]; then
-    export DHIS2_DATABASE_HOST="$DATABASE_HOST"
-    echo "[DEBUG] $SELF: copy deprecated DATABASE_HOST to DHIS2_DATABASE_HOST" >&2
-  fi
-
-  # Set value of the deprecated DATABASE_PORT variable to DHIS2_DATABASE_PORT
-  if [ -z "${DHIS2_DATABASE_PORT:-}" ] && [ -n "${DATABASE_PORT:-}" ]; then
-    export DHIS2_DATABASE_PORT="$DATABASE_PORT"
-    echo "[DEBUG] $SELF: copy deprecated DATABASE_PORT to DHIS2_DATABASE_PORT" >&2
-  fi
-
-  # Set value of the deprecated DATABASE_DBNAME variable to DHIS2_DATABASE_NAME
-  if [ -z "${DHIS2_DATABASE_NAME:-}" ] && [ -n "${DATABASE_DBNAME:-}" ]; then
-    export DHIS2_DATABASE_NAME="$DATABASE_DBNAME"
-    echo "[DEBUG] $SELF: copy deprecated DATABASE_DBNAME to DHIS2_DATABASE_NAME" >&2
-  fi
-
-  # Set value of the deprecated DATABASE_USERNAME variable to DHIS2_DATABASE_USERNAME
-  if [ -z "${DHIS2_DATABASE_USERNAME:-}" ] && [ -n "${DATABASE_USERNAME:-}" ]; then
-    export DHIS2_DATABASE_USERNAME="$DATABASE_USERNAME"
-    echo "[DEBUG] $SELF: copy deprecated DATABASE_USERNAME to DHIS2_DATABASE_USERNAME" >&2
-  fi
-
-  # Set value of the deprecated DATABASE_PASSWORD variable to DHIS2_DATABASE_PASSWORD
-  if [ -z "${DHIS2_DATABASE_PASSWORD:-}" ] && [ -n "${DATABASE_PASSWORD:-}" ]; then
-    export DHIS2_DATABASE_PASSWORD="$DATABASE_PASSWORD"
-    echo "[DEBUG] $SELF: copy deprecated DATABASE_PASSWORD to DHIS2_DATABASE_PASSWORD" >&2
-  fi
-
-  # Set value of the deprecated DATABASE_PASSWORD_FILE variable to DHIS2_DATABASE_PASSWORD_FILE
-  if [ -z "${DHIS2_DATABASE_PASSWORD_FILE:-}" ] && [ -n "${DATABASE_PASSWORD_FILE:-}" ]; then
-    export DHIS2_DATABASE_PASSWORD_FILE="$DATABASE_PASSWORD_FILE"
-    echo "[DEBUG] $SELF: copy deprecated DATABASE_PASSWORD_FILE to DHIS2_DATABASE_PASSWORD_FILE" >&2
-  fi
-
-  ########
-
   # Match first argument to this script.
   # Example: "remco" for a full command of "docker-entrypoint.sh remco -config /etc/remco/config"
   if [ "$1" = 'remco' ]; then
