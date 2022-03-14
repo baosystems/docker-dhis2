@@ -17,16 +17,6 @@ echo "[INFO] $SELF: started..." >&2  # Using stderr for info messages
 ################################################################################
 
 
-# Deprecated logic
-
-# Set value of the deprecated DATABASE_HOST variable to DHIS2_DATABASE_HOST
-if [ -z "${DHIS2_DATABASE_HOST:-}" ] && [ -n "${DATABASE_HOST:-}" ]; then
-  export DHIS2_DATABASE_HOST="$DATABASE_HOST"
-  echo "[DEBUG] $SELF: copy deprecated DATABASE_HOST to DHIS2_DATABASE_HOST" >&2
-fi
-
-########
-
 # If PGPASSWORD is empty or null, set it to the contents of PGPASSWORD_FILE
 if [[ -z "${PGPASSWORD:-}" ]] && [[ -r "${PGPASSWORD_FILE:-}" ]]; then
   export PGPASSWORD="$(<"${PGPASSWORD_FILE}")"

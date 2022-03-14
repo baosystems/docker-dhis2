@@ -135,34 +135,22 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
   provided, _connection.url_ will be set to _jdbc:postgresql:${DHIS2_DATABASE_NAME:-dhis2}_.
   **NOTE:** If `DHIS2_CONNECTION_URL` is provided, it will take precedent.
 
-    * `DATABASE_HOST` **[DEPRECATED]**: Same as `DHIS2_DATABASE_HOST`.
-
 * `DHIS2_DATABASE_PORT`: If this and `DHIS2_DATABASE_HOST` are provided, used to set the jdbc value
   in _connection.url_; default is "5432". **NOTE:** If `DHIS2_CONNECTION_URL` is provided, it will
   take precedent.
 
-    * `DATABASE_PORT` **[DEPRECATED]**: Same as `DHIS2_DATABASE_PORT`.
-
 * `DHIS2_DATABASE_NAME`: Database name used to set the jdbc value in _connection.url_; default is
   "dhis2". **NOTE:** If `DHIS2_CONNECTION_URL` is provided, it will take precedent.
-
-    * `DATABASE_DBNAME` **[DEPRECATED]**: Same as `DHIS2_DATABASE_NAME`.
 
 * `DHIS2_DATABASE_USERNAME`: Value of _connection.username_; default is "dhis". **NOTE:** If
   `DHIS2_CONNECTION_USERNAME` is provided, it will take precedent.
 
-    * `DATABASE_USERNAME` **[DEPRECATED]**: Same as `DHIS2_DATABASE_USERNAME`.
-
 * `DHIS2_DATABASE_PASSWORD`: Value of _connection.password_. **NOTE:** If
   `DHIS2_CONNECTION_PASSWORD` is provided, it will take precedent.
-
-    * `DATABASE_PASSWORD` **[DEPRECATED]**: Same as `DHIS2_DATABASE_PASSWORD`.
 
 * `DHIS2_DATABASE_PASSWORD_FILE`: Value of _connection.password_ will be set as the content of
   the path provided. **NOTE:** If `DHIS2_CONNECTION_PASSWORD` or `DHIS2_DATABASE_PASSWORD` provided,
   they will take precedent.
-
-    * `DATABASE_PASSWORD_FILE` **[DEPRECATED]**: Same as `DHIS2_DATABASE_PASSWORD_FILE`.
 
 * `DHIS2_SERVER_BASEURL`: Value of _server.base.url_.
 
