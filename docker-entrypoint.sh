@@ -61,12 +61,6 @@ _main() {
     echo "[DEBUG] $SELF: copy deprecated DATABASE_PASSWORD_FILE to DHIS2_DATABASE_PASSWORD_FILE" >&2
   fi
 
-  # Set value of the deprecated REDIS_PASSWORD_FILE variable to DHIS2_REDIS_PASSWORD_FILE
-  if [ -z "${DHIS2_REDIS_PASSWORD_FILE:-}" ] && [ -n "${REDIS_PASSWORD_FILE:-}" ]; then
-    export DHIS2_REDIS_PASSWORD_FILE="$REDIS_PASSWORD_FILE"
-    echo "[DEBUG] $SELF: copy deprecated REDIS_PASSWORD_FILE to DHIS2_REDIS_PASSWORD_FILE" >&2
-  fi
-
   ########
 
   # Match first argument to this script.

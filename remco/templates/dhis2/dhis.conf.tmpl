@@ -275,8 +275,6 @@ read5.connection.password = {{ getv("/dhis2/read5/database/password") }}
 # Use or disable Redis; default is 'false'
 {% if exists("/dhis2/redis/enabled") %}
 redis.enabled = {{ getv("/dhis2/redis/enabled") }}
-{% elif gets("/redis/*") %}
-redis.enabled = true
 {% else %}
 #redis.enabled = false
 {% endif %}
@@ -284,8 +282,6 @@ redis.enabled = true
 # Specifies where the redis server is running; default is 'localhost'
 {% if exists("/dhis2/redis/host") %}
 redis.host = {{ getv("/dhis2/redis/host") }}
-{% elif exists("/redis/host") %}
-redis.host = {{ getv("/redis/host") }}
 {% else %}
 #redis.host = localhost
 {% endif %}
@@ -293,8 +289,6 @@ redis.host = {{ getv("/redis/host") }}
 # Specifies the port in which the redis server is listening; default is '6379'
 {% if exists("/dhis2/redis/port") %}
 redis.port = {{ getv("/dhis2/redis/port") }}
-{% elif exists("/redis/port") %}
-redis.port = {{ getv("/redis/port") }}
 {% else %}
 #redis.port = 6379
 {% endif %}
@@ -302,8 +296,6 @@ redis.port = {{ getv("/redis/port") }}
 # Specifies the authentication password; default is unset
 {% if exists("/dhis2/redis/password") %}
 redis.password = {{ getv("/dhis2/redis/password") }}
-{% elif exists("/redis/password") %}
-redis.password = {{ getv("/redis/password") }}
 {% else %}
 #redis.password =
 {% endif %}
@@ -311,8 +303,6 @@ redis.password = {{ getv("/redis/password") }}
 # Specifies whether the Redis server has SSL enabled; default is 'false'
 {% if exists("/dhis2/redis/use/ssl") %}
 redis.use.ssl = {{ getv("/dhis2/redis/use/ssl") }}
-{% elif exists("/redis/usessl") %}
-redis.use.ssl = true
 {% else %}
 #redis.use.ssl = false
 {% endif %}
@@ -321,8 +311,6 @@ redis.use.ssl = true
 # to take over as the leader after the previous leader has become unavailable; default is '2'
 {% if exists("/dhis2/leader/time/to/live/minutes") %}
 leader.time.to.live.minutes = {{ getv("/dhis2/leader/time/to/live/minutes") }}
-{% elif exists("/redis/leaderttl") %}
-leader.time.to.live.minutes = {{ getv("/redis/leaderttl") }}
 {% else %}
 #leader.time.to.live.minutes = 2
 {% endif %}
