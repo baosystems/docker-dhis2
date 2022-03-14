@@ -173,24 +173,13 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 
 * `DHIS2_REDIS_HOST`: Value of _redis.host_.
 
-    * `REDIS_HOST` **[DEPRECATED]**: Same as `DHIS2_REDIS_HOST`.
-
 * `DHIS2_REDIS_PORT`: Value of _redis.port_.
-
-    * `REDIS_PORT` **[DEPRECATED]**: Same as `DHIS2_REDIS_PORT`.
 
 * `DHIS2_REDIS_PASSWORD`: Value of _redis.password_.
 
-    * `REDIS_PASSWORD` **[DEPRECATED]**: Same as `DHIS2_REDIS_PASSWORD`.
-
 * `DHIS2_REDIS_USE_SSL`: Value of _redis.use.ssl_.
 
-    * `REDIS_USESSL` **[DEPRECATED]**: If set and any value is provided, the value of
-      _redis.use.ssl_ will be set to "true".
-
 * `DHIS2_LEADER_TIME_TO_LIVE_MINUTES`: Value of _leader.time.to.live.minutes_.
-
-    * `REDIS_LEADERTTL` **[DEPRECATED]**: Same as `DHIS2_LEADER_TIME_TO_LIVE_MINUTES`.
 
 * `DHIS2_CLUSTER_HOSTNAME`: Value of _cluster.hostname_. If not provided and both `SERVICE_NAME` and
   `SYSTEM_IP` are provided by the entry point, _cluster.hostname_ will be set as the value of
