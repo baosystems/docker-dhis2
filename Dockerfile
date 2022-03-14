@@ -186,8 +186,8 @@ EOF
 COPY --chmod=755 --chown=root:root docker-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["docker-entrypoint.sh"]
 
-# Same value is copied from the FROM image. If not specified, the CMD in this image would be "null"
-CMD ["catalina.sh", "run"]
+# Remco will create configuration files and start Tomcat
+CMD ["remco"]
 
 # Extract the dhis.war file alongside this Dockerfile, and mitigate Log4Shell on old versions
 RUN --mount=type=bind,source=dhis.war,target=dhis.war <<EOF
