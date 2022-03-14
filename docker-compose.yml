@@ -127,8 +127,6 @@ services:
       DHIS2_DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
       WAIT_PATHS: /dhis2-init.progress/dhis2-init_status.txt  # Allow for dhis2_init to complete (necessary in some cases where dhis2_init may not run again)
       WAIT_TIMEOUT: 300  # Allow for dhis2_init to complete (default is 30)
-    command:
-      - remco  # Override the image default
     healthcheck:  # NOTE: Compose will not re-create containers marked as unhealthy unless they exit.
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/dhis-web-commons/security/login.action"]
       interval: 1m30s
