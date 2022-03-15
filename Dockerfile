@@ -1,5 +1,5 @@
-# syntax=docker/dockerfile:1.3-labs
-# Using syntax 1.3-labs is required for here-documents; see: https://github.com/moby/buildkit/blob/87e1fa7/frontend/dockerfile/docs/syntax.md
+# syntax=docker/dockerfile:1.4
+# Using syntax 1.4 or higher is required for here-documents; see https://github.com/moby/buildkit/blob/dockerfile/1.4.0/frontend/dockerfile/docs/syntax.md#here-documents
 
 
 ################################################################################
