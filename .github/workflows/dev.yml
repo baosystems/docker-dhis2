@@ -523,7 +523,7 @@ jobs:
             down --volumes --remove-orphans --rmi 'all'
 
   check:
-    name: Check if all "needs" jobs passed  # this job is to be used as the single required status check in branch protection
+    name: Check if all dev "needs" jobs passed  # this job is to be used as the single required status check in branch protection
 
     if: success()
 
