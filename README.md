@@ -28,10 +28,7 @@ _remco_ or _catalina.sh_:
 * Use `WAIT_HOSTS`, `WAIT_PATHS`, and [others as
   documented](https://github.com/ufoscout/docker-compose-wait#additional-configuration-options) to
   wait for other hosts or file paths before proceeding. If none are provided, `wait` will exit with
-  code 0 immediately and the container will proceed. If `WAIT_HOSTS` is not set and
-  `DHIS2_DATABASE_HOST` is provided, `WAIT_HOSTS` will be set as
-  `WAIT_HOSTS=${DHIS2_DATABASE_HOST}:${DHIS2_DATABASE_PORT:-5432}`. Similarly, if Redis is enabled,
-  the host and port will be added to `WAIT_HOSTS`.
+  code 0 immediately and the container will proceed.
 
 * If `FORCE_HEALTHCHECK_WAIT` is set to `1`, netcat will listen on port 8080 and respond to a single
   http request with "200 OK" and an empty body. This is to allow an orchestrator to mark as a new
@@ -66,36 +63,35 @@ _/usr/local/share/dhis2-init.d/_ to skip.
 **NOTE:** If `dhis2_init.sh` is not run, it is the responsibility of the operator to ensure the
 database is initiated and ready prior to being used by DHIS2.
 
+The following environment variables are set in `dhis2_init.sh` but can be changed as necessary:
+
+  * `DHIS2_DATABASE_NAME` (default: "dhis2")
+  * `DHIS2_DATABASE_USERNAME` (default: "dhis")
+  * `DHIS2_DATABASE_PASSWORD` (optional, but strongly recommended), or contents in
+    `DHIS2_DATABASE_PASSWORD_FILE`
+  * `PGHOST`, or `DHIS2_DATABASE_HOST` (default: "localhost")
+  * `PGPORT` (default: "5432")
+  * `PGDATABASE` (default: "postgres")
+  * `PGUSER` (default: "postgres", must be a PostgreSQL superuser)
+  * `PGPASSWORD` (optional, but strongly recommended, may be required for `PGUSER` in most
+    PostgreSQL installations), or contents in `PGPASSWORD_FILE`
+
 ### dhis2-init.d scripts
 
 * `10_dhis2-database.sh`: Create and initialize a PostgreSQL database with PostGIS. If `WAIT_HOSTS`
-  is empty or null, it will be set to `PGHOST`/`DHIS2_DATABASE_HOST`:`PGPORT`/"5432" and the script
-  will proceed once the database service is ready. The script requires the following environment
-  variables set:
+  or `WAIT_PATHS` are provided, it will wait for hosts or file paths before proceeding. In
+  addition to various `PG*` values being set for connecting to the database, the script
+  requires the following environment variables set:
 
-    * `DHIS2_DATABASE_NAME` (default: "dhis2")
-    * `DHIS2_DATABASE_USERNAME` (default: "dhis")
-    * `DHIS2_DATABASE_PASSWORD` (optional, but strongly recommended), or contents in
-      `DHIS2_DATABASE_PASSWORD_FILE`
-    * `PGHOST`, or `DHIS2_DATABASE_HOST` (default: "localhost")
-    * `PGPORT` (default: "5432")
-    * `PGUSER` (default: "postgres", must be a PostgreSQL superuser)
-    * `PGPASSWORD` (optional, but strongly recommended, may be required for `PGUSER` in most
-      PostgreSQL installations), or contents in `PGPASSWORD_FILE`
+    * `DHIS2_DATABASE_NAME`
+    * `DHIS2_DATABASE_USERNAME`
+    * `DHIS2_DATABASE_PASSWORD`
 
 * `15_pgstatstatements.sh`: Add the
   [pg_stat_statements](https://www.postgresql.org/docs/current/pgstatstatements.html) extension to
-  the `PGDATABASE`. This module is included in the PostGIS container image. If `WAIT_HOSTS` is empty
-  or null, it will be set to `PGHOST`/`DHIS2_DATABASE_HOST`:`PGPORT`/"5432" and the script will
-  proceed once the database service is ready. The script requires the following environment
-  variables set:
-
-    * `PGDATABASE` (default: "postgres")
-    * `PGHOST`, or `DHIS2_DATABASE_HOST` (default: "localhost")
-    * `PGPORT` (default: "5432")
-    * `PGUSER` (default: "postgres", must be a PostgreSQL superuser)
-    * `PGPASSWORD` (optional, but strongly recommended, may be required for `PGUSER` in most
-      PostgreSQL installations), or contents in `PGPASSWORD_FILE`
+  the `PGDATABASE`. This module is included in the PostGIS container image. If `WAIT_HOSTS` or
+  `WAIT_PATHS` are provided, it will wait for hosts or file paths before proceeding. The various
+  `PG*` values can be set as needed to connect to the database.
 
 * `20_dhis2-initwar.sh`: If the last line in _/dhis2-init.progress/20_dhis2-initwar_history.csv_
   does not contain a line stating that the current DHIS2 version and build revision started
@@ -460,10 +456,10 @@ EOF
 
 docker compose up --detach
 
-# Later, upgrade to 2.37.1:
+# Later, upgrade to 2.38.0:
 
 cat >> .env <<'EOF'
-DHIS2_TAG=2.37.1
+DHIS2_TAG=2.38.0
 EOF
 
 docker compose stop dhis2
