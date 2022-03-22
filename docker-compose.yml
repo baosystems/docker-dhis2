@@ -89,17 +89,13 @@ services:
         target: /pass_pg_postgres
         read_only: true
     environment:
-      DHIS2_DATABASE_HOST: database
+      DHIS2_DATABASE_HOST: database  # Matches the name of the Compose service running PostgreSQL
       DHIS2_DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
       DHIS2_INIT_SKIP: 20_dhis2-initwar.sh  # String like "item1.sh,item2.sh"; NOTE: Only skip "20_dhis2-initwar.sh" on stacks with a single Tomcat node
       PGPASSWORD_FILE: /pass_pg_postgres/pass_pg_postgres.txt
-      WAIT_BEFORE: 10  # Allow time for postgres to initialize itself. Also, 10_dhis2-database.sh will set WAIT_HOSTS to the database host if not specified.
+      WAIT_HOSTS: "database:5432"  # Matches the name and port of the Compose service running PostgreSQL
     command:
       - dhis2-init.sh  # Override the image default
-
-  #
-  # NOTE: This Compose file cannot run multiple Tomcat nodes without additional configuration and a Redis service.
-  #
 
   dhis2:
     image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-latest}"
@@ -123,10 +119,10 @@ services:
         target: /pass_pg_dhis
         read_only: true
     environment:
-      DHIS2_DATABASE_HOST: database
+      DHIS2_DATABASE_HOST: database  # Matches the name of the Compose service running PostgreSQL
       DHIS2_DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
+      WAIT_HOSTS: "database:5432"  # Matches the name and port of the Compose service running PostgreSQL
       WAIT_PATHS: /dhis2-init.progress/dhis2-init_status.txt  # Allow for dhis2_init to complete (necessary in some cases where dhis2_init may not run again)
-      WAIT_TIMEOUT: 300  # Allow for dhis2_init to complete (default is 30)
     healthcheck:  # NOTE: Compose will not re-create containers marked as unhealthy unless they exit.
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/dhis-web-commons/security/login.action"]
       interval: 1m30s

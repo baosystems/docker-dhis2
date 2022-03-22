@@ -11,6 +11,8 @@ set -Eeo pipefail
 
 SELF="$( basename "$0" )"
 
+echo "[INFO] $SELF: started..."
+
 # Exit immediately if any required scripts or programs are not found
 ITEMS=(
   basename
@@ -35,42 +37,118 @@ done
 ################################################################################
 
 
-STATUS_FILE="/dhis2-init.progress/${SELF%.sh}_status.txt"
+if [[ -d /dhis2-init.progress/ ]]; then
 
-# Ensure status file parent directory exists
-if [[ ! -d "$( dirname "$STATUS_FILE" )" ]]; then
-  mkdir -p "$( dirname "$STATUS_FILE" )"
-fi
+  STATUS_FILE="/dhis2-init.progress/${SELF%.sh}_status.txt"
 
-if [[ "${DHIS2_INIT_FORCE:-0}" == "1" ]]; then
-  echo "[DEBUG] $SELF: DHIS2_INIT_FORCE=1; delete \"$STATUS_FILE\"..." >&2
-  rm -v -f "$STATUS_FILE"
+  # Ensure status file parent directory exists
+  if [[ ! -d "$( dirname "$STATUS_FILE" )" ]]; then
+    mkdir -p "$( dirname "$STATUS_FILE" )"
+  fi
+
+  if [[ "${DHIS2_INIT_FORCE:-0}" == "1" ]]; then
+    echo "[DEBUG] $SELF: DHIS2_INIT_FORCE=1; delete \"$STATUS_FILE\"..." >&2
+    rm -v -f "$STATUS_FILE"
+  fi
+
 fi
 
 
 ################################################################################
 
 
-LOCK_FILE="/dhis2-init.progress/${SELF%.sh}.lock"
+if [[ -d /dhis2-init.progress/ ]]; then
 
-# Random sleep from 0.01 to 5 seconds to prevent possible race condition with acquiring the file lock
-sleep "$( seq 0 .01 5 | shuf | head -n1 )s"
+  LOCK_FILE="/dhis2-init.progress/${SELF%.sh}.lock"
 
-# Ensure lock file parent directory exists
-if [[ ! -d "$( dirname "$LOCK_FILE" )" ]]; then
-  mkdir -p "$( dirname "$LOCK_FILE" )"
+  # Random sleep from 0.01 to 5 seconds to prevent possible race condition with acquiring the file lock
+  sleep "$( seq 0 .01 5 | shuf | head -n1 )s"
+
+  # Ensure lock file parent directory exists
+  if [[ ! -d "$( dirname "$LOCK_FILE" )" ]]; then
+    mkdir -p "$( dirname "$LOCK_FILE" )"
+  fi
+
+  # Acquire lock as named file
+  # NOTE: the named file descriptor cannot be set with a variable and it cannot contain a hyphen
+  # http://mywiki.wooledge.org/BashFAQ/045 via http://stackoverflow.com/a/17515965/534275
+  # https://github.com/pkrumins/bash-redirections-cheat-sheet/blob/92dac40/bash-redirections-cheat-sheet.txt#L118-L121
+  exec {dhis2init}> "$LOCK_FILE"
+
+  # Wait until lock is available before proceeding, exit with error if timeout is reached
+  if ! timeout 3600s bash -c "until flock -n ${dhis2init} ; do echo \"[INFO] $SELF: Waiting 10s for lock $LOCK_FILE to be released...\"; sleep 10s; done" ; then
+    echo "[WARNING] $SELF: script lock was not released in time, exiting..." >&2
+    exit 1
+  fi
+
 fi
 
-# Acquire lock as named file
-# NOTE: the named file descriptor cannot be set with a variable and it cannot contain a hyphen
-# http://mywiki.wooledge.org/BashFAQ/045 via http://stackoverflow.com/a/17515965/534275
-# https://github.com/pkrumins/bash-redirections-cheat-sheet/blob/92dac40/bash-redirections-cheat-sheet.txt#L118-L121
-exec {dhis2init}> "$LOCK_FILE"
 
-# Wait until lock is available before proceeding, exit with error if timeout is reached
-if ! timeout 3600s bash -c "until flock -n ${dhis2init} ; do echo \"[INFO] $SELF: Waiting 10s for lock $LOCK_FILE to be released...\"; sleep 10s; done" ; then
-  echo "[WARNING] $SELF: script lock was not released in time, exiting..." >&2
-  exit 1
+################################################################################
+
+
+if [[ -x /usr/local/bin/wait ]]; then
+
+  # Ensure there are no trailing commas for WAIT_HOSTS or WAIT_PATHS if provided
+  if [ -n "${WAIT_HOSTS:-}" ]; then
+    export WAIT_HOSTS="${WAIT_HOSTS%,}"
+  fi
+  if [ -n "${WAIT_PATHS:-}" ]; then
+    export WAIT_PATHS="${WAIT_PATHS%,}"
+  fi
+
+  if [ -n "${WAIT_HOSTS:-}" ] || [ -n "${WAIT_PATHS:-}" ]; then
+    # Wait for hosts specified in the environment variable WAIT_HOSTS (noop if not set).
+
+    # Pause for 10 seconds to allow time for PostgreSQL to initialize itself
+    export WAIT_BEFORE='10'
+
+    # If it times out before the targets are available, it will exit with a non-0 code,
+    # and this script will quit because of the bash option "set -e" above.
+    # https://github.com/ufoscout/docker-compose-wait
+
+    /usr/local/bin/wait 2> >( sed -r -e 's/^\[(DEBUG|INFO)\s+(wait)\]/[\1] \2:/g' >&2 )
+  fi
+
+fi
+
+
+################################################################################
+
+
+# If DHIS2_DATABASE_PASSWORD is empty or null, set it to the contents of DHIS2_DATABASE_PASSWORD_FILE
+if [[ -z "${DHIS2_DATABASE_PASSWORD:-}" ]] && [[ -r "${DHIS2_DATABASE_PASSWORD_FILE:-}" ]]; then
+  export DHIS2_DATABASE_PASSWORD="$(<"${DHIS2_DATABASE_PASSWORD_FILE}")"
+fi
+
+# If PGPASSWORD is empty or null, set it to the contents of PGPASSWORD_FILE
+if [[ -z "${PGPASSWORD:-}" ]] && [[ -r "${PGPASSWORD_FILE:-}" ]]; then
+  export PGPASSWORD="$(<"${PGPASSWORD_FILE}")"
+fi
+
+# If PGHOST is empty or null, set it to DHIS2_DATABASE_HOST if provided
+if [[ -z "${PGHOST:-}" ]] && [[ -n "${DHIS2_DATABASE_HOST:-}" ]]; then
+  export PGHOST="${DHIS2_DATABASE_HOST:-}"
+fi
+
+# Set default values if not provided in the environment
+if [[ -z "${DHIS2_DATABASE_USERNAME:-}" ]]; then
+  export DHIS2_DATABASE_USERNAME='dhis'
+fi
+if [[ -z "${DHIS2_DATABASE_NAME:-}" ]]; then
+  export DHIS2_DATABASE_NAME='dhis2'
+fi
+if [[ -z "${PGHOST:-}" ]]; then
+  export PGHOST='localhost'
+fi
+if [[ -z "${PGPORT:-}" ]]; then
+  export PGPORT='5432'
+fi
+if [[ -z "${PGUSER:-}" ]]; then
+  export PGUSER='postgres'
+fi
+if [[ -z "${PGDATABASE:-}" ]]; then
+  export PGDATABASE='postgres'
 fi
 
 
@@ -133,8 +211,12 @@ _main() {
   ################################################################################
 
 
-  # Record script progess
-  echo "$SELF: COMPLETED" | tee "$STATUS_FILE"
+  if [[ -d /dhis2-init.progress/ ]]; then
+    # Record script progess
+    echo "$SELF: COMPLETED" | tee "$STATUS_FILE"
+  else
+    echo "$SELF: COMPLETED"
+  fi
 
 }
 

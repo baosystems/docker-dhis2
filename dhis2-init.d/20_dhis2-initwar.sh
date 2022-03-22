@@ -31,7 +31,6 @@ ITEMS=(
   tee
   timeout
   unzip
-  /usr/local/bin/wait
 )
 for ITEM in "${ITEMS[@]}"; do
   if ! command -V "$ITEM" &>/dev/null ; then
@@ -44,45 +43,53 @@ done
 ################################################################################
 
 
-STATUS_FILE="/dhis2-init.progress/${SELF%.sh}_status.txt"
+if [[ -d /dhis2-init.progress/ ]]; then
 
-# Ensure status file parent directory exists
-if [[ ! -d "$( dirname "$STATUS_FILE" )" ]]; then
-  mkdir -p "$( dirname "$STATUS_FILE" )"
-fi
+  STATUS_FILE="/dhis2-init.progress/${SELF%.sh}_status.txt"
 
-if [[ "${DHIS2_INIT_FORCE:-0}" == "1" ]]; then
-  echo "[DEBUG] $SELF: DHIS2_INIT_FORCE=1; delete \"$STATUS_FILE\"..." >&2
-  rm -v -f "$STATUS_FILE"
+  # Ensure status file parent directory exists
+  if [[ ! -d "$( dirname "$STATUS_FILE" )" ]]; then
+    mkdir -p "$( dirname "$STATUS_FILE" )"
+  fi
+
+  if [[ "${DHIS2_INIT_FORCE:-0}" == "1" ]]; then
+    echo "[DEBUG] $SELF: DHIS2_INIT_FORCE=1; delete \"$STATUS_FILE\"..." >&2
+    rm -v -f "$STATUS_FILE"
+  fi
+
 fi
 
 
 ################################################################################
 
 
-# Set path for history file
-HISTORY_FILE="/dhis2-init.progress/${SELF%.sh}_history.csv"
+if [[ -d /dhis2-init.progress/ ]]; then
 
-# Ensure history file parent directory exists
-if [[ ! -d "$( dirname "$HISTORY_FILE" )" ]]; then
-  mkdir -p "$( dirname "$HISTORY_FILE" )"
-fi
+  # Set path for history file
+  HISTORY_FILE="/dhis2-init.progress/${SELF%.sh}_history.csv"
 
-# Initialize history file
-if [[ ! -f "$HISTORY_FILE" ]]; then
-  echo "build.version,build.revision,build.time,status,datelog" > "$HISTORY_FILE"
-fi
+  # Ensure history file parent directory exists
+  if [[ ! -d "$( dirname "$HISTORY_FILE" )" ]]; then
+    mkdir -p "$( dirname "$HISTORY_FILE" )"
+  fi
 
-# Set DHIS2 build information (logic also used in docker-entrypoint.sh)
-DHIS2_BUILD_PROPERTIES="$( unzip -q -p "$( find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib -maxdepth 1 -type f -name "dhis-service-core-2.*.jar" )" build.properties )"
-DHIS2_BUILD_VERSION="$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
-DHIS2_BUILD_REVISION="$( awk -F'=' '/^build\.revision/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
-DHIS2_BUILD_TIME="$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+  # Initialize history file
+  if [[ ! -f "$HISTORY_FILE" ]]; then
+    echo "build.version,build.revision,build.time,status,datelog" > "$HISTORY_FILE"
+  fi
 
-# Skip if history file contains status message written at the end and DHIS2_INIT_FORCE is not equal to "1"
-if [[ "${DHIS2_INIT_FORCE:-0}" != "1" ]] && { tail -1 "$HISTORY_FILE" | grep -q "${DHIS2_BUILD_VERSION},${DHIS2_BUILD_REVISION},${DHIS2_BUILD_TIME},success" ; } ; then
-  echo "[INFO] $SELF: script has already run for ${DHIS2_BUILD_VERSION},${DHIS2_BUILD_REVISION}, skipping..."
-  exit 0
+  # Set DHIS2 build information (logic also used in docker-entrypoint.sh)
+  DHIS2_BUILD_PROPERTIES="$( unzip -q -p "$( find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib -maxdepth 1 -type f -name "dhis-service-core-2.*.jar" )" build.properties )"
+  DHIS2_BUILD_VERSION="$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+  DHIS2_BUILD_REVISION="$( awk -F'=' '/^build\.revision/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+  DHIS2_BUILD_TIME="$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+
+  # Skip if history file contains status message written at the end and DHIS2_INIT_FORCE is not equal to "1"
+  if [[ "${DHIS2_INIT_FORCE:-0}" != "1" ]] && { tail -1 "$HISTORY_FILE" | grep -q "${DHIS2_BUILD_VERSION},${DHIS2_BUILD_REVISION},${DHIS2_BUILD_TIME},success" ; } ; then
+    echo "[INFO] $SELF: script has already run for ${DHIS2_BUILD_VERSION},${DHIS2_BUILD_REVISION}, skipping..."
+    exit 0
+  fi
+
 fi
 
 
@@ -102,12 +109,8 @@ echo "[INFO] $SELF: Start Tomcat in the background: CATALINA_PID=$CATALINA_PID c
 gosu tomcat \
   catalina.sh start
 
-echo "[INFO] $SELF: Wait for Tomcat to listen on localhost:8080"
-env \
-  WAIT_BEFORE=3 \
-  WAIT_HOSTS=localhost:8080 \
-  WAIT_TIMEOUT=300 \
-  /usr/local/bin/wait 2> >( sed -r -e 's/^\[(DEBUG|INFO)\s+(wait)\]/[\1] \2:/g' >&2 )
+# Wait for Tomcat to start
+sleep 3
 
 # Assume DHIS2 is ready when the login page renders
 if timeout --signal=SIGINT 900s bash -c "until curl --output /dev/null --silent --max-time 3 --fail http://localhost:8080/dhis-web-commons/security/login.action ; do echo [INFO] $SELF: Waiting for DHIS2 login screen... ; sleep 3 ; done"
@@ -115,7 +118,11 @@ then
   echo "[INFO] $SELF: DHIS2 login screen accessed"
 else
   echo "[ERROR] $SELF: Unable to access DHIS2 login screen, exiting..." >&2
-  echo "${DHIS2_BUILD_VERSION},${DHIS2_BUILD_REVISION},${DHIS2_BUILD_TIME},failed,$(date '+%F %T')" >> "$HISTORY_FILE"
+
+  if [[ -d /dhis2-init.progress/ ]]; then
+    echo "${DHIS2_BUILD_VERSION},${DHIS2_BUILD_REVISION},${DHIS2_BUILD_TIME},failed,$(date '+%F %T')" >> "$HISTORY_FILE"
+  fi
+
   exit 1
 fi
 
@@ -128,7 +135,13 @@ gosu tomcat \
 ################################################################################
 
 
-# Record script progess
-echo "[INFO] $SELF: Add to history file ${HISTORY_FILE}:"
-echo "${DHIS2_BUILD_VERSION},${DHIS2_BUILD_REVISION},${DHIS2_BUILD_TIME},success,$(date '+%F %T')" | tee -a "$HISTORY_FILE"
-echo "$SELF: COMPLETED" | tee "$STATUS_FILE"
+if [[ -d /dhis2-init.progress/ ]]; then
+  # Record script progess
+  echo "$SELF: COMPLETED" | tee "$STATUS_FILE"
+
+  echo "[INFO] $SELF: Add to history file ${HISTORY_FILE}:"
+  echo "${DHIS2_BUILD_VERSION},${DHIS2_BUILD_REVISION},${DHIS2_BUILD_TIME},success,$(date '+%F %T')" | tee -a "$HISTORY_FILE"
+
+else
+  echo "$SELF: COMPLETED"
+fi

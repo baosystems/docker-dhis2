@@ -10,9 +10,7 @@ services:
       postgres
         -c "listen_addresses=*"
         -c "synchronous_commit=off"
-        -c "checkpoint_completion_target=0.8"
         -c "wal_writer_delay=10000ms"
-        -c "random_page_cost=1.1"
         -c "max_locks_per_transaction=96"
         -c "shared_buffers=1GB"
         -c "effective_cache_size=3GB"

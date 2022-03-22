@@ -1,5 +1,4 @@
 # syntax=docker/dockerfile:1.4
-# Using syntax 1.4 or higher is required for here-documents; see https://github.com/moby/buildkit/blob/dockerfile/1.4.0/frontend/dockerfile/docs/syntax.md#here-documents
 
 
 ################################################################################
