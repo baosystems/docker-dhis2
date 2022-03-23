@@ -131,18 +131,17 @@ if [[ -z "${PGHOST:-}" ]] && [[ -n "${DHIS2_DATABASE_HOST:-}" ]]; then
   export PGHOST="${DHIS2_DATABASE_HOST:-}"
 fi
 
+# If PGPORT is empty or null, set it to DHIS2_DATABASE_PORT if provided
+if [[ -z "${PGPORT:-}" ]] && [[ -n "${DHIS2_DATABASE_PORT:-}" ]]; then
+  export PGPORT="${DHIS2_DATABASE_PORT:-}"
+fi
+
 # Set default values if not provided in the environment
 if [[ -z "${DHIS2_DATABASE_USERNAME:-}" ]]; then
   export DHIS2_DATABASE_USERNAME='dhis'
 fi
 if [[ -z "${DHIS2_DATABASE_NAME:-}" ]]; then
   export DHIS2_DATABASE_NAME='dhis2'
-fi
-if [[ -z "${PGHOST:-}" ]]; then
-  export PGHOST='localhost'
-fi
-if [[ -z "${PGPORT:-}" ]]; then
-  export PGPORT='5432'
 fi
 if [[ -z "${PGUSER:-}" ]]; then
   export PGUSER='postgres'
