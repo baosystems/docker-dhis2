@@ -70,7 +70,7 @@ The following environment variables are set in `dhis2_init.sh` but can be change
   * `DHIS2_DATABASE_PASSWORD` (optional, but strongly recommended), or contents in
     `DHIS2_DATABASE_PASSWORD_FILE`
   * `PGHOST`, or `DHIS2_DATABASE_HOST` (default: "localhost")
-  * `PGPORT` (default: "5432")
+  * `PGPORT`, or `DHIS2_DATABASE_PORT` (default: "5432")
   * `PGDATABASE` (default: "postgres")
   * `PGUSER` (default: "postgres", must be a PostgreSQL superuser)
   * `PGPASSWORD` (optional, but strongly recommended, may be required for `PGUSER` in most
