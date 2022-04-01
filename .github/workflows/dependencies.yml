@@ -243,7 +243,7 @@ jobs:
           number: ${{ steps.cpr.outputs.pull-request-number }}
 
   check:
-    name: Check if all "needs" jobs passed  # this job is to be used as the single required status check in branch protection
+    name: Check if required jobs passed  # this job name is to be used as the single required status check in branch protection
 
     if: always()
 
