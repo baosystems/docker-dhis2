@@ -81,6 +81,11 @@ services:
         source: dhis2_init_progress
         target: /dhis2-init.progress
       - type: volume
+        source: dhis2_files
+        target: /opt/dhis2/files
+        volume:
+          nocopy: true
+      - type: volume
         source: pass_pg_dhis
         target: /pass_pg_dhis
         read_only: true
@@ -113,8 +118,6 @@ services:
       - type: volume
         source: dhis2_files
         target: /opt/dhis2/files
-        volume:
-          nocopy: true
       - type: volume
         source: pass_pg_dhis
         target: /pass_pg_dhis
