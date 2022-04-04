@@ -40,11 +40,11 @@ for prefix in pages.search('CommonPrefixes'):
 
     bucket_folder = prefix['Prefix'].strip("/")
 
-    # dev versions go straight to the version matrix
+    # Dev versions go straight to the version matrix
     if bucket_folder.startswith('2.') and Version(bucket_folder) > Version('2.34'):
         full_matrix['dhis2_version'].append(f'{bucket_folder}-dev')
 
-    # releases
+    # Released versions
     if bucket_folder.startswith('2.') and Version(bucket_folder) > Version('2.34'):
         dhis2_majors.append(bucket_folder)
 
@@ -80,7 +80,7 @@ for dhis2_major in dhis2_majors_sorted:
     # Add unique list to dhis2_versions dict
     dhis2_versions[dhis2_major] = dhis2_major_versions_sorted
 
-# Remove major versions that have no stable releases (its of releases is empty)
+# Remove major versions that have no stable releases (list of releases is empty)
 # Useful for when a version of DHIS2 is in development with no releases
 # (Using list() to allow editing dict while iterating; see https://stackoverflow.com/a/11941855)
 for key, values in list(dhis2_versions.items()):
