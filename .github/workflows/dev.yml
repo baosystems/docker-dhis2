@@ -305,6 +305,14 @@ jobs:
             --file 'source/docker-compose.yml' \
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
             exec database \
+              psql --echo-all --echo-hidden -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='postgres' --command='CREATE ROLE "dhis";'
+
+          docker compose \
+            --project-name 'docker-dhis2' \
+            --project-directory 'source' \
+            --file 'source/docker-compose.yml' \
+            --file 'source/.github/workflows/support/docker-compose.override.yml' \
+            exec database \
               psql --echo-all --echo-hidden -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='postgres' --command='CREATE DATABASE "dhis2";'
 
           docker compose \
