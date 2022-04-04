@@ -296,6 +296,9 @@ jobs:
         run: |
           set -x
 
+          # Allow PostgreSQL to bootstrap
+          sleep 6
+
           docker compose \
             --project-name 'docker-dhis2' \
             --project-directory 'source' \
