@@ -178,8 +178,11 @@ EOSQL
 
 # If DHIS2_DATABASE_PASSWORD is provided, set LOGIN capability and a password for DHIS2_DATABASE_USERNAME
 if [[ -n "${DHIS2_DATABASE_PASSWORD:-}" ]]; then
-  psql -v ON_ERROR_STOP=1 <<- EOSQL
+  psql --echo-all --echo-hidden -v ON_ERROR_STOP=1 <<- EOSQL
 -- Set role password and grant login
+EOSQL
+
+  psql -v ON_ERROR_STOP=1 <<- EOSQL
 ALTER ROLE $DHIS2_DATABASE_USERNAME WITH LOGIN PASSWORD '$DHIS2_DATABASE_PASSWORD';
 EOSQL
 fi
