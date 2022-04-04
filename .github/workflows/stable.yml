@@ -312,7 +312,7 @@ jobs:
             --project-directory 'source' \
             --file 'source/docker-compose.yml' \
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
-            run --rm dhis2_init db-empty.sh
+            run --rm --entrypoint db-empty.sh dhis2_init
 
       - name: Import sample data
         run: |
@@ -344,7 +344,7 @@ jobs:
             --project-directory 'source' \
             --file 'source/docker-compose.yml' \
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
-            run --rm --env 'DHIS2_INIT_FORCE=1' dhis2_init dhis2-init.sh
+            run --rm --env 'DHIS2_INIT_FORCE=1' --entrypoint dhis2-init.sh dhis2_init
 
       - name: Start DHIS2 container
         timeout-minutes: 15
