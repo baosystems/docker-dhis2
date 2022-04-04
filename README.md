@@ -405,7 +405,7 @@ match the least-privilege approach used in this setup.
 wget -nc -O dhis2-db-sierra-leone-2.37.sql.gz https://databases.dhis2.org/sierra-leone/2.37/dhis2-db-sierra-leone.sql.gz
 
 # Stop Tomcat
-docker compose stop dhis2
+docker compose rm --force --stop dhis2
 
 # Drop and re-create the database using the db-empty.sh helper script
 docker compose run --rm dhis2_init db-empty.sh
@@ -418,10 +418,10 @@ gunzip -c dhis2-db-sierra-leone-2.37.sql.gz | docker compose exec -T database ps
 #docker compose exec database bash -c "gunzip -c /tmp/db.sql.gz | psql -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2' && rm -v /tmp/db.sql.gz"
 
 # Re-initialize DHIS2
-docker compose run --rm --env 'DHIS2_INIT_FORCE=1' dhis2_init
+docker compose run --rm --env 'DHIS2_INIT_FORCE=1' dhis2_init dhis2-init.sh
 
 # Start Tomcat
-docker compose start dhis2
+docker compose up --detach dhis2
 ```
 
 ### Export the database to a file on your system

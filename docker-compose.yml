@@ -95,13 +95,14 @@ services:
       PGPASSWORD_FILE: /pass_pg_postgres/pass_pg_postgres.txt
       WAIT_HOSTS: "database:5432"  # Matches the name and port of the Compose service running PostgreSQL
     command:
-      - dhis2-init.sh  # Override the image default
+      - sh  # Override the image default
+      - -c
+      - "dhis2-init.sh && sleep infinity"
 
   dhis2:
     image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-latest}"
     depends_on:
-      dhis2_init:
-        condition: service_completed_successfully
+      - dhis2_init
     restart: unless-stopped
     working_dir: /opt/dhis2/logs
     volumes:

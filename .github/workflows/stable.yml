@@ -302,7 +302,7 @@ jobs:
             --project-directory 'source' \
             --file 'source/docker-compose.yml' \
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
-            stop dhis2
+            rm --force --stop dhis2
 
       - name: Empty the database
         run: |
@@ -336,6 +336,16 @@ jobs:
               --file 'source/.github/workflows/support/docker-compose.override.yml' \
               exec -T database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
 
+      - name: Re-initialize the database
+        run: |
+          set -x
+          docker compose \
+            --project-name 'docker-dhis2' \
+            --project-directory 'source' \
+            --file 'source/docker-compose.yml' \
+            --file 'source/.github/workflows/support/docker-compose.override.yml' \
+            run --rm --env 'DHIS2_INIT_FORCE=1' dhis2_init dhis2-init.sh
+
       - name: Start DHIS2 container
         timeout-minutes: 15
         run: |
@@ -345,7 +355,7 @@ jobs:
             --project-directory 'source' \
             --file 'source/docker-compose.yml' \
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
-            start dhis2
+            up --detach dhis2
 
           # Wait for service to be healthy
           set +x
