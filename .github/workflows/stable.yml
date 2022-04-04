@@ -297,6 +297,8 @@ jobs:
       - name: Stop DHIS2 container
         run: |
           set -x
+
+          # Need to remove service to prevent DHIS2 from starting up before database is imported
           docker compose \
             --project-name 'docker-dhis2' \
             --project-directory 'source' \
@@ -313,7 +315,25 @@ jobs:
             --file 'source/docker-compose.yml' \
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
             run --rm --entrypoint db-empty.sh dhis2_init
+
+          # Troubleshoot
+          docker compose \
+            --project-name 'docker-dhis2' \
+            --project-directory 'source' \
+            --file 'source/docker-compose.yml' \
+            --file 'source/.github/workflows/support/docker-compose.override.yml' \
+            exec database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2' -c '\dT *.geometry'
+
+          # Allow PostGIS to initialize
           sleep 10
+
+          # Troubleshoot
+          docker compose \
+            --project-name 'docker-dhis2' \
+            --project-directory 'source' \
+            --file 'source/docker-compose.yml' \
+            --file 'source/.github/workflows/support/docker-compose.override.yml' \
+            exec database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2' -c '\dT *.geometry'
 
       - name: Import sample data
         run: |
