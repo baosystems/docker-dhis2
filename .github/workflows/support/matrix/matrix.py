@@ -12,9 +12,9 @@ s3_bucket='releases.dhis2.org'
 
 # Initialization
 
-# Initialize the full matrix dict
+# Initialize the full matrix dict; include "dev" manually as it is not added below
 full_matrix={
-    'dhis2_version': [],
+    'dhis2_version': ['dev'],
     'latest_major': [False],
     'latest_overall': [False],
     'include': [],
@@ -40,6 +40,11 @@ for prefix in pages.search('CommonPrefixes'):
 
     bucket_folder = prefix['Prefix'].strip("/")
 
+    # dev versions go straight to the version matrix
+    if bucket_folder.startswith('2.') and Version(bucket_folder) > Version('2.34'):
+        full_matrix['dhis2_version'].append(f'{bucket_folder}-dev')
+
+    # releases
     if bucket_folder.startswith('2.') and Version(bucket_folder) > Version('2.34'):
         dhis2_majors.append(bucket_folder)
 

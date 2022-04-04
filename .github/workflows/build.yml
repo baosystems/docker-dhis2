@@ -101,9 +101,7 @@ jobs:
         id: matrix_cmd
         run: |
           set -x
-          DHIS2_MATRIX_DEV="$( python3 .github/workflows/support/matrix/dev_matrix.py )"
-          DHIS2_MATRIX_STABLE="$( python3 .github/workflows/support/matrix/stable_matrix.py )"
-          DHIS2_MATRIX="$( echo "$DHIS2_MATRIX_STABLE" "$DHIS2_MATRIX_DEV" | jq --compact-output --slurp '.[0].dhis2_version = .[0].dhis2_version + .[1].dhis2_version | .[0].include = .[0].include + .[1].include | .[0]' )"
+          DHIS2_MATRIX="$( python3 .github/workflows/support/matrix/matrix.py )"
           echo "::set-output name=dhis2_matrix::$DHIS2_MATRIX"
 
     outputs:
