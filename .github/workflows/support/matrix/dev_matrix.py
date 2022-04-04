@@ -12,11 +12,9 @@ s3_bucket='releases.dhis2.org'
 
 # Initialization
 
-# Initialize the full matrix dict
+# Initialize the full matrix dict; include "dev" manually as it is not added below
 full_matrix={
-    'dhis2_version': [],
-    'latest_overall': [False],
-    'include': [],
+    'dhis2_version': ['dev'],
 }
 
 # Use boto3 without credentials (https://stackoverflow.com/a/34866092)
@@ -42,12 +40,5 @@ for prefix in pages.search('CommonPrefixes'):
     if bucket_folder.startswith('2.') and Version(bucket_folder) > Version('2.34'):
         full_matrix['dhis2_version'].append(f'{bucket_folder}-dev')
 
-# Include "dev" as the overall latest (used for determining type of GHA cache)
-full_matrix['include'].append({
-    'dhis2_version': 'dev',
-    'latest_overall': True,
-})
-
 # Send list to stdout as JSON
 print(json.dumps(full_matrix))
-

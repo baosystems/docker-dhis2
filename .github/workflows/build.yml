@@ -1,4 +1,4 @@
-name: stable images
+name: build images
 
 on:
   push:
@@ -23,7 +23,7 @@ on:
       - 'LICENSE'
       - 'README.md'
   schedule:
-    - cron: '28 4 * * *'
+    - cron: '28 3 * * *'
 
 defaults:
   run:
@@ -97,11 +97,13 @@ jobs:
           set -x
           pip3 install --requirement .github/workflows/support/matrix/requirements.txt
 
-      - name: Generate matrix for stable versions
+      - name: Generate matrix for dev and stable versions
         id: matrix_cmd
         run: |
           set -x
-          DHIS2_MATRIX="$( python3 .github/workflows/support/matrix/stable_matrix.py )"
+          DHIS2_MATRIX_DEV="$( python3 .github/workflows/support/matrix/dev_matrix.py )"
+          DHIS2_MATRIX_STABLE="$( python3 .github/workflows/support/matrix/stable_matrix.py )"
+          DHIS2_MATRIX="$( echo "$DHIS2_MATRIX_STABLE" "$DHIS2_MATRIX_DEV" | jq --compact-output --slurp '.[0].dhis2_version = .[0].dhis2_version + .[1].dhis2_version | .[0].include = .[0].include + .[1].include | .[0]' )"
           echo "::set-output name=dhis2_matrix::$DHIS2_MATRIX"
 
     outputs:
@@ -171,7 +173,7 @@ jobs:
           DHIS2_MAJOR="$( cut -c1-4 <<< "${{ steps.get_war.outputs.build_version }}" )"
           echo "::set-output name=dhis2_major::$DHIS2_MAJOR"
 
-          # Due to limited GHA cache space, only retain Docker cache for latest overall
+          # Due to limited GHA cache space, only retain Docker cache for one version
           if ${{ matrix.latest_overall }}; then
             echo "::set-output name=cache_to::type=gha,mode=max"
           fi
@@ -227,12 +229,12 @@ jobs:
             tomcat.major=${{ needs.baseimage_query.outputs.tomcat_major }}
             tomcat.version=${{ needs.baseimage_query.outputs.tomcat_version }}
           flavor: latest=false
-          tags: |  # 2nd and 3rd not controlled by a boolean because jobs.lookup_versions always runs on the latest tomcat
-            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs.baseimage_query.outputs.tomcat_version }}-jre${{ needs.baseimage_query.outputs.java_major }}-openjdk
-            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs.baseimage_query.outputs.tomcat_major }}
-            type=raw,value=${{ matrix.dhis2_version }}
-            type=raw,value=${{ steps.versions_helper.outputs.dhis2_major }},enable=${{ matrix.latest_major }}
+          tags: |
             type=raw,value=latest,enable=${{ matrix.latest_overall }}
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_major }},enable=${{ matrix.latest_major }}
+            type=raw,value=${{ matrix.dhis2_version }}
+            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs.baseimage_query.outputs.tomcat_major }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
+            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs.baseimage_query.outputs.tomcat_version }}-jre${{ needs.baseimage_query.outputs.java_major }}-openjdk,enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
 
       - name: Set up QEMU for amd64 and arm64
         uses: docker/setup-qemu-action@27d0a4f181a40b142cce983c5393082c365d1480
@@ -536,7 +538,7 @@ jobs:
             down --volumes --remove-orphans --rmi 'all'
 
   check:
-    name: Check if all "needs" jobs passed  # this job is to be used as the single required status check in branch protection
+    name: Check if required jobs passed  # this job name is to be used as the single required status check in branch protection
 
     if: success()
 
