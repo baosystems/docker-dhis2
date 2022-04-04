@@ -146,7 +146,7 @@ _main() {
       echo "[DEBUG] $SELF: environment WAIT_PATHS=$WAIT_PATHS" >&2
 
       # Increase the timeout from 30 seconds to allow for dhis2_init to complete.
-      if [ -n "${WAIT_TIMEOUT:-}" ]; then
+      if [ -z "${WAIT_TIMEOUT:-}" ]; then
         export WAIT_TIMEOUT='300'
         echo "[DEBUG] $SELF: environment WAIT_TIMEOUT=$WAIT_TIMEOUT" >&2
       fi
