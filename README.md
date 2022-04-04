@@ -382,13 +382,13 @@ remove existing data and re-initialize the database.
 
 ```bash
 # Stop Tomcat
-docker compose stop dhis2
+docker compose rm --force --stop dhis2
 
 # Drop and re-create the database using a helper script in the container image
 docker compose run --rm dhis2_init db-empty.sh
 
 # Start Tomcat
-docker compose start dhis2
+docker compose up --detach dhis2
 
 # Watch Tomcat logs (press Ctrl+c to exit logs)
 docker compose logs --follow --tail='10' dhis2
@@ -402,7 +402,7 @@ match the least-privilege approach used in this setup.
 
 ```bash
 # Download database file to your system
-wget -nc -O dhis2-db-sierra-leone-2.37.sql.gz https://databases.dhis2.org/sierra-leone/2.37/dhis2-db-sierra-leone.sql.gz
+wget -nc -O dhis2-db-sierra-leone.sql.gz https://databases.dhis2.org/sierra-leone/2.37/dhis2-db-sierra-leone.sql.gz
 
 # Stop Tomcat
 docker compose rm --force --stop dhis2
@@ -411,10 +411,10 @@ docker compose rm --force --stop dhis2
 docker compose run --rm dhis2_init db-empty.sh
 
 # Import the database backup into the empty database
-gunzip -c dhis2-db-sierra-leone-2.37.sql.gz | docker compose exec -T database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
+gunzip -c dhis2-db-sierra-leone.sql.gz | docker compose exec -T database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
 
 # If the previous command didn't work, try the steps below which will copy the file into the container before importing
-#docker cp dhis2-db-sierra-leone-2.37.sql.gz "$( docker compose ps -q 'database' | head -n1 )":/tmp/db.sql.gz
+#docker cp dhis2-db-sierra-leone.sql.gz "$( docker compose ps -q 'database' | head -n1 )":/tmp/db.sql.gz
 #docker compose exec database bash -c "gunzip -c /tmp/db.sql.gz | psql -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2' && rm -v /tmp/db.sql.gz"
 
 # Re-initialize DHIS2
@@ -427,7 +427,7 @@ docker compose up --detach dhis2
 ### Export the database to a file on your system
 
 An included helper script will run `pg_dump` with generated tables excluded and perform some minor
-changes to increase the liklihood of being imported on other systems.
+changes to increase the likelihood of being imported on other systems.
 
 ```bash
 # Stop Tomcat
@@ -448,23 +448,21 @@ Because two versions of DHIS2 should not be running at the same time, stop the d
 first.
 
 ```bash
-# Let's say you started with 2.37.0:
+# Let's say you started with 2.36.0:
 
-cat >> .env <<'EOF'
-DHIS2_TAG=2.37.0
+cat > .env <<'EOF'
+DHIS2_TAG=2.36.0
 EOF
 
 docker compose up --detach
 
-# Later, upgrade to 2.38.0:
+# Later, upgrade to 2.37.0:
 
-cat >> .env <<'EOF'
-DHIS2_TAG=2.38.0
+cat > .env <<'EOF'
+DHIS2_TAG=2.37.0
 EOF
 
-docker compose stop dhis2
-
-docker compose rm -f -s dhis2_init
+docker compose rm --force --stop dhis2 dhis2_init
 
 docker compose pull
 
