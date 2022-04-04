@@ -301,6 +301,7 @@ jobs:
             --file 'source/docker-compose.yml' \
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
             rm --force --stop dhis2
+          sleep 10
 
       - name: Empty the database
         run: |

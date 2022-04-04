@@ -313,6 +313,7 @@ jobs:
             --file 'source/docker-compose.yml' \
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
             run --rm --entrypoint db-empty.sh dhis2_init
+          sleep 10
 
       - name: Import sample data
         run: |
