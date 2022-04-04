@@ -282,7 +282,7 @@ jobs:
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
             pull --quiet
 
-      - name: Create and start DHIS2 Compose stack
+      - name: Create Compose stack and start database service
         run: |
           set -x
           docker compose \
@@ -290,48 +290,27 @@ jobs:
             --project-directory 'source' \
             --file 'source/docker-compose.yml' \
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
-            up --detach
+            up --detach database
 
-      - name: Stop DHIS2 container
+      - name: Initialize the database
         run: |
           set -x
 
-          # Need to remove service to prevent DHIS2 from starting up before database is imported
           docker compose \
             --project-name 'docker-dhis2' \
             --project-directory 'source' \
             --file 'source/docker-compose.yml' \
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
-            rm --force --stop dhis2
+            exec database \
+              psql --echo-all --echo-hidden -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='postgres' --command='CREATE DATABASE "dhis2";'
 
-      - name: Empty the database
-        run: |
-          set -x
           docker compose \
             --project-name 'docker-dhis2' \
             --project-directory 'source' \
             --file 'source/docker-compose.yml' \
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
-            run --rm --entrypoint db-empty.sh dhis2_init
-
-          # Troubleshoot
-          docker compose \
-            --project-name 'docker-dhis2' \
-            --project-directory 'source' \
-            --file 'source/docker-compose.yml' \
-            --file 'source/.github/workflows/support/docker-compose.override.yml' \
-            exec database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2' -c '\dT *.geometry'
-
-          # Allow PostGIS to initialize
-          sleep 10
-
-          # Troubleshoot
-          docker compose \
-            --project-name 'docker-dhis2' \
-            --project-directory 'source' \
-            --file 'source/docker-compose.yml' \
-            --file 'source/.github/workflows/support/docker-compose.override.yml' \
-            exec database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2' -c '\dT *.geometry'
+            exec database \
+              psql --echo-all --echo-hidden -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2' --command='CREATE EXTENSION postgis;'
 
       - name: Import sample data
         run: |
@@ -355,17 +334,7 @@ jobs:
               --file 'source/.github/workflows/support/docker-compose.override.yml' \
               exec -T database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
 
-      - name: Re-initialize the database
-        run: |
-          set -x
-          docker compose \
-            --project-name 'docker-dhis2' \
-            --project-directory 'source' \
-            --file 'source/docker-compose.yml' \
-            --file 'source/.github/workflows/support/docker-compose.override.yml' \
-            run --rm --env 'DHIS2_INIT_FORCE=1' --entrypoint dhis2-init.sh dhis2_init
-
-      - name: Start DHIS2 container
+      - name: Start DHIS2
         timeout-minutes: 15
         run: |
           set -x
@@ -374,7 +343,7 @@ jobs:
             --project-directory 'source' \
             --file 'source/docker-compose.yml' \
             --file 'source/.github/workflows/support/docker-compose.override.yml' \
-            up --detach dhis2
+            up --detach
 
           # Wait for service to be healthy
           set +x
