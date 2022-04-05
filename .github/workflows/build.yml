@@ -297,8 +297,6 @@ jobs:
       - name: Initialize the database
         run: |
           set -x
-
-          # Allow PostgreSQL to bootstrap
           sleep 6
 
           docker compose \
@@ -345,7 +343,8 @@ jobs:
               --project-directory 'source' \
               --file 'source/docker-compose.yml' \
               --file 'source/.github/workflows/support/docker-compose.override.yml' \
-              exec -T database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
+              exec -T database \
+                psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
 
       - name: Start DHIS2
         timeout-minutes: 15
