@@ -527,6 +527,7 @@ jobs:
 
       - name: Destroy DHIS2 Compose stack
         if: always()
+        continue-on-error: true  # okay if this fails since GHA will terminate the VM
         run: |
           set -x
           docker compose \
