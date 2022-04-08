@@ -525,18 +525,6 @@ jobs:
           retention-days: 8
           if-no-files-found: ignore
 
-      - name: Destroy DHIS2 Compose stack
-        if: always()
-        continue-on-error: true  # okay if this fails since GHA will terminate the VM
-        run: |
-          set -x
-          docker compose \
-            --project-name 'docker-dhis2' \
-            --project-directory 'source' \
-            --file 'source/docker-compose.yml' \
-            --file 'source/.github/workflows/support/docker-compose.override.yml' \
-            down --volumes --remove-orphans --rmi 'all'
-
   check:
     name: Check if required jobs passed  # this job name is to be used as the single required status check in branch protection
 
