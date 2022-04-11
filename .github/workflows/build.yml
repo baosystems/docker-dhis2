@@ -404,7 +404,7 @@ jobs:
       ##########################################################################
 
       - name: Install NodeJS
-        uses: actions/setup-node@5b52f097d36d4b0b2f94ed6de710023fbb8b2236
+        uses: actions/setup-node@56337c425554a6be30cdef71bf441f15be286854
         with:
           node-version: '14'  # NOTE: A dependency in e2e-tests will not run in v16 or higher
           check-latest: true
