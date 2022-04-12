@@ -170,6 +170,10 @@ ALTER EXTENSION postgis UPDATE;
 -- PostGIS 3.x migration action
 DROP EXTENSION IF EXISTS postgis_raster;
 
+-- PostGIS extensions may cause DHIS2 startup problems
+DROP EXTENSION IF EXISTS postgis_tiger_geocoder;
+DROP EXTENSION IF EXISTS postgis_topology;
+
 -- postgis schema effective privileges for user "$DHIS2_DATABASE_USERNAME" to use
 GRANT USAGE ON SCHEMA postgis TO $DHIS2_DATABASE_USERNAME;
 GRANT SELECT ON ALL TABLES IN SCHEMA postgis TO $DHIS2_DATABASE_USERNAME;
