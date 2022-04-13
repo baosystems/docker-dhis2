@@ -326,9 +326,9 @@ See https://github.com/baosystems/docker-dhis2/pkgs/container/dhis2/versions for
 ### Start
 
 ```bash
-docker compose pull
+docker-compose pull
 
-docker compose up --detach
+docker-compose up --detach
 ```
 
 You can access the site through http://localhost:8080/
@@ -336,7 +336,7 @@ You can access the site through http://localhost:8080/
 ### Watch logs
 
 ```bash
-docker compose logs --follow
+docker-compose logs --follow
 ```
 
 Press _Ctrl+c_ to exit logs
@@ -346,13 +346,13 @@ Press _Ctrl+c_ to exit logs
 Stop the entire stack:
 
 ```bash
-docker compose stop
+docker-compose stop
 ```
 
 Resume later with:
 
 ```bash
-docker compose start
+docker-compose start
 ```
 
 ### Delete All
@@ -360,7 +360,7 @@ docker compose start
 Delete containers and data storage volumes:
 
 ```bash
-docker compose down --volumes
+docker-compose down --volumes
 ```
 
 ## Passwords
@@ -370,7 +370,7 @@ DHIS2 database user (dhis). The passwords should not be needed for common operat
 be accessed later via:
 
 ```bash
-docker compose run --rm pass_init bash -c 'for i in pg_dhis pg_postgres ; do echo -n "pass_${i}.txt: "; cat "/pass_${i}/pass_${i}.txt"; done'
+docker-compose run --rm pass_init bash -c 'for i in pg_dhis pg_postgres ; do echo -n "pass_${i}.txt: "; cat "/pass_${i}/pass_${i}.txt"; done'
 ```
 
 ## Advanced
@@ -382,16 +382,16 @@ remove existing data and re-initialize the database.
 
 ```bash
 # Stop Tomcat
-docker compose rm --force --stop dhis2
+docker-compose rm --force --stop dhis2
 
 # Drop and re-create the database using a helper script in the container image
-docker compose run --rm dhis2_init db-empty.sh
+docker-compose run --rm dhis2_init db-empty.sh
 
 # Start Tomcat
-docker compose up --detach dhis2
+docker-compose up --detach dhis2
 
 # Watch Tomcat logs (press Ctrl+c to exit logs)
-docker compose logs --follow --tail='10' dhis2
+docker-compose logs --follow --tail='10' dhis2
 ```
 
 ### Load a backup file from DHIS2
@@ -405,23 +405,23 @@ match the least-privilege approach used in this setup.
 wget -nc -O dhis2-db-sierra-leone.sql.gz https://databases.dhis2.org/sierra-leone/2.37/dhis2-db-sierra-leone.sql.gz
 
 # Stop Tomcat
-docker compose rm --force --stop dhis2
+docker-compose rm --force --stop dhis2
 
 # Drop and re-create the database using the db-empty.sh helper script
-docker compose run --rm dhis2_init db-empty.sh
+docker-compose run --rm dhis2_init db-empty.sh
 
 # Import the database backup into the empty database
-gunzip -c dhis2-db-sierra-leone.sql.gz | docker compose exec -T database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
+gunzip -c dhis2-db-sierra-leone.sql.gz | docker-compose exec -T database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
 
 # If the previous command didn't work, try the steps below which will copy the file into the container before importing
-#docker cp dhis2-db-sierra-leone.sql.gz "$( docker compose ps -q 'database' | head -n1 )":/tmp/db.sql.gz
-#docker compose exec database bash -c "gunzip -c /tmp/db.sql.gz | psql -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2' && rm -v /tmp/db.sql.gz"
+#docker cp dhis2-db-sierra-leone.sql.gz "$( docker-compose ps -q 'database' | head -n1 )":/tmp/db.sql.gz
+#docker-compose exec database bash -c "gunzip -c /tmp/db.sql.gz | psql -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2' && rm -v /tmp/db.sql.gz"
 
 # Re-initialize DHIS2
-docker compose run --rm --env 'DHIS2_INIT_FORCE=1' dhis2_init dhis2-init.sh
+docker-compose run --rm --env 'DHIS2_INIT_FORCE=1' dhis2_init dhis2-init.sh
 
 # Start Tomcat
-docker compose up --detach dhis2
+docker-compose up --detach dhis2
 ```
 
 ### Export the database to a file on your system
@@ -431,13 +431,13 @@ changes to increase the likelihood of being imported on other systems.
 
 ```bash
 # Stop Tomcat
-docker compose stop dhis2
+docker-compose stop dhis2
 
 # Export the database using the db-export.sh helper script and compress with gzip
-docker compose run --rm dhis2_init db-export.sh | gzip > export.sql.gz
+docker-compose run --rm dhis2_init db-export.sh | gzip > export.sql.gz
 
 # Start Tomcat
-docker compose start dhis2
+docker-compose start dhis2
 ```
 
 ### Upgrade DHIS2 version
@@ -454,7 +454,7 @@ cat > .env <<'EOF'
 DHIS2_TAG=2.36.0
 EOF
 
-docker compose up --detach
+docker-compose up --detach
 
 # Later, upgrade to 2.37.0:
 
@@ -462,9 +462,9 @@ cat > .env <<'EOF'
 DHIS2_TAG=2.37.0
 EOF
 
-docker compose rm --force --stop dhis2 dhis2_init
+docker-compose rm --force --stop dhis2 dhis2_init
 
-docker compose pull
+docker-compose pull
 
-docker compose up --detach --remove-orphans
+docker-compose up --detach --remove-orphans
 ```
