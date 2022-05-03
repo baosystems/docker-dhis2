@@ -406,7 +406,7 @@ jobs:
       - name: Install NodeJS
         uses: actions/setup-node@56337c425554a6be30cdef71bf441f15be286854
         with:
-          node-version: '14'  # NOTE: A dependency in e2e-tests will not run in v16 or higher
+          node-version: '14'  # NOTE: A dependency in dhis2/e2e-tests will not run in v16 or higher
           check-latest: true
 
       - name: Install Java  # For Selenium
@@ -427,7 +427,7 @@ jobs:
             sudo apt-get install -y --only-upgrade google-chrome-stable
           fi
 
-      - name: Checkout dhis/e2e-tests to current directory
+      - name: Checkout dhis2/e2e-tests to current directory
         uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
         with:
           repository: dhis2/e2e-tests
