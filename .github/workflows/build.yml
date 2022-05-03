@@ -470,13 +470,18 @@ jobs:
           matrix.dhis2_version != '2.35.4' &&
           matrix.dhis2_version != '2.35.5' &&
           matrix.dhis2_version != '2.36.0'
-        continue-on-error: ${{ endsWith(matrix.dhis2_version, 'dev') }}  # don't block the remaining actions if it fails on dev versions
+        uses: nick-fields/retry@e88a9994b039653512d697de1bce46b00bfe11b5
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          warning_on_retry: false
+          continue_on_error: ${{ endsWith(matrix.dhis2_version, 'dev') }}  # don't block the remaining actions if it fails on dev versions
+          command: |
+            set -x
+            npx wdio ./tests/config/wdio.cucumber.conf.js
         env:
           BASE_URL: http://localhost:8080/
           DEBUG: '1'  # Do not run in parallel; there can be more failures in GHA without this due to limited resources
-        run: |
-          set -x
-          npx wdio ./tests/config/wdio.cucumber.conf.js
 
       ##########################################################################
 
