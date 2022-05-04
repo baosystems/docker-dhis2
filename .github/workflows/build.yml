@@ -346,6 +346,11 @@ jobs:
               exec -T database \
                 psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
 
+      - name: Delete buggy metadata from DHIS2
+        run: |
+          set -x
+          source/.github/workflows/support/delete-data.sh
+
       - name: Start DHIS2
         timeout-minutes: 15
         run: |
