@@ -488,6 +488,14 @@ jobs:
           BASE_URL: http://localhost:8080/
           DEBUG: '1'  # Do not run in parallel; there can be more failures in GHA without this due to limited resources
 
+      - name: Mocha tests  # Requires analytics to have been generated
+        continue-on-error: true  # Allow to fail for now
+        env:
+          BASE_URL: http://localhost:8080/
+        run: |
+          set -x
+          npx wdio ./tests/config/wdio.mocha.conf.js
+
       ##########################################################################
 
       - name: Login to GitHub Container Registry
