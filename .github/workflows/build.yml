@@ -346,11 +346,6 @@ jobs:
               exec -T database \
                 psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
 
-      - name: Delete buggy metadata from DHIS2
-        run: |
-          set -x
-          source/.github/workflows/support/delete-data.sh
-
       - name: Start DHIS2
         timeout-minutes: 15
         run: |
@@ -368,6 +363,161 @@ jobs:
             curl -silent --output /dev/null --fail --max-time 1 http://localhost:8080/dhis-web-commons/security/login.action
           do
             sleep .5
+          done
+
+      - name: Delete buggy metadata from DHIS2
+        run: |
+          set -x
+
+          # Items causing test failures in all versions (2.35.13, 2.36.10, 2.37.6)
+          FAVS_DASHBOARDS=(
+            "EE maps"
+          )
+          FAVS_VISUALIZATIONS=(
+            "Child Health: ARI treatment"
+            "Commodities: Magnesium sulfate cosumption districts this year"
+            "Commodities: Zink consumption districts last quarter"
+            "Expenditures: Expenses by financial years line chart"
+            "MCH: Data items last two years"
+          )
+          FAVS_MAPS=(
+            "EE: Nighttime lights 2013 EE"
+            "Immunization: FIC at facilities and population density 2016 EE"
+            "Malaria: Cases and elevation 2016 EE"
+            "Malaria: Cases Western Area 2016 EE"
+            "Malaria: Cases with elevation eastern area "
+            "Malaria: LLITN coverage and rainfall EE"
+            "Map: Nighttime lights 2013"
+            "MCH: Apgar score at facilities this year"
+          )
+          FAVS_PIVOTS=(
+            "Child Health: ARI treatment"
+          )
+
+          # Additional failures for 2.36
+          if \
+            [[ "$( sed 's/\.//g' <<<"${{ steps.versions_helper.outputs.dhis2_major }}" )" -ge 236 ]]
+          then
+            FAVS_DASHBOARDS+=(
+              "Info Videos"
+            )
+            FAVS_VISUALIZATIONS+=(
+              "ER: Emergency report Result vs Target Rural and Urban with legend"
+              "ER: Emergency response Result vs Target last 4 quarters"
+              "ER: Emergency response Result vs Target with legend"
+              "Immunization: BCG doses coverage at facility last 12 months (program)"
+            )
+            FAVS_PIVOTS+=(
+              "Immunization: BCG doses coverage at facility last 12 months (program)"
+            )
+          fi
+
+          # # Additional failures for 2.37.0 and up
+          # if [[ "$( sed 's/\.//g' <<<"${{ steps.versions_helper.outputs.dhis2_major }}" )" -ge 237 ]] \
+          # || [[ "${{ matrix.dhis2_version }}" == "dev" ]]
+          # then
+          #   # Maps missing data for 2.37 and up
+          #   FAVS_MAPS+=(
+          #     "ANC: IPT 2 Cov Chiefdom this year"  # No data exists
+          #     "ANC: IPT 2 Coverage this year"  # No data exists
+          #     "ANC: LLITN coverage district and facility"  # No data exists
+          #   )
+          #   # Pivot API no longer available
+          #   unset FAVS_PIVOTS
+          # fi
+
+          # # Additional failures for 2.38.0 and up
+          # if [[ "$( sed 's/\.//g' <<<"${{ steps.versions_helper.outputs.dhis2_major }}" )" -ge 238 ]] \
+          # || [[ "${{ matrix.dhis2_version }}" == "dev" ]]
+          # then
+          #   FAVS_MAPS+=(
+          #     "Malaria: Cases 2015-2016 Western Area clustered"  # Cannot read properties of undefined (reading '_tiles')
+          #     "Malaria: Cases Female <5y Sierra Leone clustered"  # same
+          #     "Malaria: Cases Sierra Leone <5y 2015-2016 clustered"  # same
+          #     "Malaria: Cases Sierra Leone 2015-2016 clustered"  # same
+          #     "Malaria: Cases Sierra Leone this year clustered"  # same
+          #     "Malaria: Cases Western Area this year clustered"  # same
+          #     "Malaria: Malaria cases households this year"  # same
+          #     "Malaria: Malaria cases Sierra Leone terrain basemap"  # same
+          #   )
+          #   FAVS_VISUALIZATIONS+=(
+          #     "Malaria: Cases with elevation eastern area"
+          #   )
+          # fi
+
+          for FAV_DASHBOARD in "${FAVS_DASHBOARDS[@]}"; do
+            echo "# [Dashboard] \"$FAV_DASHBOARD\""
+            curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
+              --get \
+              --data-urlencode "filter=displayName:eq:$FAV_DASHBOARD" \
+              --data 'fields=id' \
+              --data 'paging=false' \
+              'http://localhost:8080/api/dashboards' \
+            | jq -r '.dashboards[].id' \
+            | xargs --no-run-if-empty --max-args='1' --replace \
+                curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
+                  --request DELETE \
+                  --write-out '\n%{http_code}\n' \
+                  'http://localhost:8080/api/dashboards/{}'
+          done
+
+          for FAV_VISUALIZATION in "${FAVS_VISUALIZATIONS[@]}"; do
+            echo "# [Visualization] \"$FAV_VISUALIZATION\""
+            RESPONSE_JSON="$(
+              curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
+                --get \
+                --data-urlencode "filter=displayName:eq:$FAV_VISUALIZATION" \
+                --data 'fields=id,interpretations' \
+                --data 'paging=false' \
+                'http://localhost:8080/api/visualizations'
+            )"
+            # Delete any interpretations on the visualization
+            jq -r '.visualizations[].interpretations[].id'<<<"$RESPONSE_JSON" \
+            | xargs --no-run-if-empty --max-args='1' --replace \
+                curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
+                  --request DELETE \
+                  --write-out '\n%{http_code}\n' \
+                  'http://localhost:8080/api/interpretations/{}'
+            # Delete the visualization
+            jq -r '.visualizations[].id' <<<"$RESPONSE_JSON" \
+            | xargs --no-run-if-empty --max-args='1' --replace \
+                curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
+                  --request DELETE \
+                  --write-out '\n%{http_code}\n' \
+                  'http://localhost:8080/api/visualizations/{}'
+            unset RESPONSE_JSON
+          done
+
+          for FAV_MAP in "${FAVS_MAPS[@]}"; do
+            echo "# [Map] \"$FAV_MAP\""
+            curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
+              --get \
+              --data-urlencode "filter=displayName:eq:$FAV_MAP" \
+              --data 'fields=id' \
+              --data 'paging=false' \
+              'http://localhost:8080/api/maps' \
+            | jq -r '.maps[].id' \
+            | xargs --no-run-if-empty --max-args='1' --replace \
+                curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
+                  --request DELETE \
+                  --write-out '\n%{http_code}\n' \
+                  'http://localhost:8080/api/maps/{}'
+          done
+
+          for FAV_PIVOT in "${FAVS_PIVOTS[@]}"; do
+            echo "# [Pivot] \"$FAV_PIVOT\""
+            curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
+              --get \
+              --data-urlencode "filter=name:eq:$FAV_PIVOT" \
+              --data 'fields=id' \
+              --data 'paging=false' \
+              'http://localhost:8080/api/reportTables' \
+            | jq -r '.reportTables[].id' \
+            | xargs --no-run-if-empty --max-args='1' --replace \
+                curl --user 'system:System123' --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 60 --connect-timeout 5 --silent \
+                  --request DELETE \
+                  --write-out '\n%{http_code}\n' \
+                  'http://localhost:8080/api/reportTables/{}'
           done
 
       - name: Generate analytics
@@ -432,6 +582,25 @@ jobs:
             sudo apt-get install -y --only-upgrade google-chrome-stable
           fi
 
+      - name: Downgrade to Chrome 84 for older builds
+        if: matrix.dhis2_version == '2.35.0'
+        run: |
+          set -x
+          # CHROME_VERSION="84.0.4147.89-1"
+          # CHROME_VERSION="84.0.4147.105-1"
+          # CHROME_VERSION="84.0.4147.125-1"
+          CHROME_VERSION="84.0.4147.135-1"
+          wget \
+            --no-verbose \
+            --output-document=/tmp/chrome.deb \
+            "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb"
+          if dpkg-query -W google-chrome-stable ; then
+            sudo apt remove -y google-chrome-stable
+          fi
+          sudo apt install -y /tmp/chrome.deb
+          rm -f /tmp/chrome.deb
+          unset CHROME_VERSION
+
       - name: Checkout dhis2/e2e-tests to current directory
         uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
         with:
@@ -466,35 +635,15 @@ jobs:
             --in-place \
             "$WDIO_CONFIG_PATH"
 
-      - name: Cucumber tests  # does NOT require analytics to have been generated
-        if: |  # Tests fail on earlier versions for similar reasons as newer Mocha tests
-          matrix.dhis2_version != '2.35.0' &&
-          matrix.dhis2_version != '2.35.1' &&
-          matrix.dhis2_version != '2.35.2' &&
-          matrix.dhis2_version != '2.35.3' &&
-          matrix.dhis2_version != '2.35.4' &&
-          matrix.dhis2_version != '2.35.5' &&
-          matrix.dhis2_version != '2.36.0'
-        uses: nick-fields/retry@e88a9994b039653512d697de1bce46b00bfe11b5
-        with:
-          timeout_minutes: 5
-          max_attempts: 3
-          warning_on_retry: false
-          continue_on_error: ${{ endsWith(matrix.dhis2_version, 'dev') }}  # don't block the remaining actions if it fails on dev versions
-          command: |
-            set -x
-            npx wdio ./tests/config/wdio.cucumber.conf.js
+      - name: Run all tests
+        continue-on-error: ${{ endsWith(matrix.dhis2_version, 'dev') }}  # don't block the remaining actions if it fails on dev versions
         env:
           BASE_URL: http://localhost:8080/
           DEBUG: '1'  # Do not run in parallel; there can be more failures in GHA without this due to limited resources
-
-      - name: Mocha tests  # Requires analytics to have been generated
-        continue-on-error: true  # Allow to fail for now
-        env:
-          BASE_URL: http://localhost:8080/
+          JIRA_ENABLED: 'false'
         run: |
           set -x
-          npx wdio ./tests/config/wdio.mocha.conf.js
+          npm test
 
       ##########################################################################
 
@@ -514,6 +663,15 @@ jobs:
           dst: ${{ steps.image_meta.outputs.tags }}
 
       ##########################################################################
+
+      - name: Upload npm logs
+        if: always()
+        uses: actions/upload-artifact@6673cd052c4cd6fcf4b4e6e60ea986c889389535
+        with:
+          name: ${{ matrix.dhis2_version }}_npm
+          path: /home/runner/.npm/_logs/
+          retention-days: 8
+          if-no-files-found: ignore
 
       - name: Upload wdio logs
         if: always()
