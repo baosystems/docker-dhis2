@@ -410,7 +410,7 @@ jobs:
           check-latest: true
 
       - name: Install Java  # For Selenium
-        uses: actions/setup-java@4fe61d24fe5472910b93bdeffb8aad49f979d862
+        uses: actions/setup-java@860f60056505705214d223b91ed7a30f173f6142
         with:
           distribution: 'adopt'
           java-version: '11'
