@@ -437,7 +437,7 @@ jobs:
       - name: Install dependencies for dhis2/e2e-tests
         run: |
           set -x
-          npm install
+          npm install --legacy-peer-deps
 
       - name: Fix tests for 2.36.1 and 2.36.2
         if: |
