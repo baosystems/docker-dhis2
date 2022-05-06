@@ -435,6 +435,7 @@ jobs:
           fetch-depth: ${{ steps.versions_helper.outputs.e2e_remote_depth }}  # default is "1", "0" for certain versions; see "versions_helper" for logic
 
       - name: Install dependencies for dhis2/e2e-tests
+        continue-on-error: true  # temporary
         run: |
           set -x
           npm install --legacy-peer-deps
