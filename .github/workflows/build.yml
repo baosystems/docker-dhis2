@@ -502,6 +502,15 @@ jobs:
 
       ##########################################################################
 
+      - name: Upload npm logs
+        if: always()
+        uses: actions/upload-artifact@6673cd052c4cd6fcf4b4e6e60ea986c889389535
+        with:
+          name: ${{ matrix.dhis2_version }}_npm
+          path: /home/runner/.npm/_logs/
+          retention-days: 8
+          if-no-files-found: ignore
+
       - name: Upload wdio logs
         if: always()
         uses: actions/upload-artifact@6673cd052c4cd6fcf4b4e6e60ea986c889389535
