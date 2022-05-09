@@ -9,14 +9,6 @@ set -Eeo pipefail
 ################################################################################
 
 
-SELF="$( basename "$0" )"
-
-echo "[INFO] $SELF: started..." >&2  # Using stderr for info messages
-
-
-################################################################################
-
-
 # If PGPASSWORD is empty or null, set it to the contents of PGPASSWORD_FILE
 if [[ -z "${PGPASSWORD:-}" ]] && [[ -r "${PGPASSWORD_FILE:-}" ]]; then
   export PGPASSWORD="$(<"${PGPASSWORD_FILE}")"
@@ -81,9 +73,6 @@ fi
 # - PGPASSWORD
 
 
-# Using stderr for log output in this script to avoid being in a stdout-captured file
-echo "[INFO] $SELF: Exporting database \"$DHIS2_DATABASE_NAME\":" >&2
-
 pg_dump \
   "$DHIS2_DATABASE_NAME" \
   --format='plain' \
@@ -103,11 +92,3 @@ pg_dump \
     -e '/^-- Name: postgis/i \\nSET check_function_bodies = false;\n\n--' \
     -e 's/postgis\.(geometry)/\1/g' \
     -e 's/( postgis) WITH SCHEMA postgis;/\1;/'
-
-
-################################################################################
-
-
-# Output script progess
-# Using stderr for log output in this script to avoid being in a stdout-captured file
-echo "$SELF: COMPLETED" >&2
