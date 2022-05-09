@@ -125,6 +125,7 @@ services:
     environment:
       DHIS2_DATABASE_HOST: database  # Matches the name of the Compose service running PostgreSQL
       DHIS2_DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
+      DHIS2_SERVER_BASEURL: "http://localhost:8080"  # It's best to always set the hostname, even if it's "localhost"; if using, the protocol is required
       WAIT_HOSTS: "database:5432"  # Matches the name and port of the Compose service running PostgreSQL
       WAIT_PATHS: /dhis2-init.progress/dhis2-init_status.txt  # Allow for dhis2_init to complete (necessary in some cases where dhis2_init may not run again)
     healthcheck:  # NOTE: Compose will not re-create containers marked as unhealthy unless they exit.
@@ -133,6 +134,15 @@ services:
       timeout: 30s
       retries: 3
       start_period: 60s
+
+  reverse_proxy:
+    image: "docker.io/caddy:${CADDY_TAG:-latest}"
+    restart: unless-stopped
+    command:
+      - "caddy"
+      - "reverse-proxy"
+      - "--from=:8080"
+      - "--to=dhis2:8080"
     ports:
       - target: 8080
         published: 8080  # Accessible on port 8080 on the host machine
