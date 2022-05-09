@@ -90,5 +90,5 @@ pg_dump \
     --regexp-extended \
     -e '/^-- Dumped by pg_dump/,/^-- Name: postgis/{/^-- Dumped by pg_dump/!{/^-- Name: postgis/!d}}' \
     -e '/^-- Name: postgis/i \\nSET check_function_bodies = false;\n\n--' \
-    -e 's/postgis\.(geometry)/\1/g' \
-    -e 's/( postgis) WITH SCHEMA postgis;/\1;/'
+    -e 's/(postgis|public)\.(geometry)/\2/g' \
+    -e 's/( postgis) WITH SCHEMA (postgis|public);/\1;/'
