@@ -402,7 +402,7 @@ match the least-privilege approach used in this setup.
 
 ```bash
 # Download database file to your system
-wget -nc -O dhis2-db-sierra-leone.sql.gz https://databases.dhis2.org/sierra-leone/2.37/dhis2-db-sierra-leone.sql.gz
+wget -nc -O dhis2-db-sierra-leone.sql.gz https://databases.dhis2.org/sierra-leone/2.38/dhis2-db-sierra-leone.sql.gz
 
 # Stop Tomcat
 docker compose rm --force --stop dhis2
@@ -456,10 +456,10 @@ EOF
 
 docker compose up --detach
 
-# Later, upgrade to 2.37.0:
+# Later, upgrade to 2.38.0:
 
 cat > .env <<'EOF'
-DHIS2_TAG=2.37.0
+DHIS2_TAG=2.38.0
 EOF
 
 docker compose rm --force --stop dhis2 dhis2_init
