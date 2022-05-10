@@ -403,87 +403,85 @@ jobs:
 
       ##########################################################################
 
-      - name: Install NodeJS
-        uses: actions/setup-node@56337c425554a6be30cdef71bf441f15be286854
-        with:
-          node-version: '14'  # NOTE: A dependency in dhis2/e2e-tests will not run in v16 or higher
-          check-latest: true
+      # - name: Install NodeJS
+      #   uses: actions/setup-node@56337c425554a6be30cdef71bf441f15be286854
+      #   with:
+      #     node-version: '14'  # NOTE: A dependency in dhis2/e2e-tests will not run in v16 or higher
+      #     check-latest: true
 
-      - name: Install Java  # For Selenium
-        uses: actions/setup-java@860f60056505705214d223b91ed7a30f173f6142
-        with:
-          distribution: 'adopt'
-          java-version: '11'
+      # - name: Install Java  # For Selenium
+      #   uses: actions/setup-java@860f60056505705214d223b91ed7a30f173f6142
+      #   with:
+      #     distribution: 'adopt'
+      #     java-version: '11'
 
-      - name: Install latest google-chrome-stable
-        run: |
-          set -x
-          echo "deb [arch=$(dpkg --print-architecture)] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list >/dev/null
-          curl --silent  https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/google.gpg >/dev/null
-          sudo apt-get update
-          if ! dpkg-query -W google-chrome-stable ; then
-            sudo apt-get install -y --no-install-recommends google-chrome-stable
-          else
-            sudo apt-get install -y --only-upgrade google-chrome-stable
-          fi
+      # - name: Install latest google-chrome-stable
+      #   run: |
+      #     set -x
+      #     echo "deb [arch=$(dpkg --print-architecture)] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list >/dev/null
+      #     curl --silent  https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/google.gpg >/dev/null
+      #     sudo apt-get update
+      #     if ! dpkg-query -W google-chrome-stable ; then
+      #       sudo apt-get install -y --no-install-recommends google-chrome-stable
+      #     else
+      #       sudo apt-get install -y --only-upgrade google-chrome-stable
+      #     fi
 
-      - name: Checkout dhis2/e2e-tests to current directory
-        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
-        with:
-          repository: dhis2/e2e-tests
-          ref: ${{ steps.versions_helper.outputs.e2e_remote_ref }}  # "master" for dev, "${{ matrix.dhis2_version }}-rc" for releases; see "versions_helper" for logic
-          fetch-depth: ${{ steps.versions_helper.outputs.e2e_remote_depth }}  # default is "1", "0" for certain versions; see "versions_helper" for logic
+      # - name: Checkout dhis2/e2e-tests to current directory
+      #   uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
+      #   with:
+      #     repository: dhis2/e2e-tests
+      #     ref: ${{ steps.versions_helper.outputs.e2e_remote_ref }}  # "master" for dev, "${{ matrix.dhis2_version }}-rc" for releases; see "versions_helper" for logic
+      #     fetch-depth: ${{ steps.versions_helper.outputs.e2e_remote_depth }}  # default is "1", "0" for certain versions; see "versions_helper" for logic
 
-      - name: Install dependencies for dhis2/e2e-tests
-        continue-on-error: true  # temporary
-        run: |
-          set -x
-          npm install --legacy-peer-deps
+      # - name: Install dependencies for dhis2/e2e-tests
+      #   run: |
+      #     set -x
+      #     npm install --legacy-peer-deps
 
-      - name: Fix tests for 2.36.1 and 2.36.2
-        if: |
-          matrix.dhis2_version == '2.36.1' ||
-          matrix.dhis2_version == '2.36.2'
-        run: |
-          set -x
-          git show 2e090dd85936d8e95b5e5ed43ed1ceea7094888a | sed --regexp-extended --expression='s,([ab]/)(step_definitions/),\1tests/\2,g' | git apply --reverse
+      # - name: Fix tests for 2.36.1 and 2.36.2
+      #   if: |
+      #     matrix.dhis2_version == '2.36.1' ||
+      #     matrix.dhis2_version == '2.36.2'
+      #   run: |
+      #     set -x
+      #     git show 2e090dd85936d8e95b5e5ed43ed1ceea7094888a | sed --regexp-extended --expression='s,([ab]/)(step_definitions/),\1tests/\2,g' | git apply --reverse
 
-      - name: Add headless Chrome options to wdio
-        run: |
-          set -x
-          if [[ -f ./tests/config/wdio.local.conf.js ]]; then
-            WDIO_CONFIG_PATH="./tests/config/wdio.local.conf.js"
-          else
-            WDIO_CONFIG_PATH="./wdio.conf.js"
-          fi
-          sed \
-            --regexp-extended \
-            --expression="/\s*--disable-web-security/ { s/^(\s*)/\1'--headless','--disable-gpu','--window-size=2048,1536','--ignore-certificate-errors','--disable-extensions','--no-sandbox','--disable-dev-shm-usage',\n\1/ }" \
-            --in-place \
-            "$WDIO_CONFIG_PATH"
+      # - name: Add headless Chrome options to wdio
+      #   run: |
+      #     set -x
+      #     if [[ -f ./tests/config/wdio.local.conf.js ]]; then
+      #       WDIO_CONFIG_PATH="./tests/config/wdio.local.conf.js"
+      #     else
+      #       WDIO_CONFIG_PATH="./wdio.conf.js"
+      #     fi
+      #     sed \
+      #       --regexp-extended \
+      #       --expression="/\s*--disable-web-security/ { s/^(\s*)/\1'--headless','--disable-gpu','--window-size=2048,1536','--ignore-certificate-errors','--disable-extensions','--no-sandbox','--disable-dev-shm-usage',\n\1/ }" \
+      #       --in-place \
+      #       "$WDIO_CONFIG_PATH"
 
-      - name: Cucumber tests  # does NOT require analytics to have been generated
-        continue-on-error: true  # temporary
-        if: |  # Tests fail on earlier versions for similar reasons as newer Mocha tests
-          matrix.dhis2_version != '2.35.0' &&
-          matrix.dhis2_version != '2.35.1' &&
-          matrix.dhis2_version != '2.35.2' &&
-          matrix.dhis2_version != '2.35.3' &&
-          matrix.dhis2_version != '2.35.4' &&
-          matrix.dhis2_version != '2.35.5' &&
-          matrix.dhis2_version != '2.36.0'
-        uses: nick-fields/retry@e88a9994b039653512d697de1bce46b00bfe11b5
-        with:
-          timeout_minutes: 5
-          max_attempts: 3
-          warning_on_retry: false
-          continue_on_error: ${{ endsWith(matrix.dhis2_version, 'dev') }}  # don't block the remaining actions if it fails on dev versions
-          command: |
-            set -x
-            npx wdio ./tests/config/wdio.cucumber.conf.js
-        env:
-          BASE_URL: http://localhost:8080/
-          DEBUG: '1'  # Do not run in parallel; there can be more failures in GHA without this due to limited resources
+      # - name: Cucumber tests  # does NOT require analytics to have been generated
+      #   if: |  # Tests fail on earlier versions for similar reasons as newer Mocha tests
+      #     matrix.dhis2_version != '2.35.0' &&
+      #     matrix.dhis2_version != '2.35.1' &&
+      #     matrix.dhis2_version != '2.35.2' &&
+      #     matrix.dhis2_version != '2.35.3' &&
+      #     matrix.dhis2_version != '2.35.4' &&
+      #     matrix.dhis2_version != '2.35.5' &&
+      #     matrix.dhis2_version != '2.36.0'
+      #   uses: nick-fields/retry@e88a9994b039653512d697de1bce46b00bfe11b5
+      #   with:
+      #     timeout_minutes: 5
+      #     max_attempts: 3
+      #     warning_on_retry: false
+      #     continue_on_error: ${{ endsWith(matrix.dhis2_version, 'dev') }}  # don't block the remaining actions if it fails on dev versions
+      #     command: |
+      #       set -x
+      #       npx wdio ./tests/config/wdio.cucumber.conf.js
+      #   env:
+      #     BASE_URL: http://localhost:8080/
+      #     DEBUG: '1'  # Do not run in parallel; there can be more failures in GHA without this due to limited resources
 
       ##########################################################################
 
