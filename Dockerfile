@@ -16,7 +16,7 @@ ARG BASE_IMAGE="docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye"
 
 # gosu for easy step-down from root - https://github.com/tianon/gosu/releases
 # Using rust:bullseye (same as wait-builder stage) to have gpg, unzip, and wget preinstalled.
-FROM docker.io/library/rust:1.60.0-bullseye as gosu-builder
+FROM docker.io/library/rust:1.61.0-bullseye as gosu-builder
 ARG GOSU_VERSION=1.14
 WORKDIR /work
 RUN <<EOF
@@ -76,7 +76,7 @@ EOF
 
 # wait pauses until remote hosts are available - https://github.com/ufoscout/docker-compose-wait
 # Tests are excluded due to the time taken running in arm64 emulation; see https://github.com/ufoscout/docker-compose-wait/issues/54
-FROM docker.io/library/rust:1.60.0-bullseye as wait-builder
+FROM docker.io/library/rust:1.61.0-bullseye as wait-builder
 ARG WAIT_VERSION=2.9.0
 WORKDIR /work
 RUN <<EOF
