@@ -504,7 +504,7 @@ jobs:
 
       - name: Upload npm logs
         if: always()
-        uses: actions/upload-artifact@6673cd052c4cd6fcf4b4e6e60ea986c889389535
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8
         with:
           name: ${{ matrix.dhis2_version }}_npm
           path: /home/runner/.npm/_logs/
@@ -513,7 +513,7 @@ jobs:
 
       - name: Upload wdio logs
         if: always()
-        uses: actions/upload-artifact@6673cd052c4cd6fcf4b4e6e60ea986c889389535
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8
         with:
           name: ${{ matrix.dhis2_version }}_wdio
           path: output/
@@ -532,7 +532,7 @@ jobs:
 
       - name: Upload allure results
         if: always()
-        uses: actions/upload-artifact@6673cd052c4cd6fcf4b4e6e60ea986c889389535
+        uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8
         with:
           name: ${{ matrix.dhis2_version }}_allure
           path: reports/allure-results.zip
