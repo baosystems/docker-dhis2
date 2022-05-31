@@ -258,6 +258,10 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 
 * `DHIS2_ANALYTICS_CACHE_EXPIRATION`: Value of _analytics.cache.expiration_.
 
+### 2.35.2  and up
+
+* `DHIS2_SYSTEM_PROGRAM_RULE_SERVER_EXECUTION`: Value of _system.program_rule.server_execution_.
+
 ### 2.36 and up
 
 * `DHIS2_SYSTEM_AUDIT_ENABLED`: Value of _system.audit.enabled_.
