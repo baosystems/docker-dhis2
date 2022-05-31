@@ -220,6 +220,8 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 
 * `DHIS2_SYSTEM_SESSION_TIMEOUT`: Value of _system.session.timeout_.
 
+* `DHIS2_SYSTEM_SQL_VIEW_TABLE_PROTECTION`: Value of _system.sql_view_table_protection_.
+
 * `DHIS2_CHANGELOG_AGGREGATE`: Value of _changelog.aggregate_.
 
 * `DHIS2_CHANGELOG_TRACKER`: Value of _changelog.tracker_.

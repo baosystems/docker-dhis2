@@ -704,6 +704,18 @@ system.cache.cap.percentage = {{ getv("/dhis2/system/cache/cap/percentage") }}
 
 
 # ----------------------------------------------------------------------
+# Advanced
+# ----------------------------------------------------------------------
+
+# SQL view table protection; default is 'on'
+{% if exists("/dhis2/system/sql/view/table/protection") %}
+system.sql_view_table_protection = {{ getv("/dhis2/system/sql/view/table/protection") }}
+{% else %}
+#system.sql_view_table_protection = on
+{% endif %}
+
+
+# ----------------------------------------------------------------------
 # End of template
 # ----------------------------------------------------------------------
 
