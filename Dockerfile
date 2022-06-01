@@ -92,7 +92,21 @@ else
   git checkout "$WAIT_VERSION"
   R_TARGET="$( rustup target list --installed | grep -- '-gnu' | tail -1 | awk '{print $1}'| sed 's/gnu/musl/' )"
   rustup target add "$R_TARGET"
-  cargo build --release --target="$R_TARGET"
+  ####
+  #### BEGIN crates.io update failure workaround
+  #### https://users.rust-lang.org/t/updating-crates-io-index-manually/39360
+  #### https://stackoverflow.com/a/9237511
+  ####
+    CARGO_CRATES_INDEX="${CARGO_HOME:-$HOME/.cargo}/registry/index/github.com-1ecc6299db9ec823/.git"
+    git clone --bare https://github.com/rust-lang/crates.io-index.git "$CARGO_CRATES_INDEX"
+    git --git-dir="$CARGO_CRATES_INDEX" fetch
+    touch --reference="$CARGO_CRATES_INDEX/FETCH_HEAD" "${CARGO_CRATES_INDEX%git}last-updated"
+  ####
+  #### END crates.io update failure workaround
+  ####
+  cargo fetch --target="$R_TARGET"
+  #cargo test --target="$R_TARGET"
+  cargo build --target="$R_TARGET" --release
   strip ./target/"$R_TARGET"/release/wait
   install --verbose --mode=0755 ./target/"$R_TARGET"/release/wait ..
   cd ..
