@@ -171,6 +171,16 @@ jobs:
           DHIS2_MAJOR="$( cut -c1-4 <<< "${{ steps.get_war.outputs.build_version }}" )"
           echo "::set-output name=dhis2_major::$DHIS2_MAJOR"
 
+          # Trims full version with a _hotfix_ value like "2.36.10.1" or "2.36.10.1-SNAPSHOT", to a _maintenance_ value like "2.36.10"
+          # See https://dhis2-a3b1.kxcdn.com/uploads/default/original/3X/c/d/cd18b97ca7420000bd3c274c470cad01c63e24e5.jpeg
+          # or https://community.dhis2.org/t/hotfix-versioning-convention/47088 for details
+          if grep --quiet --only-matching --extended-regexp '^2\.[0-9]{2}\.[0-9]+\.[0-9]+.*' <<< "${{ matrix.dhis2_version }}" ; then
+            DHIS2_VERSION_MAINT="$( grep --only-matching --extended-regexp '^2\.[0-9]{2}\.[0-9]+' <<< "${{ matrix.dhis2_version }}" )"
+          else
+            DHIS2_VERSION_MAINT="${{ matrix.dhis2_version }}"
+          fi
+          echo "::set-output name=dhis2_version_maint::$DHIS2_VERSION_MAINT"
+
           # Due to limited GHA cache space, only retain Docker cache for one version
           if ${{ matrix.latest_overall }}; then
             echo "::set-output name=cache_to::type=gha,mode=max"
@@ -329,7 +339,7 @@ jobs:
           if [[ "${{ matrix.dhis2_version }}" =~ ^2\.[0-9]{2}-dev$ ]]; then
             DHIS2_DB_URL="https://databases.dhis2.org/sierra-leone/${{ steps.versions_helper.outputs.dhis2_major }}/dhis2-db-sierra-leone.sql.gz"
           else
-            DHIS2_DB_URL="https://databases.dhis2.org/sierra-leone/${{ matrix.dhis2_version }}/dhis2-db-sierra-leone.sql.gz"
+            DHIS2_DB_URL="https://databases.dhis2.org/sierra-leone/${{ steps.versions_helper.outputs.dhis2_version_maint }}/dhis2-db-sierra-leone.sql.gz"
           fi
 
           wget \
