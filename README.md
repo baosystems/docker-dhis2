@@ -13,10 +13,10 @@ The following occur when using _docker-entrypoint.sh_ as the entry point and the
 _remco_:
 
 * If `DHIS2_DATABASE_PASSWORD` is empty or not set, the contents of `DHIS2_DATABASE_PASSWORD_FILE`
-  will be set in `DHIS2_DATABASE_PASSWORD`.
+  will be set as `DHIS2_DATABASE_PASSWORD`.
 
 * If `DHIS2_REDIS_PASSWORD` is empty or not set, the contents of `DHIS2_REDIS_PASSWORD_FILE` will be
-  set in `DHIS2_REDIS_PASSWORD`.
+  set as `DHIS2_REDIS_PASSWORD`.
 
 * If `SYSTEM_FQDN` is empty or not set, it will be exported as the output of `hostname --fqdn`.
 
@@ -26,12 +26,12 @@ The following occur when using _docker-entrypoint.sh_ as the entry point and the
 _remco_ or _catalina.sh_:
 
 * Use `WAIT_HOSTS`, `WAIT_PATHS`, and [others as
-  documented](https://github.com/ufoscout/docker-compose-wait#additional-configuration-options) to
-  wait for other hosts or file paths before proceeding. If none are provided, `wait` will exit with
-  code 0 immediately and the container will proceed.
+  documented to wait](https://github.com/ufoscout/docker-compose-wait#additional-configuration-options)
+  for other hosts or file paths before proceeding. If none are provided, `wait` will exit with code 0
+  immediately and the container will proceed.
 
 * If `FORCE_HEALTHCHECK_WAIT` is set to `1`, netcat will listen on port 8080 and respond to a single
-  http request with "200 OK" and an empty body. This is to allow an orchestrator to mark as a new
+  http request with "200 OK" and an empty body. This is to allow an orchestrator to mark a new
   container as healthy before proceeding to start Tomcat, to which subsequent health checks will
   actually hit DHIS2.
 
