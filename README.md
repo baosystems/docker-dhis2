@@ -127,7 +127,7 @@ The following environment variables can be used to create _dhis.conf_ when using
 command.
 
 See the [DHIS2
-documentation](https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-237/installation.html)
+documentation](https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-238/installation.html) and [source](https://github.com/dhis2/dhis2-core/blob/2.38/dhis-2/dhis-support/dhis-support-external/src/main/java/org/hisp/dhis/external/conf/ConfigurationKey.java)
 for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value is provided:_
 
 * `DHIS2_DATABASE_HOST`: Database hostname used to set the jdbc value in _connection.url_. If not
