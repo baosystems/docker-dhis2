@@ -64,7 +64,7 @@ for dhis2_major in dhis2_majors_sorted:
             # Exclude objects that contain the "-eos/-latest/-rc" strings in the key name
             if (
                 object['Key'].startswith(s3_prefix) and
-                not any(key in object['Key'] for key in ("-eos", "-latest", "-rc"))
+                not any(key in object['Key'] for key in ("-eos", "-hidden", "-latest", "-rc"))
             ):
                 # With the key name, remove text from the beginning and end so it's only a version name
                 dhis2_version_semver = object['Key'].removeprefix(s3_prefix).removesuffix('.war').removesuffix('-EMBARGOED')
