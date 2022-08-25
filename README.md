@@ -325,7 +325,7 @@ architectures amd64 and arm64 are supported.
 
 The version of DHIS2 can be set in the _.env_ file; see
 [.env.example](https://github.com/baosystems/docker-dhis2/blob/main/.env.example) for an example.
-See https://github.com/baosystems/docker-dhis2/pkgs/container/dhis2/versions for available versions.
+See [https://github.com/baosystems/docker-dhis2/pkgs/container/dhis2/versions](https://github.com/orgs/baosystems/packages/container/dhis2/versions?filters%5Bversion_type%5D=tagged) for available versions.
 
 ## Quick
 
