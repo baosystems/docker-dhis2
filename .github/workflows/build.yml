@@ -245,7 +245,7 @@ jobs:
             type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs.baseimage_query.outputs.tomcat_version }}-jre${{ needs.baseimage_query.outputs.java_major }}-openjdk,enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
 
       - name: Set up QEMU for amd64 and arm64
-        uses: docker/setup-qemu-action@8b122486cedac8393e77aa9734c3528886e4a1a8
+        uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18
         with:
           platforms: linux/amd64,linux/arm64
 
