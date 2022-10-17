@@ -212,7 +212,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@671dc9c9e0c2d73f07fa45a3eb0220e1622f0c5f
+        uses: peter-evans/create-pull-request@ad43dccb4d726ca8514126628bec209b8354b6dd
         with:
           # GITHUB_TOKEN does not have "repo" permissions (https://docs.github.com/en/actions/security-guides/automatic-token-authentication)
           # Personal Access Token with "repo" is necessary to create commits
