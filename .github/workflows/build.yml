@@ -38,16 +38,14 @@ jobs:
 
     steps:
 
-      # It is not possible to use a global env for jobs.baseimage_query.container. Because the
-      # value is used again in the outputs, and because we will want to support alternate versions
-      # of Tomcat and Java in the future, we will set it a single time in this job and pass the
-      # value as an output.
+      # It is not currently possible to use a global env for jobs.baseimage_query.container.
+      # Because we may want to support alternate versions of Tomcat and Java in the future,
+      # we will set it a single time in this job and pass the value as an output.
       - name: Set default base image
         id: default_base_image
         run: |
           set -x
-          BASE_IMAGE="docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye"
-          echo "::set-output name=base_image::$BASE_IMAGE"
+          echo "base_image=docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye" >> $GITHUB_OUTPUT
 
     outputs:
       base_image: ${{ steps.default_base_image.outputs.base_image }}
@@ -66,10 +64,10 @@ jobs:
         id: tomcat_query
         run: |
           set -x
-          echo "::set-output name=java_major::$( sed --regexp-extended --expression='s/^([0-9]+)(\.|u).*$/\1/' <<< "$JAVA_VERSION" )"
-          echo "::set-output name=java_version::$JAVA_VERSION"
-          echo "::set-output name=tomcat_major::$TOMCAT_MAJOR"
-          echo "::set-output name=tomcat_version::$TOMCAT_VERSION"
+          echo "java_major=$( sed --regexp-extended --expression='s/^([0-9]+)(\.|u).*$/\1/' <<< "$JAVA_VERSION" )" >> $GITHUB_OUTPUT
+          echo "java_version=$JAVA_VERSION" >> $GITHUB_OUTPUT
+          echo "tomcat_major=$TOMCAT_MAJOR" >> $GITHUB_OUTPUT
+          echo "tomcat_version=$TOMCAT_VERSION" >> $GITHUB_OUTPUT
 
     outputs:
       java_major: ${{ steps.tomcat_query.outputs.java_major }}
@@ -101,8 +99,7 @@ jobs:
         id: matrix_cmd
         run: |
           set -x
-          DHIS2_MATRIX="$( python3 .github/workflows/support/matrix/matrix.py )"
-          echo "::set-output name=dhis2_matrix::$DHIS2_MATRIX"
+          echo "dhis2_matrix=$( python3 .github/workflows/support/matrix/matrix.py )" >> $GITHUB_OUTPUT
 
     outputs:
       dhis2_matrix: ${{ steps.matrix_cmd.outputs.dhis2_matrix }}
@@ -158,10 +155,10 @@ jobs:
           # Expand to get the contents of build.properties
           unzip -qq source/dhis.war -d source/dhis
           DHIS2_BUILD_PROPERTIES="$( find source/dhis/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; )"
-          echo "::set-output name=build_version::$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
-          echo "::set-output name=build_revision::$( awk -F'=' '/^build\.revision/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
-          echo "::set-output name=build_time::$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
-          echo "::set-output name=build_date::$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" | grep --only-matching --extended-regexp '20[0-9]{2}-[0-9]{2}-[0-9]{2}' )"
+          echo "build_version=$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )" >> $GITHUB_OUTPUT
+          echo "build_revision=$( awk -F'=' '/^build\.revision/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )" >> $GITHUB_OUTPUT
+          echo "build_time=$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )" >> $GITHUB_OUTPUT
+          echo "build_date=$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" | grep --only-matching --extended-regexp '20[0-9]{2}-[0-9]{2}-[0-9]{2}' )" >> $GITHUB_OUTPUT
 
       - name: Version helper
         id: versions_helper
@@ -169,7 +166,7 @@ jobs:
           set -x
           # Trims full version like "2.36.1" or "2.36.7-SNAPSHOT" to "2.36" from war file build properties
           DHIS2_MAJOR="$( cut -c1-4 <<< "${{ steps.get_war.outputs.build_version }}" )"
-          echo "::set-output name=dhis2_major::$DHIS2_MAJOR"
+          echo "dhis2_major=$DHIS2_MAJOR" >> $GITHUB_OUTPUT
 
           # Trims full version with a _hotfix_ value like "2.36.10.1" or "2.36.10.1-SNAPSHOT", to a _maintenance_ value like "2.36.10"
           # See https://dhis2-a3b1.kxcdn.com/uploads/default/original/3X/c/d/cd18b97ca7420000bd3c274c470cad01c63e24e5.jpeg
@@ -179,11 +176,11 @@ jobs:
           else
             DHIS2_VERSION_MAINT="${{ matrix.dhis2_version }}"
           fi
-          echo "::set-output name=dhis2_version_maint::$DHIS2_VERSION_MAINT"
+          echo "dhis2_version_maint=$DHIS2_VERSION_MAINT" >> $GITHUB_OUTPUT
 
           # Due to limited GHA cache space, only retain Docker cache for one version
           if ${{ matrix.latest_overall }}; then
-            echo "::set-output name=cache_to::type=gha,mode=max"
+            echo "cache_to=type=gha,mode=max" >> $GITHUB_OUTPUT
           fi
 
           # Git checkout reference for e2e-tests repository
@@ -208,13 +205,13 @@ jobs:
               E2E_REMOTE_REF="$( git ls-remote --tags --refs --sort='version:refname' https://github.com/dhis2/e2e-tests.git | awk '/[[:blank:]]+refs\/tags\/[0-9.]+-rc$/ {gsub("refs/tags/",""); print $NF}'| grep "^${DHIS2_MAJOR}" | sort --version-sort | tail -1 )"
             fi
           fi
-          echo "::set-output name=e2e_remote_ref::$E2E_REMOTE_REF"
+          echo "e2e_remote_ref=$E2E_REMOTE_REF" >> $GITHUB_OUTPUT
 
           # Git checkout depth for e2e-tests repository
           if [[ "${{ matrix.dhis2_version }}" =~ ^2\.36\.[012]$ ]] ; then
-            echo "::set-output name=e2e_remote_depth::0"
+            echo "e2e_remote_depth=0" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=e2e_remote_depth::1"
+            echo "e2e_remote_depth=1" >> $GITHUB_OUTPUT
           fi
 
       - name: Container image metadata
@@ -225,7 +222,7 @@ jobs:
           labels: |
             org.opencontainers.image.base.name=${{ needs.set_defaults.outputs.base_image }}
             org.opencontainers.image.title=dhis2
-            org.opencontainers.image.url=https://github.com/baosystems/docker-dhis2/pkgs/container/dhis2
+            org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}/pkgs/container/dhis2
             org.opencontainers.image.version=${{ matrix.dhis2_version }}
             dhis2.build.major=${{ steps.versions_helper.outputs.dhis2_major }}
             dhis2.build.version=${{ steps.get_war.outputs.build_version }}

@@ -37,21 +37,17 @@ jobs:
         id: gosu
         run: |
           set -x
-          echo "::set-output name=version::$( awk -F'=' '/^ARG GOSU_VERSION/ {print $NF}' Dockerfile )"
+          echo "version=$( awk -F'=' '/^ARG GOSU_VERSION=/ {print $NF}' Dockerfile )" >> $GITHUB_OUTPUT
       - name: Query version of remco
         id: remco
         run: |
           set -x
-          echo "::set-output name=version::$( awk -F'=' '/^ARG REMCO_VERSION/ {print $NF}' Dockerfile )"
+          echo "version=$( awk -F'=' '/^ARG REMCO_VERSION=/ {print $NF}' Dockerfile )" >> $GITHUB_OUTPUT
       - name: Query version of wait
         id: wait
         run: |
           set -x
-          echo "::set-output name=version::$( awk -F'=' '/^ARG WAIT_VERSION/ {print $NF}' Dockerfile )"
-    outputs:
-      gosu: ${{ steps.gosu.outputs.version }}
-      remco: ${{ steps.remco.outputs.version }}
-      wait: ${{ steps.wait.outputs.version }}
+          echo "version=$( awk -F'=' '/^ARG WAIT_VERSION=/ {print $NF}' Dockerfile )" >> $GITHUB_OUTPUT
 
   file_envexample:
     name: Query versions in .env.example
@@ -63,15 +59,12 @@ jobs:
         id: dhis2
         run: |
           set -x
-          echo "::set-output name=version::$( source .env.example && echo "$DHIS2_TAG" )"
+          echo "version=$( source .env.example && echo "$DHIS2_TAG" )" >> $GITHUB_OUTPUT
       - name: Query version of Tomcat
         id: tomcat
         run: |
           set -x
-          echo "::set-output name=version::$( grep --only-matching --extended-regexp 'tomcat[0-9]{1,2}\.[0-9.]+' .env.example | sed 's/^tomcat//' )"
-    outputs:
-      dhis2: ${{ steps.dhis2.outputs.version }}
-      tomcat: ${{ steps.tomcat.outputs.version }}
+          echo "version=$( grep --only-matching --extended-regexp 'tomcat[0-9]{1,2}\.[0-9.]+' .env.example | sed 's/^tomcat//' )" >> $GITHUB_OUTPUT
 
   github_tags:
     name: Query versions of projects using the GitHub API
@@ -81,21 +74,17 @@ jobs:
         id: gosu
         run: |
           set -x
-          echo "::set-output name=version::$( curl -fsS https://api.github.com/repos/tianon/gosu/tags | jq --raw-output '.[].name' | sort --version-sort | tail -1 )"
+          echo "version=$( curl -fsS https://api.github.com/repos/tianon/gosu/tags | jq --raw-output '.[].name' | sort --version-sort | tail -1 )" >> $GITHUB_OUTPUT
       - name: Query latest remco tag
         id: remco
         run: |
           set -x
-          echo "::set-output name=version::$( curl -fsS https://api.github.com/repos/HeavyHorst/remco/tags | jq --raw-output '.[].name' | sed -r 's/^[v.]{1,2}//g' | sort --version-sort | tail -1 )"
+          echo "version=$( curl -fsS https://api.github.com/repos/HeavyHorst/remco/tags | jq --raw-output '.[].name' | sed -r 's/^[v.]{1,2}//g' | sort --version-sort | tail -1 )" >> $GITHUB_OUTPUT
       - name: Query latest wait tag
         id: wait
         run: |
           set -x
-          echo "::set-output name=version::$( curl -fsS https://api.github.com/repos/ufoscout/docker-compose-wait/tags | jq --raw-output '.[].name' | sort --version-sort | tail -1 )"
-    outputs:
-      gosu: ${{ steps.gosu.outputs.version }}
-      remco: ${{ steps.remco.outputs.version }}
-      wait: ${{ steps.wait.outputs.version }}
+          echo "version=$( curl -fsS https://api.github.com/repos/ufoscout/docker-compose-wait/tags | jq --raw-output '.[].name' | sort --version-sort | tail -1 )" >> $GITHUB_OUTPUT
 
   image_latest:
     name: Query versions in the latest ghcr.io/baosystems/dhis2 image
@@ -106,15 +95,12 @@ jobs:
         id: dhis2
         run: |
           set -x
-          echo "::set-output name=version::$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' /opt/dhis2/build.properties )"
+          echo "version=$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' /opt/dhis2/build.properties )" >> $GITHUB_OUTPUT
       - name: Query version of Tomcat
         id: tomcat
         run: |
           set -x
-          echo "::set-output name=version::$TOMCAT_VERSION"
-    outputs:
-      dhis2: ${{ steps.dhis2.outputs.version }}
-      tomcat: ${{ steps.tomcat.outputs.version }}
+          echo "version=$TOMCAT_VERSION" >> $GITHUB_OUTPUT
 
   notify:
     name: Notify of dependencies that need to be updated
