@@ -120,7 +120,7 @@ jobs:
 
       - name: Send message to Slack about gosu version in Dockerfile
         if: ${{ needs.file_dockerfile.outputs.gosu != needs.github_tags.outputs.gosu }}
-        uses: slackapi/slack-github-action@936158bbe252e9a6062e793ea4609642c966e302
+        uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
@@ -128,7 +128,7 @@ jobs:
 
       - name: Send message to Slack about remco version in Dockerfile
         if: ${{ needs.file_dockerfile.outputs.remco != needs.github_tags.outputs.remco }}
-        uses: slackapi/slack-github-action@936158bbe252e9a6062e793ea4609642c966e302
+        uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
@@ -136,7 +136,7 @@ jobs:
 
       - name: Send message to Slack about wait version in Dockerfile
         if: ${{ needs.file_dockerfile.outputs.wait != needs.github_tags.outputs.wait }}
-        uses: slackapi/slack-github-action@936158bbe252e9a6062e793ea4609642c966e302
+        uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
