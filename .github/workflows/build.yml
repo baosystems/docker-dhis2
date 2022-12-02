@@ -502,7 +502,7 @@ jobs:
 
       - name: Copy image from local registry and push to public registry
         if: ${{ (github.ref == 'refs/heads/main') && (github.event_name != 'pull_request') && !env.ACT }}
-        uses: akhilerm/tag-push-action@f973043dc002b8e5a772c53e79441e6e1861e874
+        uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37
         with:
           src: ${{ fromJSON(steps.image_build.outputs.metadata)['image.name'] }}
           dst: ${{ steps.image_meta.outputs.tags }}
