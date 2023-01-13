@@ -202,6 +202,8 @@ COPY --chmod=755 --chown=root:root ./helpers/port-from-url.py /usr/local/bin/
 COPY --chmod=644 --chown=root:root ./remco/config.toml /etc/remco/config
 COPY --chmod=644 --chown=root:root ./remco/dhis2-onetime.toml /etc/remco/
 COPY --chmod=644 --chown=root:root ./remco/tomcat.toml /etc/remco/
+COPY --chmod=644 --chown=root:root ./remco/templates/dhis2/dhis-cluster.conf.tmpl /etc/remco/templates/dhis2/
+COPY --chmod=644 --chown=root:root ./remco/templates/dhis2/dhis-rr.conf.tmpl /etc/remco/templates/dhis2/
 COPY --chmod=644 --chown=root:root ./remco/templates/dhis2/dhis.conf.tmpl /etc/remco/templates/dhis2/
 COPY --chmod=644 --chown=root:root ./remco/templates/tomcat/server.xml.tmpl /etc/remco/templates/tomcat/
 # Initialize empty remco log file for the tomcat user (the "EOF" on the next line is not a typo)
@@ -235,4 +237,64 @@ for JAR in /usr/local/tomcat/webapps/**/log4j-core-2.*.jar ; do
     set -o pipefail
   fi
 done
+EOF
+
+# Create remco template for dhis.conf based on the ConfigurationKey.java file in GitHub for the build version
+RUN <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+# WAR version without suffix like "-SNAPSHOT" or "-rc1"
+DHIS2_VERSION_NOSUFFIX="$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' /opt/dhis2/build.properties | grep --only-matching --extended-regexp '^2\.[0-9\.]+' )"
+# Determine major version, like "2.37" from "2.37.9"
+DHIS2_MAJOR="$( cut -c1-4 <<< "$DHIS2_VERSION_NOSUFFIX" )"
+# Attempt to find file from GitHub tag, then find the GitHub branch, and fallback to the master branch URL
+DHIS2_CONFIGKEY_URL="https://github.com/dhis2/dhis2-core/raw/${DHIS2_VERSION_NOSUFFIX}/dhis-2/dhis-support/dhis-support-external/src/main/java/org/hisp/dhis/external/conf/ConfigurationKey.java"
+if ! curl -o /dev/null -fsSL "$DHIS2_CONFIGKEY_URL" ; then
+  DHIS2_CONFIGKEY_URL="https://github.com/dhis2/dhis2-core/raw/${DHIS2_MAJOR}/dhis-2/dhis-support/dhis-support-external/src/main/java/org/hisp/dhis/external/conf/ConfigurationKey.java"
+  if ! curl -o /dev/null -fsSL "$DHIS2_CONFIGKEY_URL" ; then
+    DHIS2_CONFIGKEY_URL="https://github.com/dhis2/dhis2-core/raw/master/dhis-2/dhis-support/dhis-support-external/src/main/java/org/hisp/dhis/external/conf/ConfigurationKey.java"
+  fi
+fi
+# Grab file on GitHub, sanitize, and create remco template with default values and comments
+curl -fsSL "$DHIS2_CONFIGKEY_URL" \
+| grep -E '^\s+[[:upper:]][[:upper:]]+[^\(]+\(' `# limit to lines beginning with whitespace, two or more uppercase letters, parameter name ending with (` \
+| sed -r 's/^\s+//g' `# remove leading spaces` \
+| awk -F'[ ,]' '{print $2","$4}' `# using [[:space:]] and comma as field separators, print fields separated commas for csv rows` \
+| sed \
+  -r \
+  -e 's/"([^"]+)"/\1/g' `# remove quotation marks from non-empty quoted values` \
+  -e 's/""$//g' `# drop empty quoted values` \
+| sed  `# convert to strings` \
+  -e 's/Constants\.OFF/off/g' \
+  -e 's/Constants\.ON/on/g' \
+  -e 's/Constants\.FALSE/false/g' \
+  -e 's/Constants\.TRUE/true/g' \
+  -e "s/CspUtils\.DEFAULT_HEADER_VALUE/script-src 'none';/g" \
+  -e 's/String\.valueOf( SECONDS.toMillis( \([0-9]\+\) ) )/\1000/g' \
+| sed -e '/^cluster\.\(cache\.\(\|remote\.object\.\)port\|hostname\|members\)/d'  `# remove options that will be added with dhis-cluster.conf.tmpl` \
+| sort \
+| while IFS= read -r LINE ; do
+  CONFIG_OPTION="$( awk -F',' '{print $1}' <<<"$LINE" )"
+  CONFIG_DEFAULT="$( awk -F',' '{print $2}' <<<"$LINE" )"
+  TEMPLATE_OPTION="$( sed -e 's,^,/dhis2/,' <<<"$CONFIG_OPTION" | tr '._' '/' )"
+  cat >> /tmp/.dhis.conf.tmpl <<EOS
+{% if exists("${TEMPLATE_OPTION}") %}
+${CONFIG_OPTION} = {{ getv("${TEMPLATE_OPTION}") }}
+{% else %}
+#${CONFIG_OPTION} = ${CONFIG_DEFAULT}
+{% endif %}
+EOS
+done
+# Add clustering settings (keep logic in remco for DNS lookups of SERVICE_NAME)
+if curl -fsSL "$DHIS2_CONFIGKEY_URL" | grep -q 'CLUSTER_HOSTNAME( "cluster\.hostname",' ; then
+  cat /etc/remco/templates/dhis2/dhis-cluster.conf.tmpl >> /tmp/.dhis.conf.tmpl
+fi
+# Add read-replica settings
+cat /etc/remco/templates/dhis2/dhis-rr.conf.tmpl >> /tmp/.dhis.conf.tmpl
+# Add comment at the top about how the file was generated
+sed -e "1i##\n## Template generated from $DHIS2_CONFIGKEY_URL\n##\n" -i /tmp/.dhis.conf.tmpl
+# Add template section at the end for unspecified values
+echo -e '{% if exists("/dhis2/unspecified") %}\n\n##\n## Unspecified settings\n##\n\n{{ getv("/dhis2/unspecified") }}\n{% endif %}' >> /tmp/.dhis.conf.tmpl
+# Move generated template into place
+mv --force /tmp/.dhis.conf.tmpl /etc/remco/templates/dhis2/dhis.conf.tmpl
 EOF

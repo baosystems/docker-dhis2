@@ -20,4 +20,4 @@ log_level = "debug"
     [resource.backend.env]
       onetime = true
       interval = 1
-      keys = ["/dhis2/","/service/","/system/"]
+      keys = ["/dhis2/","/service/name","/system/ip"]
