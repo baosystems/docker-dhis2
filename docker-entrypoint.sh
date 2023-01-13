@@ -24,8 +24,17 @@ _main() {
   ########
 
   # Match first argument to this script.
-  # Example: "remco" for a full command of "docker-entrypoint.sh remco -config /etc/remco/config"
+  # Example: "remco" for a full command like "docker-entrypoint.sh remco -config /etc/remco/config"
   if [ "$1" = 'remco' ]; then
+
+    # Set DHIS2 build information (logic also used in 20_dhis2-initwar.sh):
+
+    DHIS2_BUILD_PROPERTIES="$( unzip -q -p "$( find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib -maxdepth 1 -type f -name "dhis-service-core-2.*.jar" )" build.properties )"
+    export DHIS2_BUILD_VERSION="$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+    export DHIS2_BUILD_MAJOR="$( cut -c1-4 <<< "$DHIS2_BUILD_VERSION" )"
+    export DHIS2_BUILD_REVISION="$( awk -F'=' '/^build\.revision/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+    export DHIS2_BUILD_TIME="$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
+    export DHIS2_BUILD_DATE="$( grep --only-matching --extended-regexp '20[0-9]{2}-[0-9]{2}-[0-9]{2}' <<< "$DHIS2_BUILD_TIME" )"
 
     # Set environment variables for using remco to generate dhis.conf:
 
@@ -39,12 +48,6 @@ _main() {
     if [ -z "${DHIS2_REDIS_PASSWORD:-}" ] && [ -r "${DHIS2_REDIS_PASSWORD_FILE:-}" ]; then
       export DHIS2_REDIS_PASSWORD="$(<"${DHIS2_REDIS_PASSWORD_FILE}")"
       echo "[DEBUG] $SELF: set DHIS2_REDIS_PASSWORD from DHIS2_REDIS_PASSWORD_FILE" >&2
-    fi
-
-    # Set SYSTEM_FQDN as hostname
-    if [ -z "${SYSTEM_FQDN:-}" ]; then
-      export SYSTEM_FQDN="$(hostname --fqdn)"
-      echo "[DEBUG] $SELF: set SYSTEM_FQDN=$SYSTEM_FQDN" >&2
     fi
 
     # Set SYSTEM_IP to the internal IP address
@@ -77,13 +80,358 @@ _main() {
       echo "[DEBUG] $SELF: set TOMCAT_CONNECTOR_SECURE=$TOMCAT_CONNECTOR_SECURE" >&2
     fi
 
-    # Set DHIS2 build information (logic also used in 20_dhis2-initwar.sh)
-    DHIS2_BUILD_PROPERTIES="$( unzip -q -p "$( find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib -maxdepth 1 -type f -name "dhis-service-core-2.*.jar" )" build.properties )"
-    export DHIS2_BUILD_VERSION="$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
-    export DHIS2_BUILD_MAJOR="$( cut -c1-4 <<< "$DHIS2_BUILD_VERSION" )"
-    export DHIS2_BUILD_REVISION="$( awk -F'=' '/^build\.revision/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
-    export DHIS2_BUILD_TIME="$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
-    export DHIS2_BUILD_DATE="$( grep --only-matching --extended-regexp '20[0-9]{2}-[0-9]{2}-[0-9]{2}' <<< "$DHIS2_BUILD_TIME" )"
+    # Set DHIS2_DATABASE_USERNAME if not provided
+    if [ -z "${DHIS2_DATABASE_USERNAME:-}" ]; then
+      export DHIS2_DATABASE_USERNAME="dhis"
+      echo "[DEBUG] $SELF: set DHIS2_DATABASE_USERNAME=$DHIS2_DATABASE_USERNAME" >&2
+    fi
+
+    # Set DHIS2_CONNECTION_USERNAME if not provided
+    if [ -z "${DHIS2_CONNECTION_USERNAME:-}" ]; then
+      export DHIS2_CONNECTION_USERNAME="$DHIS2_DATABASE_USERNAME"
+      echo "[DEBUG] $SELF: set DHIS2_CONNECTION_USERNAME=$DHIS2_CONNECTION_USERNAME" >&2
+    fi
+
+    # Set DHIS2_CONNECTION_PASSWORD if not provided and DHIS2_DATABASE_PASSWORD is provided
+    if [ -z "${DHIS2_CONNECTION_PASSWORD:-}" ] && [ -n "${DHIS2_DATABASE_PASSWORD:-}" ]; then
+      export DHIS2_CONNECTION_PASSWORD="$DHIS2_DATABASE_PASSWORD"
+      echo "[DEBUG] $SELF: set DHIS2_CONNECTION_PASSWORD to the value of DHIS2_DATABASE_PASSWORD" >&2
+    fi
+
+    # Set DHIS2_CONNECTION_URL from DHIS2_DATABASE_* values
+    if [ -z "${DHIS2_CONNECTION_URL:-}" ]; then
+
+      # Set DHIS2_DATABASE_NAME if not provided
+      if [ -z "${DHIS2_DATABASE_NAME:-}" ]; then
+        export DHIS2_DATABASE_NAME="dhis2"
+        echo "[DEBUG] $SELF: set DHIS2_DATABASE_NAME=$DHIS2_DATABASE_NAME" >&2
+      fi
+
+      # Set DHIS2_CONNECTION_URL as a remote URL if DHIS2_DATABASE_HOST is provided
+      if [ -n "${DHIS2_DATABASE_HOST:-}" ]; then
+
+        # Set DHIS2_DATABASE_PORT if not provided
+        if [ -z "${DHIS2_DATABASE_PORT:-}" ]; then
+          export DHIS2_DATABASE_PORT="5432"
+          echo "[DEBUG] $SELF: set DHIS2_DATABASE_PORT=$DHIS2_DATABASE_PORT" >&2
+        fi
+
+        export DHIS2_CONNECTION_URL="jdbc:postgresql://$DHIS2_DATABASE_HOST:$DHIS2_DATABASE_PORT/$DHIS2_DATABASE_NAME"
+        echo "[DEBUG] $SELF: set DHIS2_CONNECTION_URL=$DHIS2_CONNECTION_URL" >&2
+
+      # Otherwise, use a local connection
+      else
+        export DHIS2_CONNECTION_URL="jdbc:postgresql:$DHIS2_DATABASE_NAME"
+        echo "[DEBUG] $SELF: set DHIS2_CONNECTION_URL=$DHIS2_CONNECTION_URL" >&2
+
+      fi
+    fi
+
+    # Set DHIS2_CONNECTION_DIALECT if not provided
+    if [ -z "${DHIS2_CONNECTION_DIALECT:-}" ]; then
+      export DHIS2_CONNECTION_DIALECT="org.hibernate.dialect.PostgreSQLDialect"
+      echo "[DEBUG] $SELF: set DHIS2_CONNECTION_DIALECT=$DHIS2_CONNECTION_DIALECT" >&2
+    fi
+
+    # Set DHIS2_CONNECTION_DRIVER_CLASS if not provided for DHIS2 2.38 and below
+    if [ -z "${DHIS2_CONNECTION_DRIVER_CLASS:-}" ] && [ "${DHIS2_BUILD_MAJOR//.}" -le "238" ]; then
+      export DHIS2_CONNECTION_DRIVER_CLASS="org.postgresql.Driver"
+      echo "[DEBUG] $SELF: set DHIS2_CONNECTION_DRIVER_CLASS=$DHIS2_CONNECTION_DRIVER_CLASS" >&2
+    fi
+
+    # Set DHIS2_CONNECTION_SCHEMA if not provided for DHIS2 2.37 and below
+    if [ -z "${DHIS2_CONNECTION_SCHEMA:-}" ] && [ "${DHIS2_BUILD_MAJOR//.}" -le "237" ]; then
+      export DHIS2_CONNECTION_SCHEMA="update"
+      echo "[DEBUG] $SELF: set DHIS2_CONNECTION_SCHEMA=$DHIS2_CONNECTION_SCHEMA" >&2
+    fi
+
+    # Set DHIS2_NODE_ID as hostname
+    if [ -z "${DHIS2_NODE_ID:-}" ]; then
+      export DHIS2_NODE_ID="$(hostname --fqdn)"
+      echo "[DEBUG] $SELF: set DHIS2_NODE_ID=$DHIS2_NODE_ID" >&2
+    fi
+
+    # Set SYSTEM_FQDN [DEPRECATED] as DHIS2_NODE_ID
+    if [ -z "${SYSTEM_FQDN:-}" ]; then
+      export SYSTEM_FQDN="$DHIS2_NODE_ID"
+      echo "[DEBUG] $SELF: set SYSTEM_FQDN=$SYSTEM_FQDN [DEPRECATED]" >&2
+    fi
+
+    # DHIS2 can support up to 5 read replicas.
+    # Read replica 1
+    if [ -z "${DHIS2_READ1_CONNECTION_URL:-}" ] \
+    && { [ -n "${DHIS2_READ1_DATABASE_HOST:-}" ] || [ -n "${DHIS2_READ1_DATABASE_NAME:-}" ]; } ; then
+
+      # Set DHIS2_READ1_DATABASE_NAME if not provided
+      if [ -z "${DHIS2_READ1_DATABASE_NAME:-}" ]; then
+        export DHIS2_READ1_DATABASE_NAME="$DHIS2_DATABASE_NAME"
+        echo "[DEBUG] $SELF: set DHIS2_READ1_DATABASE_NAME=$DHIS2_READ1_DATABASE_NAME" >&2
+      fi
+
+      # Set DHIS2_READ1_CONNECTION_URL as a remote URL if DHIS2_READ1_DATABASE_HOST is provided
+      if [ -n "${DHIS2_READ1_DATABASE_HOST:-}" ]; then
+
+        # Set DHIS2_READ1_DATABASE_PORT if not provided
+        if [ -z "${DHIS2_READ1_DATABASE_PORT:-}" ]; then
+          export DHIS2_READ1_DATABASE_PORT="$DHIS2_DATABASE_PORT"
+          echo "[DEBUG] $SELF: set DHIS2_READ1_DATABASE_PORT=$DHIS2_READ1_DATABASE_PORT" >&2
+        fi
+
+        export DHIS2_READ1_CONNECTION_URL="jdbc:postgresql://$DHIS2_READ1_DATABASE_HOST:$DHIS2_READ1_DATABASE_PORT/$DHIS2_READ1_DATABASE_NAME"
+        echo "[DEBUG] $SELF: set DHIS2_READ1_CONNECTION_URL=$DHIS2_READ1_CONNECTION_URL" >&2
+
+      # Otherwise, use a local connection
+      else
+        export DHIS2_READ1_CONNECTION_URL="jdbc:postgresql:$DHIS2_READ1_DATABASE_NAME"
+        echo "[DEBUG] $SELF: set DHIS2_READ1_CONNECTION_URL=$DHIS2_READ1_CONNECTION_URL" >&2
+
+      fi
+
+      # Set contents of DHIS2_READ1_DATABASE_PASSWORD_FILE to DHIS2_READ1_DATABASE_PASSWORD
+      if [ -z "${DHIS2_READ1_DATABASE_PASSWORD:-}" ] && [ -r "${DHIS2_READ1_DATABASE_PASSWORD_FILE:-}" ]; then
+        export DHIS2_READ1_DATABASE_PASSWORD="$(<"${DHIS2_READ1_DATABASE_PASSWORD_FILE}")"
+        echo "[DEBUG] $SELF: set DHIS2_READ1_DATABASE_PASSWORD from DHIS2_READ1_DATABASE_PASSWORD_FILE" >&2
+      fi
+
+      # Set DHIS2_READ1_CONNECTION_PASSWORD if not provided and DHIS2_READ1_DATABASE_PASSWORD is provided
+      if [ -z "${DHIS2_READ1_CONNECTION_PASSWORD:-}" ] && [ -n "${DHIS2_READ1_DATABASE_PASSWORD:-}" ]; then
+        export DHIS2_READ1_CONNECTION_PASSWORD="$DHIS2_READ1_DATABASE_PASSWORD"
+        echo "[DEBUG] $SELF: set DHIS2_READ1_CONNECTION_PASSWORD to the value of DHIS2_READ1_DATABASE_PASSWORD" >&2
+      fi
+
+      # Set DHIS2_READ1_DATABASE_USERNAME to DHIS2_DATABASE_USERNAME if not provided
+      if [ -z "${DHIS2_READ1_DATABASE_USERNAME:-}" ]; then
+        export DHIS2_READ1_DATABASE_USERNAME="$DHIS2_DATABASE_USERNAME"
+        echo "[DEBUG] $SELF: set DHIS2_READ1_DATABASE_USERNAME=$DHIS2_READ1_DATABASE_USERNAME" >&2
+      fi
+
+      # Set DHIS2_READ1_CONNECTION_USERNAME if not provided
+      if [ -z "${DHIS2_READ1_CONNECTION_USERNAME:-}" ]; then
+        export DHIS2_READ1_CONNECTION_USERNAME="$DHIS2_READ1_DATABASE_USERNAME"
+        echo "[DEBUG] $SELF: set DHIS2_READ1_CONNECTION_USERNAME=$DHIS2_READ1_CONNECTION_USERNAME" >&2
+      fi
+
+      # Read replica 2
+      if [ -z "${DHIS2_READ2_CONNECTION_URL:-}" ] \
+      && { [ -n "${DHIS2_READ2_DATABASE_HOST:-}" ] || [ -n "${DHIS2_READ2_DATABASE_NAME:-}" ]; } ; then
+
+        # Set DHIS2_READ2_DATABASE_NAME if not provided
+        if [ -z "${DHIS2_READ2_DATABASE_NAME:-}" ]; then
+          export DHIS2_READ2_DATABASE_NAME="$DHIS2_DATABASE_NAME"
+          echo "[DEBUG] $SELF: set DHIS2_READ2_DATABASE_NAME=$DHIS2_READ2_DATABASE_NAME" >&2
+        fi
+
+        # Set DHIS2_READ2_CONNECTION_URL as a remote URL if DHIS2_READ2_DATABASE_HOST is provided
+        if [ -n "${DHIS2_READ2_DATABASE_HOST:-}" ]; then
+
+          # Set DHIS2_READ2_DATABASE_PORT if not provided
+          if [ -z "${DHIS2_READ2_DATABASE_PORT:-}" ]; then
+            export DHIS2_READ2_DATABASE_PORT="$DHIS2_DATABASE_PORT"
+            echo "[DEBUG] $SELF: set DHIS2_READ2_DATABASE_PORT=$DHIS2_READ2_DATABASE_PORT" >&2
+          fi
+
+          export DHIS2_READ2_CONNECTION_URL="jdbc:postgresql://$DHIS2_READ2_DATABASE_HOST:$DHIS2_READ2_DATABASE_PORT/$DHIS2_READ2_DATABASE_NAME"
+          echo "[DEBUG] $SELF: set DHIS2_READ2_CONNECTION_URL=$DHIS2_READ2_CONNECTION_URL" >&2
+
+        # Otherwise, use a local connection
+        else
+          export DHIS2_READ2_CONNECTION_URL="jdbc:postgresql:$DHIS2_READ2_DATABASE_NAME"
+          echo "[DEBUG] $SELF: set DHIS2_READ2_CONNECTION_URL=$DHIS2_READ2_CONNECTION_URL" >&2
+
+        fi
+
+        # Set contents of DHIS2_READ2_DATABASE_PASSWORD_FILE to DHIS2_READ2_DATABASE_PASSWORD
+        if [ -z "${DHIS2_READ2_DATABASE_PASSWORD:-}" ] && [ -r "${DHIS2_READ2_DATABASE_PASSWORD_FILE:-}" ]; then
+          export DHIS2_READ2_DATABASE_PASSWORD="$(<"${DHIS2_READ2_DATABASE_PASSWORD_FILE}")"
+          echo "[DEBUG] $SELF: set DHIS2_READ2_DATABASE_PASSWORD from DHIS2_READ2_DATABASE_PASSWORD_FILE" >&2
+        fi
+
+        # Set DHIS2_READ2_CONNECTION_PASSWORD if not provided and DHIS2_READ2_DATABASE_PASSWORD is provided
+        if [ -z "${DHIS2_READ2_CONNECTION_PASSWORD:-}" ] && [ -n "${DHIS2_READ2_DATABASE_PASSWORD:-}" ]; then
+          export DHIS2_READ2_CONNECTION_PASSWORD="$DHIS2_READ2_DATABASE_PASSWORD"
+          echo "[DEBUG] $SELF: set DHIS2_READ2_CONNECTION_PASSWORD to the value of DHIS2_READ2_DATABASE_PASSWORD" >&2
+        fi
+
+        # Set DHIS2_READ2_DATABASE_USERNAME to DHIS2_DATABASE_USERNAME if not provided
+        if [ -z "${DHIS2_READ2_DATABASE_USERNAME:-}" ]; then
+          export DHIS2_READ2_DATABASE_USERNAME="$DHIS2_DATABASE_USERNAME"
+          echo "[DEBUG] $SELF: set DHIS2_READ2_DATABASE_USERNAME=$DHIS2_READ2_DATABASE_USERNAME" >&2
+        fi
+
+        # Set DHIS2_READ2_CONNECTION_USERNAME if not provided
+        if [ -z "${DHIS2_READ2_CONNECTION_USERNAME:-}" ]; then
+          export DHIS2_READ2_CONNECTION_USERNAME="$DHIS2_READ2_DATABASE_USERNAME"
+          echo "[DEBUG] $SELF: set DHIS2_READ2_CONNECTION_USERNAME=$DHIS2_READ2_CONNECTION_USERNAME" >&2
+        fi
+
+        # Read replica 3
+        if [ -z "${DHIS2_READ3_CONNECTION_URL:-}" ] \
+        && { [ -n "${DHIS2_READ3_DATABASE_HOST:-}" ] || [ -n "${DHIS2_READ3_DATABASE_NAME:-}" ]; } ; then
+
+          # Set DHIS2_READ3_DATABASE_NAME if not provided
+          if [ -z "${DHIS2_READ3_DATABASE_NAME:-}" ]; then
+            export DHIS2_READ3_DATABASE_NAME="$DHIS2_DATABASE_NAME"
+            echo "[DEBUG] $SELF: set DHIS2_READ3_DATABASE_NAME=$DHIS2_READ3_DATABASE_NAME" >&2
+          fi
+
+          # Set DHIS2_READ3_CONNECTION_URL as a remote URL if DHIS2_READ3_DATABASE_HOST is provided
+          if [ -n "${DHIS2_READ3_DATABASE_HOST:-}" ]; then
+
+            # Set DHIS2_READ3_DATABASE_PORT if not provided
+            if [ -z "${DHIS2_READ3_DATABASE_PORT:-}" ]; then
+              export DHIS2_READ3_DATABASE_PORT="$DHIS2_DATABASE_PORT"
+              echo "[DEBUG] $SELF: set DHIS2_READ3_DATABASE_PORT=$DHIS2_READ3_DATABASE_PORT" >&2
+            fi
+
+            export DHIS2_READ3_CONNECTION_URL="jdbc:postgresql://$DHIS2_READ3_DATABASE_HOST:$DHIS2_READ3_DATABASE_PORT/$DHIS2_READ3_DATABASE_NAME"
+            echo "[DEBUG] $SELF: set DHIS2_READ3_CONNECTION_URL=$DHIS2_READ3_CONNECTION_URL" >&2
+
+          # Otherwise, use a local connection
+          else
+            export DHIS2_READ3_CONNECTION_URL="jdbc:postgresql:$DHIS2_READ3_DATABASE_NAME"
+            echo "[DEBUG] $SELF: set DHIS2_READ3_CONNECTION_URL=$DHIS2_READ3_CONNECTION_URL" >&2
+
+          fi
+
+          # Set contents of DHIS2_READ3_DATABASE_PASSWORD_FILE to DHIS2_READ3_DATABASE_PASSWORD
+          if [ -z "${DHIS2_READ3_DATABASE_PASSWORD:-}" ] && [ -r "${DHIS2_READ3_DATABASE_PASSWORD_FILE:-}" ]; then
+            export DHIS2_READ3_DATABASE_PASSWORD="$(<"${DHIS2_READ3_DATABASE_PASSWORD_FILE}")"
+            echo "[DEBUG] $SELF: set DHIS2_READ3_DATABASE_PASSWORD from DHIS2_READ3_DATABASE_PASSWORD_FILE" >&2
+          fi
+
+          # Set DHIS2_READ3_CONNECTION_PASSWORD if not provided and DHIS2_READ3_DATABASE_PASSWORD is provided
+          if [ -z "${DHIS2_READ3_CONNECTION_PASSWORD:-}" ] && [ -n "${DHIS2_READ3_DATABASE_PASSWORD:-}" ]; then
+            export DHIS2_READ3_CONNECTION_PASSWORD="$DHIS2_READ3_DATABASE_PASSWORD"
+            echo "[DEBUG] $SELF: set DHIS2_READ3_CONNECTION_PASSWORD to the value of DHIS2_READ3_DATABASE_PASSWORD" >&2
+          fi
+
+          # Set DHIS2_READ3_DATABASE_USERNAME to DHIS2_DATABASE_USERNAME if not provided
+          if [ -z "${DHIS2_READ3_DATABASE_USERNAME:-}" ]; then
+            export DHIS2_READ3_DATABASE_USERNAME="$DHIS2_DATABASE_USERNAME"
+            echo "[DEBUG] $SELF: set DHIS2_READ3_DATABASE_USERNAME=$DHIS2_READ3_DATABASE_USERNAME" >&2
+          fi
+
+          # Set DHIS2_READ3_CONNECTION_USERNAME if not provided
+          if [ -z "${DHIS2_READ3_CONNECTION_USERNAME:-}" ]; then
+            export DHIS2_READ3_CONNECTION_USERNAME="$DHIS2_READ3_DATABASE_USERNAME"
+            echo "[DEBUG] $SELF: set DHIS2_READ3_CONNECTION_USERNAME=$DHIS2_READ3_CONNECTION_USERNAME" >&2
+          fi
+
+          # Read replica 4
+          if [ -z "${DHIS2_READ4_CONNECTION_URL:-}" ] \
+          && { [ -n "${DHIS2_READ4_DATABASE_HOST:-}" ] || [ -n "${DHIS2_READ4_DATABASE_NAME:-}" ]; } ; then
+
+            # Set DHIS2_READ4_DATABASE_NAME if not provided
+            if [ -z "${DHIS2_READ4_DATABASE_NAME:-}" ]; then
+              export DHIS2_READ4_DATABASE_NAME="$DHIS2_DATABASE_NAME"
+              echo "[DEBUG] $SELF: set DHIS2_READ4_DATABASE_NAME=$DHIS2_READ4_DATABASE_NAME" >&2
+            fi
+
+            # Set DHIS2_READ4_CONNECTION_URL as a remote URL if DHIS2_READ4_DATABASE_HOST is provided
+            if [ -n "${DHIS2_READ4_DATABASE_HOST:-}" ]; then
+
+              # Set DHIS2_READ4_DATABASE_PORT if not provided
+              if [ -z "${DHIS2_READ4_DATABASE_PORT:-}" ]; then
+                export DHIS2_READ4_DATABASE_PORT="$DHIS2_DATABASE_PORT"
+                echo "[DEBUG] $SELF: set DHIS2_READ4_DATABASE_PORT=$DHIS2_READ4_DATABASE_PORT" >&2
+              fi
+
+              export DHIS2_READ4_CONNECTION_URL="jdbc:postgresql://$DHIS2_READ4_DATABASE_HOST:$DHIS2_READ4_DATABASE_PORT/$DHIS2_READ4_DATABASE_NAME"
+              echo "[DEBUG] $SELF: set DHIS2_READ4_CONNECTION_URL=$DHIS2_READ4_CONNECTION_URL" >&2
+
+            # Otherwise, use a local connection
+            else
+              export DHIS2_READ4_CONNECTION_URL="jdbc:postgresql:$DHIS2_READ4_DATABASE_NAME"
+              echo "[DEBUG] $SELF: set DHIS2_READ4_CONNECTION_URL=$DHIS2_READ4_CONNECTION_URL" >&2
+
+            fi
+
+            # Set contents of DHIS2_READ4_DATABASE_PASSWORD_FILE to DHIS2_READ4_DATABASE_PASSWORD
+            if [ -z "${DHIS2_READ4_DATABASE_PASSWORD:-}" ] && [ -r "${DHIS2_READ4_DATABASE_PASSWORD_FILE:-}" ]; then
+              export DHIS2_READ4_DATABASE_PASSWORD="$(<"${DHIS2_READ4_DATABASE_PASSWORD_FILE}")"
+              echo "[DEBUG] $SELF: set DHIS2_READ4_DATABASE_PASSWORD from DHIS2_READ4_DATABASE_PASSWORD_FILE" >&2
+            fi
+
+            # Set DHIS2_READ4_CONNECTION_PASSWORD if not provided and DHIS2_READ4_DATABASE_PASSWORD is provided
+            if [ -z "${DHIS2_READ4_CONNECTION_PASSWORD:-}" ] && [ -n "${DHIS2_READ4_DATABASE_PASSWORD:-}" ]; then
+              export DHIS2_READ4_CONNECTION_PASSWORD="$DHIS2_READ4_DATABASE_PASSWORD"
+              echo "[DEBUG] $SELF: set DHIS2_READ4_CONNECTION_PASSWORD to the value of DHIS2_READ4_DATABASE_PASSWORD" >&2
+            fi
+
+            # Set DHIS2_READ4_DATABASE_USERNAME to DHIS2_DATABASE_USERNAME if not provided
+            if [ -z "${DHIS2_READ4_DATABASE_USERNAME:-}" ]; then
+              export DHIS2_READ4_DATABASE_USERNAME="$DHIS2_DATABASE_USERNAME"
+              echo "[DEBUG] $SELF: set DHIS2_READ4_DATABASE_USERNAME=$DHIS2_READ4_DATABASE_USERNAME" >&2
+            fi
+
+            # Set DHIS2_READ4_CONNECTION_USERNAME if not provided
+            if [ -z "${DHIS2_READ4_CONNECTION_USERNAME:-}" ]; then
+              export DHIS2_READ4_CONNECTION_USERNAME="$DHIS2_READ4_DATABASE_USERNAME"
+              echo "[DEBUG] $SELF: set DHIS2_READ4_CONNECTION_USERNAME=$DHIS2_READ4_CONNECTION_USERNAME" >&2
+            fi
+
+            # Read replica 5
+            if [ -z "${DHIS2_READ5_CONNECTION_URL:-}" ] \
+            && { [ -n "${DHIS2_READ5_DATABASE_HOST:-}" ] || [ -n "${DHIS2_READ5_DATABASE_NAME:-}" ]; } ; then
+
+              # Set DHIS2_READ5_DATABASE_NAME if not provided
+              if [ -z "${DHIS2_READ5_DATABASE_NAME:-}" ]; then
+                export DHIS2_READ5_DATABASE_NAME="$DHIS2_DATABASE_NAME"
+                echo "[DEBUG] $SELF: set DHIS2_READ5_DATABASE_NAME=$DHIS2_READ5_DATABASE_NAME" >&2
+              fi
+
+              # Set DHIS2_READ5_CONNECTION_URL as a remote URL if DHIS2_READ5_DATABASE_HOST is provided
+              if [ -n "${DHIS2_READ5_DATABASE_HOST:-}" ]; then
+
+                # Set DHIS2_READ5_DATABASE_PORT if not provided
+                if [ -z "${DHIS2_READ5_DATABASE_PORT:-}" ]; then
+                  export DHIS2_READ5_DATABASE_PORT="$DHIS2_DATABASE_PORT"
+                  echo "[DEBUG] $SELF: set DHIS2_READ5_DATABASE_PORT=$DHIS2_READ5_DATABASE_PORT" >&2
+                fi
+
+                export DHIS2_READ5_CONNECTION_URL="jdbc:postgresql://$DHIS2_READ5_DATABASE_HOST:$DHIS2_READ5_DATABASE_PORT/$DHIS2_READ5_DATABASE_NAME"
+                echo "[DEBUG] $SELF: set DHIS2_READ5_CONNECTION_URL=$DHIS2_READ5_CONNECTION_URL" >&2
+
+              # Otherwise, use a local connection
+              else
+                export DHIS2_READ5_CONNECTION_URL="jdbc:postgresql:$DHIS2_READ5_DATABASE_NAME"
+                echo "[DEBUG] $SELF: set DHIS2_READ5_CONNECTION_URL=$DHIS2_READ5_CONNECTION_URL" >&2
+
+              fi
+
+              # Set contents of DHIS2_READ5_DATABASE_PASSWORD_FILE to DHIS2_READ5_DATABASE_PASSWORD
+              if [ -z "${DHIS2_READ5_DATABASE_PASSWORD:-}" ] && [ -r "${DHIS2_READ5_DATABASE_PASSWORD_FILE:-}" ]; then
+                export DHIS2_READ5_DATABASE_PASSWORD="$(<"${DHIS2_READ5_DATABASE_PASSWORD_FILE}")"
+                echo "[DEBUG] $SELF: set DHIS2_READ5_DATABASE_PASSWORD from DHIS2_READ5_DATABASE_PASSWORD_FILE" >&2
+              fi
+
+              # Set DHIS2_READ5_CONNECTION_PASSWORD if not provided and DHIS2_READ5_DATABASE_PASSWORD is provided
+              if [ -z "${DHIS2_READ5_CONNECTION_PASSWORD:-}" ] && [ -n "${DHIS2_READ5_DATABASE_PASSWORD:-}" ]; then
+                export DHIS2_READ5_CONNECTION_PASSWORD="$DHIS2_READ5_DATABASE_PASSWORD"
+                echo "[DEBUG] $SELF: set DHIS2_READ5_CONNECTION_PASSWORD to the value of DHIS2_READ5_DATABASE_PASSWORD" >&2
+              fi
+
+              # Set DHIS2_READ5_DATABASE_USERNAME to DHIS2_DATABASE_USERNAME if not provided
+              if [ -z "${DHIS2_READ5_DATABASE_USERNAME:-}" ]; then
+                export DHIS2_READ5_DATABASE_USERNAME="$DHIS2_DATABASE_USERNAME"
+                echo "[DEBUG] $SELF: set DHIS2_READ5_DATABASE_USERNAME=$DHIS2_READ5_DATABASE_USERNAME" >&2
+              fi
+
+              # Set DHIS2_READ5_CONNECTION_USERNAME if not provided
+              if [ -z "${DHIS2_READ5_CONNECTION_USERNAME:-}" ]; then
+                export DHIS2_READ5_CONNECTION_USERNAME="$DHIS2_READ5_DATABASE_USERNAME"
+                echo "[DEBUG] $SELF: set DHIS2_READ5_CONNECTION_USERNAME=$DHIS2_READ5_CONNECTION_USERNAME" >&2
+              fi
+
+            fi
+
+          fi
+
+        fi
+
+      fi
+
+    fi
 
     ########
 
@@ -145,7 +493,7 @@ _main() {
       export WAIT_PATHS="${WAIT_PATHS%,}"
       echo "[DEBUG] $SELF: environment WAIT_PATHS=$WAIT_PATHS" >&2
 
-      # Increase the timeout from 30 seconds to allow for dhis2_init to complete.
+      # If WAIT_TIMEOUT is not set, increase the timeout from the default value of 30 seconds to allow for dhis2_init to complete.
       if [ -z "${WAIT_TIMEOUT:-}" ]; then
         export WAIT_TIMEOUT='300'
         echo "[DEBUG] $SELF: environment WAIT_TIMEOUT=$WAIT_TIMEOUT" >&2

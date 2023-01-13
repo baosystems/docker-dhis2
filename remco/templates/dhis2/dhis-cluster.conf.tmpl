@@ -1,0 +1,39 @@
+
+##
+## Clustering
+##
+
+# Hostname or IP address for this web server to be reachable by other DHIS2 nodes; default is unset
+{% if exists("/dhis2/cluster/hostname") %}
+cluster.hostname = {{ getv("/dhis2/cluster/hostname") }}
+{% elif exists("/service/name") and exists("/system/ip") %}
+cluster.hostname = {{ getv("/system/ip") }}
+{% else %}
+#cluster.hostname =
+{% endif %}
+
+# Port for cache listener; default is '4001'
+{% if exists("/dhis2/cluster/cache/port") %}
+cluster.cache.port = {{ getv("/dhis2/cluster/cache/port") }}
+{% else %}
+#cluster.cache.port = 4001
+{% endif %}
+
+# Port for remote object cache listener; default is '0'
+{% if exists("/cluster/cache/remote/object/port") %}
+cluster.cache.remote.object.port = {{ getv("/cluster/cache/remote/object/port") }}
+{% elif (exists("/dhis2/cluster/hostname") or (exists("/service/name") and exists("/system/ip"))) %}
+cluster.cache.remote.object.port = 5001
+{% else %}
+#cluster.cache.remote.object.port = 0
+{% endif %}
+
+# List of Host:port participating in the cluster; default is unset
+{% if exists("/dhis2/cluster/members") %}
+cluster.members = {{ getv("/dhis2/cluster/members") }}
+{% elif exists("/service/name") and exists("/system/ip") %}
+cluster.members ={{ printf("%s", " ") }}{% for ip in lookupIP(getv("/service/name")) %}{% if ip != getv("/system/ip") %}{{ ip }}:{{ getv("/dhis2/cluster/cache/port", "4001") }},{% endif %}{% endfor %}
+
+{% else %}
+#cluster.members =
+{% endif %}

@@ -18,8 +18,6 @@ _remco_:
 * If `DHIS2_REDIS_PASSWORD` is empty or not set, the contents of `DHIS2_REDIS_PASSWORD_FILE` will be
   set as `DHIS2_REDIS_PASSWORD`.
 
-* If `SYSTEM_FQDN` is empty or not set, it will be exported as the output of `hostname --fqdn`.
-
 * If `SYSTEM_IP` is empty or not set, it will be exported as the output of `hostname --ip-address`.
 
 The following occur when using _docker-entrypoint.sh_ as the entry point and the command starts with
@@ -191,8 +189,8 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
   DNS query result to build _cluster.members_. **NOTE:** If running DHIS2 2.37 or higher and any
   `DEBEZIUM_*` option is set, this option will be ignored.
 
-* `DHIS2_NODE_ID`: Value of _node.id_. If not provided, _node.id_ is set by `SYSTEM_FQDN`, which is
-  provided by the entry point.
+* `DHIS2_NODE_ID`: Value of _node.id_. If not provided, _node.id_ is set to the value of `hostname
+  --fqdn` in the entry point.
 
 * `DHIS2_LOGGING_FILE_MAXSIZE`: Value of _logging.file.max_size_.
 
@@ -239,7 +237,7 @@ for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value i
 * `DHIS2_CONNECTION_DIALECT`: Value of _connection.dialect_; default is
   "org.hibernate.dialect.PostgreSQLDialect".
 
-* `DHIS2_CONNECTION_DRIVERCLASS`: Value of _connection.driver_class_; default is
+* `DHIS2_CONNECTION_DRIVER_CLASS`: Value of _connection.driver_class_; default is
   "org.postgresql.Driver".
 
 * `DHIS2_CONNECTION_SCHEMA`: Value of _connection.schema_; default is "update".

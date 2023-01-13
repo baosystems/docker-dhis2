@@ -20,7 +20,7 @@ log_file = "/var/log/remco.log"
     [resource.backend.env]
       onetime = false
       interval = 60
-      keys = ["/dhis2/","/service/","/system/"]
+      keys = ["/dhis2/","/service/name","/system/ip"]
 
   [resource.exec]
     command = "catalina.sh run"
