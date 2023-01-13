@@ -175,12 +175,20 @@ _main() {
     # Steps to perform if the running user is root:
     if [ "$(id -u)" = '0' ]; then
 
-      # The paths below might be mounts, so ensure that tomcat is the owner and can write
-      for dir in /opt/dhis2/files /opt/dhis2/logs /usr/local/tomcat/logs ; do
-        if [ -d "$dir" ]; then
-          echo "[DEBUG] $SELF: setting $dir ownership and permissions" >&2
-          chmod --changes u=rwX "$dir"
-          chown --changes tomcat "$dir"
+      # Ensure the tomcat user can write to Tomcat and DHIS2 directories
+      for TOMCAT_DIR in /usr/local/tomcat/{conf/Catalina,logs,temp,work} /opt/dhis2/{files,logs} ; do
+        if [ -d "$TOMCAT_DIR" ]; then
+          echo "[DEBUG] $SELF: test if \"tomcat\" user can write to \"$TOMCAT_DIR\"" >&2
+          if ! gosu tomcat touch "$TOMCAT_DIR/.writable" ; then
+            echo "[DEBUG] $SELF: setting ownership and permissions on \"$TOMCAT_DIR\"" >&2
+            chmod --changes u=rwX "$TOMCAT_DIR"
+            chown --changes tomcat "$TOMCAT_DIR"
+            if ! gosu tomcat touch "$TOMCAT_DIR/.writable" ; then
+              echo "[ERROR] $SELF: user \"tomcat\" unable to write to \"$TOMCAT_DIR\", exiting..." >&2
+              exit 1
+            fi
+          fi
+          rm --interactive=never "$TOMCAT_DIR/.writable"
         fi
       done
 
