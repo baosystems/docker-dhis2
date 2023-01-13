@@ -183,8 +183,8 @@ COPY --chmod=644 --chown=root:root ./tomcat/server.xml /usr/local/tomcat/conf/
 RUN <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
-mkdir --verbose --parents /opt/dhis2
-chown --changes tomcat:tomcat /opt/dhis2
+mkdir --verbose --parents /opt/dhis2/files /opt/dhis2/logs
+chown --changes tomcat:tomcat /opt/dhis2 /opt/dhis2/files /opt/dhis2/logs
 EOF
 
 # Add dhis2-init.sh and bundled scripts
