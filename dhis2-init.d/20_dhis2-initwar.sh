@@ -106,8 +106,12 @@ docker-entrypoint.sh \
 
 # Start Tomcat in the background as the tomcat user
 echo "[INFO] $SELF: Start Tomcat in the background: CATALINA_PID=$CATALINA_PID catalina.sh start"
-gosu tomcat \
+if [ "$(id -u)" = '0' ]; then
+  gosu tomcat \
+    catalina.sh start
+else
   catalina.sh start
+fi
 
 # Wait for Tomcat to start
 sleep 3
@@ -128,8 +132,12 @@ fi
 
 # Stop the background Tomcat process
 echo "[INFO] $SELF: Stop Tomcat: CATALINA_PID=$CATALINA_PID catalina.sh stop -force"
-gosu tomcat \
+if [ "$(id -u)" = '0' ]; then
+  gosu tomcat \
+    catalina.sh stop 90 -force
+else
   catalina.sh stop 90 -force
+fi
 
 
 ################################################################################
