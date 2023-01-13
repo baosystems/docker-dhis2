@@ -143,7 +143,17 @@ COPY --chmod=755 --chown=root:root --from=wait-builder /work/wait /usr/local/bin
 RUN <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
-adduser --system --disabled-password --group tomcat
+addgroup \
+  --gid 91 \
+  tomcat
+adduser \
+  --system \
+  --disabled-password \
+  --no-create-home \
+  --home /usr/local/tomcat \
+  --ingroup tomcat \
+  --uid 91 \
+  tomcat
 echo 'tomcat' >> /etc/cron.deny
 echo 'tomcat' >> /etc/at.deny
 rm --verbose --force '/etc/.pwd.lock' '/etc/group-' '/etc/gshadow-' '/etc/passwd-' '/etc/shadow-'
