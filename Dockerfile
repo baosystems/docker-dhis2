@@ -259,11 +259,6 @@ fi
 curl -fsSL "$DHIS2_CONFIGKEY_URL" \
 | grep -E '^\s+[[:upper:]][[:upper:]]+[^\(]+\(' `# limit to lines beginning with whitespace, two or more uppercase letters, parameter name ending with (` \
 | sed -r 's/^\s+//g' `# remove leading spaces` \
-| awk -F'[ ,]' '{print $2","$4}' `# using [[:space:]] and comma as field separators, print fields separated commas for csv rows` \
-| sed \
-  -r \
-  -e 's/"([^"]+)"/\1/g' `# remove quotation marks from non-empty quoted values` \
-  -e 's/""$//g' `# drop empty quoted values` \
 | sed  `# convert to strings` \
   -e 's/Constants\.OFF/off/g' \
   -e 's/Constants\.ON/on/g' \
@@ -271,6 +266,11 @@ curl -fsSL "$DHIS2_CONFIGKEY_URL" \
   -e 's/Constants\.TRUE/true/g' \
   -e "s/CspUtils\.DEFAULT_HEADER_VALUE/script-src 'none';/g" \
   -e 's/String\.valueOf( SECONDS.toMillis( \([0-9]\+\) ) )/\1000/g' \
+| awk -F'[ ,]' '{print $2","$4}' `# using [[:space:]] and comma as field separators, print fields separated commas for csv rows` \
+| sed \
+  -r \
+  -e 's/"([^"]+)"/\1/g' `# remove quotation marks from non-empty quoted values` \
+  -e 's/""$//g' `# drop empty quoted values` \
 | sed -e '/^cluster\.\(cache\.\(\|remote\.object\.\)port\|hostname\|members\)/d'  `# remove options that will be added with dhis-cluster.conf.tmpl` \
 | sort \
 | while IFS= read -r LINE ; do
