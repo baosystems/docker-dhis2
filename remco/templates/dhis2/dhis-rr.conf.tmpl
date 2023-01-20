@@ -1,4 +1,4 @@
-{% if gets("/dhis2/read1/*") %}
+{% if gets("/dhis2/read1/connection/*") %}
 
 ##
 ## Read-replica database configuration
@@ -19,7 +19,7 @@ read1.connection.username = {{ getv("/dhis2/read1/connection/username") }}
 {% else %}
 #read1.connection.username = 
 {% endif %}
-{% if gets("/dhis2/read2/*") %}
+{% if gets("/dhis2/read2/connection/*") %}
 
 {% if exists("/dhis2/read2/connection/password") %}
 read2.connection.password = {{ getv("/dhis2/read2/connection/password") }}
@@ -36,7 +36,7 @@ read2.connection.username = {{ getv("/dhis2/read2/connection/username") }}
 {% else %}
 #read2.connection.username = 
 {% endif %}
-{% if gets("/dhis2/read3/*") %}
+{% if gets("/dhis2/read3/connection/*") %}
 
 {% if exists("/dhis2/read3/connection/password") %}
 read3.connection.password = {{ getv("/dhis2/read3/connection/password") }}
@@ -53,7 +53,7 @@ read3.connection.username = {{ getv("/dhis2/read3/connection/username") }}
 {% else %}
 #read3.connection.username = 
 {% endif %}
-{% if gets("/dhis2/read4/*") %}
+{% if gets("/dhis2/read4/connection/*") %}
 
 {% if exists("/dhis2/read4/connection/password") %}
 read4.connection.password = {{ getv("/dhis2/read4/connection/password") }}
@@ -70,7 +70,7 @@ read4.connection.username = {{ getv("/dhis2/read4/connection/username") }}
 {% else %}
 #read4.connection.username = 
 {% endif %}
-{% if gets("/dhis2/read5/*") %}
+{% if gets("/dhis2/read5/connection/*") %}
 
 {% if exists("/dhis2/read5/connection/password") %}
 read5.connection.password = {{ getv("/dhis2/read5/connection/password") }}
