@@ -1,0 +1,335 @@
+{% if gets("/dhis2/oidc/provider/azure/0/*") or gets("/dhis2/oidc/provider/azure/0/*/*") %}
+
+##
+## Azure OIDC providers
+##
+
+{% if exists("/dhis2/oidc/provider/azure/0/tenant") %}
+oidc.provider.azure.0.tenant = {{ getv("/dhis2/oidc/provider/azure/0/tenant") }}
+{% else %}
+#oidc.provider.azure.0.tenant = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/0/client/id") %}
+oidc.provider.azure.0.client_id = {{ getv("/dhis2/oidc/provider/azure/0/client/id") }}
+{% else %}
+#oidc.provider.azure.0.client_id = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/0/client/secret") %}
+oidc.provider.azure.0.client_secret = {{ getv("/dhis2/oidc/provider/azure/0/client/secret") }}
+{% else %}
+#oidc.provider.azure.0.client_secret = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/0/display/alias") %}
+oidc.provider.azure.0.display_alias = {{ getv("/dhis2/oidc/provider/azure/0/display/alias") }}
+{% else %}
+#oidc.provider.azure.0.display_alias = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/0/mapping/claim") %}
+oidc.provider.azure.0.mapping_claim = {{ getv("/dhis2/oidc/provider/azure/0/mapping/claim") }}
+{% else %}
+#oidc.provider.azure.0.mapping_claim = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/0/redirect/url") %}
+oidc.provider.azure.0.redirect_url = {{ getv("/dhis2/oidc/provider/azure/0/redirect/url") }}
+{% else %}
+#oidc.provider.azure.0.redirect_url = 
+{% endif %}
+{% if gets("/dhis2/oidc/provider/azure/1/*") or gets("/dhis2/oidc/provider/azure/1/*/*") %}
+
+{% if exists("/dhis2/oidc/provider/azure/1/tenant") %}
+oidc.provider.azure.1.tenant = {{ getv("/dhis2/oidc/provider/azure/1/tenant") }}
+{% else %}
+#oidc.provider.azure.1.tenant = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/1/client/id") %}
+oidc.provider.azure.1.client_id = {{ getv("/dhis2/oidc/provider/azure/1/client/id") }}
+{% else %}
+#oidc.provider.azure.1.client_id = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/1/client/secret") %}
+oidc.provider.azure.1.client_secret = {{ getv("/dhis2/oidc/provider/azure/1/client/secret") }}
+{% else %}
+#oidc.provider.azure.1.client_secret = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/1/display/alias") %}
+oidc.provider.azure.1.display_alias = {{ getv("/dhis2/oidc/provider/azure/1/display/alias") }}
+{% else %}
+#oidc.provider.azure.1.display_alias = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/1/mapping/claim") %}
+oidc.provider.azure.1.mapping_claim = {{ getv("/dhis2/oidc/provider/azure/1/mapping/claim") }}
+{% else %}
+#oidc.provider.azure.1.mapping_claim = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/1/redirect/url") %}
+oidc.provider.azure.1.redirect_url = {{ getv("/dhis2/oidc/provider/azure/1/redirect/url") }}
+{% else %}
+#oidc.provider.azure.1.redirect_url = 
+{% endif %}
+{% if gets("/dhis2/oidc/provider/azure/2/*") or gets("/dhis2/oidc/provider/azure/2/*/*") %}
+
+{% if exists("/dhis2/oidc/provider/azure/2/tenant") %}
+oidc.provider.azure.2.tenant = {{ getv("/dhis2/oidc/provider/azure/2/tenant") }}
+{% else %}
+#oidc.provider.azure.2.tenant = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/2/client/id") %}
+oidc.provider.azure.2.client_id = {{ getv("/dhis2/oidc/provider/azure/2/client/id") }}
+{% else %}
+#oidc.provider.azure.2.client_id = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/2/client/secret") %}
+oidc.provider.azure.2.client_secret = {{ getv("/dhis2/oidc/provider/azure/2/client/secret") }}
+{% else %}
+#oidc.provider.azure.2.client_secret = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/2/display/alias") %}
+oidc.provider.azure.2.display_alias = {{ getv("/dhis2/oidc/provider/azure/2/display/alias") }}
+{% else %}
+#oidc.provider.azure.2.display_alias = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/2/mapping/claim") %}
+oidc.provider.azure.2.mapping_claim = {{ getv("/dhis2/oidc/provider/azure/2/mapping/claim") }}
+{% else %}
+#oidc.provider.azure.2.mapping_claim = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/2/redirect/url") %}
+oidc.provider.azure.2.redirect_url = {{ getv("/dhis2/oidc/provider/azure/2/redirect/url") }}
+{% else %}
+#oidc.provider.azure.2.redirect_url = 
+{% endif %}
+{% if gets("/dhis2/oidc/provider/azure/3/*") or gets("/dhis2/oidc/provider/azure/3/*/*") %}
+
+{% if exists("/dhis2/oidc/provider/azure/3/tenant") %}
+oidc.provider.azure.3.tenant = {{ getv("/dhis2/oidc/provider/azure/3/tenant") }}
+{% else %}
+#oidc.provider.azure.3.tenant = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/3/client/id") %}
+oidc.provider.azure.3.client_id = {{ getv("/dhis2/oidc/provider/azure/3/client/id") }}
+{% else %}
+#oidc.provider.azure.3.client_id = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/3/client/secret") %}
+oidc.provider.azure.3.client_secret = {{ getv("/dhis2/oidc/provider/azure/3/client/secret") }}
+{% else %}
+#oidc.provider.azure.3.client_secret = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/3/display/alias") %}
+oidc.provider.azure.3.display_alias = {{ getv("/dhis2/oidc/provider/azure/3/display/alias") }}
+{% else %}
+#oidc.provider.azure.3.display_alias = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/3/mapping/claim") %}
+oidc.provider.azure.3.mapping_claim = {{ getv("/dhis2/oidc/provider/azure/3/mapping/claim") }}
+{% else %}
+#oidc.provider.azure.3.mapping_claim = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/3/redirect/url") %}
+oidc.provider.azure.3.redirect_url = {{ getv("/dhis2/oidc/provider/azure/3/redirect/url") }}
+{% else %}
+#oidc.provider.azure.3.redirect_url = 
+{% endif %}
+{% if gets("/dhis2/oidc/provider/azure/4/*") or gets("/dhis2/oidc/provider/azure/4/*/*") %}
+
+{% if exists("/dhis2/oidc/provider/azure/4/tenant") %}
+oidc.provider.azure.4.tenant = {{ getv("/dhis2/oidc/provider/azure/4/tenant") }}
+{% else %}
+#oidc.provider.azure.4.tenant = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/4/client/id") %}
+oidc.provider.azure.4.client_id = {{ getv("/dhis2/oidc/provider/azure/4/client/id") }}
+{% else %}
+#oidc.provider.azure.4.client_id = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/4/client/secret") %}
+oidc.provider.azure.4.client_secret = {{ getv("/dhis2/oidc/provider/azure/4/client/secret") }}
+{% else %}
+#oidc.provider.azure.4.client_secret = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/4/display/alias") %}
+oidc.provider.azure.4.display_alias = {{ getv("/dhis2/oidc/provider/azure/4/display/alias") }}
+{% else %}
+#oidc.provider.azure.4.display_alias = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/4/mapping/claim") %}
+oidc.provider.azure.4.mapping_claim = {{ getv("/dhis2/oidc/provider/azure/4/mapping/claim") }}
+{% else %}
+#oidc.provider.azure.4.mapping_claim = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/4/redirect/url") %}
+oidc.provider.azure.4.redirect_url = {{ getv("/dhis2/oidc/provider/azure/4/redirect/url") }}
+{% else %}
+#oidc.provider.azure.4.redirect_url = 
+{% endif %}
+{% if gets("/dhis2/oidc/provider/azure/5/*") or gets("/dhis2/oidc/provider/azure/5/*/*") %}
+
+{% if exists("/dhis2/oidc/provider/azure/5/tenant") %}
+oidc.provider.azure.5.tenant = {{ getv("/dhis2/oidc/provider/azure/5/tenant") }}
+{% else %}
+#oidc.provider.azure.5.tenant = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/5/client/id") %}
+oidc.provider.azure.5.client_id = {{ getv("/dhis2/oidc/provider/azure/5/client/id") }}
+{% else %}
+#oidc.provider.azure.5.client_id = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/5/client/secret") %}
+oidc.provider.azure.5.client_secret = {{ getv("/dhis2/oidc/provider/azure/5/client/secret") }}
+{% else %}
+#oidc.provider.azure.5.client_secret = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/5/display/alias") %}
+oidc.provider.azure.5.display_alias = {{ getv("/dhis2/oidc/provider/azure/5/display/alias") }}
+{% else %}
+#oidc.provider.azure.5.display_alias = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/5/mapping/claim") %}
+oidc.provider.azure.5.mapping_claim = {{ getv("/dhis2/oidc/provider/azure/5/mapping/claim") }}
+{% else %}
+#oidc.provider.azure.5.mapping_claim = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/5/redirect/url") %}
+oidc.provider.azure.5.redirect_url = {{ getv("/dhis2/oidc/provider/azure/5/redirect/url") }}
+{% else %}
+#oidc.provider.azure.5.redirect_url = 
+{% endif %}
+{% if gets("/dhis2/oidc/provider/azure/6/*") or gets("/dhis2/oidc/provider/azure/6/*/*") %}
+
+{% if exists("/dhis2/oidc/provider/azure/6/tenant") %}
+oidc.provider.azure.6.tenant = {{ getv("/dhis2/oidc/provider/azure/6/tenant") }}
+{% else %}
+#oidc.provider.azure.6.tenant = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/6/client/id") %}
+oidc.provider.azure.6.client_id = {{ getv("/dhis2/oidc/provider/azure/6/client/id") }}
+{% else %}
+#oidc.provider.azure.6.client_id = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/6/client/secret") %}
+oidc.provider.azure.6.client_secret = {{ getv("/dhis2/oidc/provider/azure/6/client/secret") }}
+{% else %}
+#oidc.provider.azure.6.client_secret = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/6/display/alias") %}
+oidc.provider.azure.6.display_alias = {{ getv("/dhis2/oidc/provider/azure/6/display/alias") }}
+{% else %}
+#oidc.provider.azure.6.display_alias = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/6/mapping/claim") %}
+oidc.provider.azure.6.mapping_claim = {{ getv("/dhis2/oidc/provider/azure/6/mapping/claim") }}
+{% else %}
+#oidc.provider.azure.6.mapping_claim = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/6/redirect/url") %}
+oidc.provider.azure.6.redirect_url = {{ getv("/dhis2/oidc/provider/azure/6/redirect/url") }}
+{% else %}
+#oidc.provider.azure.6.redirect_url = 
+{% endif %}
+{% if gets("/dhis2/oidc/provider/azure/7/*") or gets("/dhis2/oidc/provider/azure/7/*/*") %}
+
+{% if exists("/dhis2/oidc/provider/azure/7/tenant") %}
+oidc.provider.azure.7.tenant = {{ getv("/dhis2/oidc/provider/azure/7/tenant") }}
+{% else %}
+#oidc.provider.azure.7.tenant = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/7/client/id") %}
+oidc.provider.azure.7.client_id = {{ getv("/dhis2/oidc/provider/azure/7/client/id") }}
+{% else %}
+#oidc.provider.azure.7.client_id = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/7/client/secret") %}
+oidc.provider.azure.7.client_secret = {{ getv("/dhis2/oidc/provider/azure/7/client/secret") }}
+{% else %}
+#oidc.provider.azure.7.client_secret = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/7/display/alias") %}
+oidc.provider.azure.7.display_alias = {{ getv("/dhis2/oidc/provider/azure/7/display/alias") }}
+{% else %}
+#oidc.provider.azure.7.display_alias = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/7/mapping/claim") %}
+oidc.provider.azure.7.mapping_claim = {{ getv("/dhis2/oidc/provider/azure/7/mapping/claim") }}
+{% else %}
+#oidc.provider.azure.7.mapping_claim = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/7/redirect/url") %}
+oidc.provider.azure.7.redirect_url = {{ getv("/dhis2/oidc/provider/azure/7/redirect/url") }}
+{% else %}
+#oidc.provider.azure.7.redirect_url = 
+{% endif %}
+{% if gets("/dhis2/oidc/provider/azure/8/*") or gets("/dhis2/oidc/provider/azure/8/*/*") %}
+
+{% if exists("/dhis2/oidc/provider/azure/8/tenant") %}
+oidc.provider.azure.8.tenant = {{ getv("/dhis2/oidc/provider/azure/8/tenant") }}
+{% else %}
+#oidc.provider.azure.8.tenant = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/8/client/id") %}
+oidc.provider.azure.8.client_id = {{ getv("/dhis2/oidc/provider/azure/8/client/id") }}
+{% else %}
+#oidc.provider.azure.8.client_id = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/8/client/secret") %}
+oidc.provider.azure.8.client_secret = {{ getv("/dhis2/oidc/provider/azure/8/client/secret") }}
+{% else %}
+#oidc.provider.azure.8.client_secret = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/8/display/alias") %}
+oidc.provider.azure.8.display_alias = {{ getv("/dhis2/oidc/provider/azure/8/display/alias") }}
+{% else %}
+#oidc.provider.azure.8.display_alias = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/8/mapping/claim") %}
+oidc.provider.azure.8.mapping_claim = {{ getv("/dhis2/oidc/provider/azure/8/mapping/claim") }}
+{% else %}
+#oidc.provider.azure.8.mapping_claim = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/8/redirect/url") %}
+oidc.provider.azure.8.redirect_url = {{ getv("/dhis2/oidc/provider/azure/8/redirect/url") }}
+{% else %}
+#oidc.provider.azure.8.redirect_url = 
+{% endif %}
+{% if gets("/dhis2/oidc/provider/azure/9/*") or gets("/dhis2/oidc/provider/azure/9/*/*") %}
+
+{% if exists("/dhis2/oidc/provider/azure/9/tenant") %}
+oidc.provider.azure.9.tenant = {{ getv("/dhis2/oidc/provider/azure/9/tenant") }}
+{% else %}
+#oidc.provider.azure.9.tenant = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/9/client/id") %}
+oidc.provider.azure.9.client_id = {{ getv("/dhis2/oidc/provider/azure/9/client/id") }}
+{% else %}
+#oidc.provider.azure.9.client_id = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/9/client/secret") %}
+oidc.provider.azure.9.client_secret = {{ getv("/dhis2/oidc/provider/azure/9/client/secret") }}
+{% else %}
+#oidc.provider.azure.9.client_secret = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/9/display/alias") %}
+oidc.provider.azure.9.display_alias = {{ getv("/dhis2/oidc/provider/azure/9/display/alias") }}
+{% else %}
+#oidc.provider.azure.9.display_alias = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/9/mapping/claim") %}
+oidc.provider.azure.9.mapping_claim = {{ getv("/dhis2/oidc/provider/azure/9/mapping/claim") }}
+{% else %}
+#oidc.provider.azure.9.mapping_claim = 
+{% endif %}
+{% if exists("/dhis2/oidc/provider/azure/9/redirect/url") %}
+oidc.provider.azure.9.redirect_url = {{ getv("/dhis2/oidc/provider/azure/9/redirect/url") }}
+{% else %}
+#oidc.provider.azure.9.redirect_url = 
+{% endif %}
+
+{% endif %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endif %}
