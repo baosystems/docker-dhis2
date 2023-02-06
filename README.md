@@ -478,11 +478,12 @@ configuring _dhis.conf_:
 For additional Azure AD providers, repeat the values above replacing "0" with "1" through "9" as
 required.
 
-### All common values
+### All configuration options
 
 All supported environment values for setting configuration options in _dhis.conf_ are below.
-Values are common to 2.35.0 and up (this list does not include read-replicas or Azure AD OIDC
-providers; see above for those):
+Values are common to 2.35.0 and up (this list does not include [up to five
+read-replicas](#read-replicas) or [up to 10 Azure AD OIDC
+providers](#azure-oidc)):
 
 * `DHIS2_ANALYTICS_CACHE_EXPIRATION`: Value of _analytics.cache.expiration_.
 
