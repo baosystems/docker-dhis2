@@ -304,7 +304,7 @@ documentation](https://docs.dhis2.org/en/manage/performing-system-administration
 and
 [source](https://github.com/dhis2/dhis2-core/blob/master/dhis-2/dhis-support/dhis-support-external/src/main/java/org/hisp/dhis/external/conf/ConfigurationKey.java)
 for valid values in _dhis.conf_. _Unless otherwise mentioned, no default value is provided by the
-container image, but DHIS2 will often provide a default as specified in the previous link:_
+container image,_ however, DHIS2 will often provide a default as specified in the previous link:
 
 ### Database
 
