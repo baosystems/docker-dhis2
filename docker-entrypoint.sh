@@ -480,16 +480,6 @@ _main() {
 
     ########
 
-    # If environment variable FORCE_HEALTHCHECK_WAIT=1, run netcat as a webserver
-    # before proceeding (nc will stop listening after a single request is received).
-    if [ "${FORCE_HEALTHCHECK_WAIT:-}" = '1' ]; then
-      echo "[DEBUG] $SELF: match FORCE_HEALTHCHECK_WAIT=1" >&2
-      echo -n -e "HTTP/1.1 200 OK\r\nContent-Length: 0\r\nContent-Type: text/plain\r\n\r\n" | nc -l -q 1 -p 8080
-      echo "[DEBUG] $SELF: health check received, continuing" >&2
-    fi
-
-    ########
-
     # Steps to perform if the running user is root:
     if [ "$(id -u)" = '0' ]; then
 
