@@ -10,8 +10,7 @@ volumes:
 services:
 
   pass_init:
-    # Using the same image as dhis2, but with a different command
-    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-latest}"
+    image: busybox
     volumes:
       - type: volume
         source: pass_pg_dhis
@@ -20,14 +19,14 @@ services:
         source: pass_pg_postgres
         target: /pass_pg_postgres
     command: >
-      bash -c "
+      sh -c "
       if [[ ! -f /pass_pg_dhis/pass_pg_dhis.txt ]] ; then
         echo '[INFO]: Generating random string for /pass_pg_dhis/pass_pg_dhis.txt'
-        cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 > /pass_pg_dhis/pass_pg_dhis.txt
+        tr -d '-' < /proc/sys/kernel/random/uuid | base64 | head -c 32 > /pass_pg_dhis/pass_pg_dhis.txt
       fi ;
       if [[ ! -f /pass_pg_postgres/pass_pg_postgres.txt ]] ; then
         echo '[INFO]: Generating random string for /pass_pg_postgres/pass_pg_postgres.txt'
-        cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 > /pass_pg_postgres/pass_pg_postgres.txt
+        tr -d '-' < /proc/sys/kernel/random/uuid | base64 | head -c 32 > /pass_pg_postgres/pass_pg_postgres.txt
       fi
       "
 
