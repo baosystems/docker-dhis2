@@ -39,26 +39,6 @@ done
 
 if [[ -d /dhis2-init.progress/ ]]; then
 
-  STATUS_FILE="/dhis2-init.progress/${SELF%.sh}_status.txt"
-
-  # Ensure status file parent directory exists
-  if [[ ! -d "$( dirname "$STATUS_FILE" )" ]]; then
-    mkdir -p "$( dirname "$STATUS_FILE" )"
-  fi
-
-  if [[ "${DHIS2_INIT_FORCE:-0}" == "1" ]]; then
-    echo "[DEBUG] $SELF: DHIS2_INIT_FORCE=1; delete \"$STATUS_FILE\"..." >&2
-    rm -v -f "$STATUS_FILE"
-  fi
-
-fi
-
-
-################################################################################
-
-
-if [[ -d /dhis2-init.progress/ ]]; then
-
   LOCK_FILE="/dhis2-init.progress/${SELF%.sh}.lock"
 
   # Random sleep from 0.01 to 5 seconds to prevent possible race condition with acquiring the file lock
@@ -79,6 +59,26 @@ if [[ -d /dhis2-init.progress/ ]]; then
   if ! timeout 3600s bash -c "until flock -n ${dhis2init} ; do echo \"[INFO] $SELF: Waiting 10s for lock $LOCK_FILE to be released...\"; sleep 10s; done" ; then
     echo "[WARNING] $SELF: script lock was not released in time, exiting..." >&2
     exit 1
+  fi
+
+fi
+
+
+################################################################################
+
+
+if [[ -d /dhis2-init.progress/ ]]; then
+
+  STATUS_FILE="/dhis2-init.progress/${SELF%.sh}_status.txt"
+
+  # Ensure status file parent directory exists
+  if [[ ! -d "$( dirname "$STATUS_FILE" )" ]]; then
+    mkdir -p "$( dirname "$STATUS_FILE" )"
+  fi
+
+  if [[ "${DHIS2_INIT_FORCE:-0}" == "1" ]]; then
+    echo "[DEBUG] $SELF: DHIS2_INIT_FORCE=1; delete \"$STATUS_FILE\"..." >&2
+    rm -v -f "$STATUS_FILE"
   fi
 
 fi

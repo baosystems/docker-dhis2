@@ -421,38 +421,9 @@ _main() {
 
   ########
 
-  # Again, match first argument to this script.
+  # Match first argument to this script.
   # Example: "remco" for a full command of "docker-entrypoint.sh remco -config /etc/remco/config",
   # or "catalina.sh" for a full command of "docker-entrypoint.sh catalina.sh run -security"
-  if [ "$1" = 'remco' ] || [ "$1" = 'catalina.sh' ]; then
-
-    # Print some environment variables for debugging purposes if values are set
-    VARS=(
-      DHIS2_BUILD_MAJOR
-      DHIS2_BUILD_VERSION
-      DHIS2_BUILD_REVISION
-      DHIS2_BUILD_DATE
-      DHIS2_BUILD_TIME
-      FORCE_HEALTHCHECK_WAIT
-      WAIT_BEFORE
-      WAIT_HOSTS
-      WAIT_PATHS
-      WAIT_TIMEOUT
-      JAVA_MAJOR
-      JAVA_VERSION
-      JAVA_OPTS
-      TOMCAT_MAJOR
-      TOMCAT_VERSION
-      CATALINA_OPTS
-    )
-    for VAR in "${VARS[@]}"; do
-      if [ -n "${!VAR:-}" ]; then
-        echo "[DEBUG] $SELF: environment $VAR=${!VAR}" >&2
-      fi
-    done
-    unset VARS
-
-    ########
 
     # Steps to perform if the running user is root:
     if [ "$(id -u)" = '0' ]; then
