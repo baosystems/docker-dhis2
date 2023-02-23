@@ -15,8 +15,8 @@ ARG BASE_IMAGE="docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye"
 
 
 # gosu for easy step-down from root - https://github.com/tianon/gosu/releases
-# Using rust:bullseye (same as wait-builder stage) to have gpg, unzip, and wget preinstalled.
-FROM docker.io/library/rust:1.67.1-bullseye as gosu-builder
+# Using rust:bullseye (same as remco-builder stage) to have gpg, unzip, and wget preinstalled.
+FROM docker.io/library/golang:1.18.0-bullseye as gosu-builder
 ARG GOSU_VERSION=1.14
 WORKDIR /work
 RUN <<EOF
@@ -74,50 +74,6 @@ EOF
 ################################################################################
 
 
-# wait pauses until remote hosts are available - https://github.com/ufoscout/docker-compose-wait
-# Tests are excluded due to the time taken running in arm64 emulation; see https://github.com/ufoscout/docker-compose-wait/issues/54
-FROM docker.io/library/rust:1.67.1-bullseye as wait-builder
-ARG WAIT_VERSION=2.9.0
-WORKDIR /work
-RUN <<EOF
-#!/usr/bin/env bash
-set -euxo pipefail
-dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
-if [ "$dpkgArch" = "amd64" ]; then
-  wget --no-verbose "https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait"
-  chmod --changes 0755 wait
-else
-  git clone https://github.com/ufoscout/docker-compose-wait.git source
-  cd source
-  git checkout "$WAIT_VERSION"
-  R_TARGET="$( rustup target list --installed | grep -- '-gnu' | tail -1 | awk '{print $1}'| sed 's/gnu/musl/' )"
-  rustup target add "$R_TARGET"
-  ####
-  #### BEGIN crates.io update failure workaround
-  #### https://users.rust-lang.org/t/updating-crates-io-index-manually/39360
-  #### https://stackoverflow.com/a/9237511
-  ####
-    CARGO_CRATES_INDEX="${CARGO_HOME:-$HOME/.cargo}/registry/index/github.com-1ecc6299db9ec823/.git"
-    git clone --bare https://github.com/rust-lang/crates.io-index.git "$CARGO_CRATES_INDEX"
-    git --git-dir="$CARGO_CRATES_INDEX" fetch
-    touch --reference="$CARGO_CRATES_INDEX/FETCH_HEAD" "${CARGO_CRATES_INDEX%git}last-updated"
-  ####
-  #### END crates.io update failure workaround
-  ####
-  cargo fetch --target="$R_TARGET"
-  #cargo test --target="$R_TARGET"
-  cargo build --target="$R_TARGET" --release
-  strip ./target/"$R_TARGET"/release/wait
-  install --verbose --mode=0755 ./target/"$R_TARGET"/release/wait ..
-  cd ..
-fi
-./wait
-EOF
-
-
-################################################################################
-
-
 # Tomcat with OpenJDK - https://hub.docker.com/_/tomcat (see "ARG BASE_IMAGE" above)
 FROM "$BASE_IMAGE" as dhis2
 
@@ -137,7 +93,6 @@ EOF
 # Add tools from other build stages
 COPY --chmod=755 --chown=root:root --from=gosu-builder /work/gosu /usr/local/bin/
 COPY --chmod=755 --chown=root:root --from=remco-builder /work/remco /usr/local/bin/
-COPY --chmod=755 --chown=root:root --from=wait-builder /work/wait /usr/local/bin/
 
 # Create tomcat system user, disable crons, and clean up
 RUN <<EOF

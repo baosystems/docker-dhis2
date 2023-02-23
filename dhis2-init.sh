@@ -87,35 +87,6 @@ fi
 ################################################################################
 
 
-if [[ -x /usr/local/bin/wait ]]; then
-
-  # Ensure there are no trailing commas for WAIT_HOSTS or WAIT_PATHS if provided
-  if [ -n "${WAIT_HOSTS:-}" ]; then
-    export WAIT_HOSTS="${WAIT_HOSTS%,}"
-  fi
-  if [ -n "${WAIT_PATHS:-}" ]; then
-    export WAIT_PATHS="${WAIT_PATHS%,}"
-  fi
-
-  if [ -n "${WAIT_HOSTS:-}" ] || [ -n "${WAIT_PATHS:-}" ]; then
-    # Wait for hosts specified in the environment variable WAIT_HOSTS (noop if not set).
-
-    # Pause for 10 seconds to allow time for PostgreSQL to initialize itself
-    export WAIT_BEFORE='10'
-
-    # If it times out before the targets are available, it will exit with a non-0 code,
-    # and this script will quit because of the bash option "set -e" above.
-    # https://github.com/ufoscout/docker-compose-wait
-
-    /usr/local/bin/wait 2> >( sed -r -e 's/^\[(DEBUG|INFO)\s+(wait)\]/[\1] \2:/g' >&2 )
-  fi
-
-fi
-
-
-################################################################################
-
-
 # If DHIS2_DATABASE_PASSWORD is empty or null, set it to the contents of DHIS2_DATABASE_PASSWORD_FILE
 if [[ -z "${DHIS2_DATABASE_PASSWORD:-}" ]] && [[ -r "${DHIS2_DATABASE_PASSWORD_FILE:-}" ]]; then
   export DHIS2_DATABASE_PASSWORD="$(<"${DHIS2_DATABASE_PASSWORD_FILE}")"

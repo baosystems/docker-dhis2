@@ -92,7 +92,6 @@ services:
       DHIS2_INIT_FORCE: "1"  # Run every time for simplicity
       DHIS2_INIT_SKIP: 20_dhis2-initwar.sh  # String like "item1.sh,item2.sh"
       PGPASSWORD_FILE: /pass_pg_postgres/pass_pg_postgres.txt
-      WAIT_HOSTS: "database:5432"  # Matches the name and port of the Compose service running PostgreSQL
     command:
       - dhis2-init.sh  # Override the image default
 
@@ -117,8 +116,6 @@ services:
     environment:
       DHIS2_DATABASE_HOST: database
       DHIS2_DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
-      WAIT_HOSTS: "database:5432"  # Matches the name and port of the Compose service running PostgreSQL
-      WAIT_PATHS: /dhis2-init.progress/dhis2-init_status.txt  # Allow for dhis2_init to complete (necessary in some cases where dhis2_init may not run again)
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/dhis-web-commons/security/login.action"]
       interval: 1m30s

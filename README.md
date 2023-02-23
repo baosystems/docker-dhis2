@@ -188,11 +188,6 @@ _remco_, which are the defaults:
 The following occur when using _docker-entrypoint.sh_ as the entry point (the image default) and the
 command starts with _remco_ (the image default) or _catalina.sh_:
 
-* Use `WAIT_HOSTS`, `WAIT_PATHS`, and [others as
-  documented to wait](https://github.com/ufoscout/docker-compose-wait#additional-configuration-options)
-  for other hosts or file paths before proceeding. If none are provided, `wait` will exit with code 0
-  immediately and the container will proceed.
-
 * If the detected user is the *root* user, paths _/opt/dhis2/files_, _/opt/dhis2/logs_, and
   _/usr/local/tomcat/logs_ will be owned by *tomcat* and the user will be given write access. This
   is to ensure the *tomcat* user always has the ability to write, even if those paths are volume
@@ -239,10 +234,9 @@ The following environment variables are set in `dhis2_init.sh` but can be change
 
 ### dhis2-init.d scripts
 
-* `10_dhis2-database.sh`: Create and initialize a PostgreSQL database with PostGIS. If `WAIT_HOSTS`
-  or `WAIT_PATHS` are provided, it will wait for hosts or file paths before proceeding. In
-  addition to various `PG*` values being set for connecting to the database, the script
-  requires the following environment variables set:
+* `10_dhis2-database.sh`: Create and initialize a PostgreSQL database with PostGIS. In addition to
+  various `PG*` values being set for connecting to the database, the script requires the following
+  environment variables set:
 
     * `DHIS2_DATABASE_NAME`
     * `DHIS2_DATABASE_USERNAME`
@@ -250,9 +244,8 @@ The following environment variables are set in `dhis2_init.sh` but can be change
 
 * `15_pgstatstatements.sh`: Add the
   [pg_stat_statements](https://www.postgresql.org/docs/current/pgstatstatements.html) extension to
-  the `PGDATABASE`. This module is included in the PostGIS container image. If `WAIT_HOSTS` or
-  `WAIT_PATHS` are provided, it will wait for hosts or file paths before proceeding. The various
-  `PG*` values can be set as needed to connect to the database.
+  the `PGDATABASE`. This module is included in the PostGIS container image. The various `PG*` values
+  can be set as needed to connect to the database.
 
 * `20_dhis2-initwar.sh`: If the last line in _/dhis2-init.progress/20_dhis2-initwar_history.csv_
   does not contain a line stating that the current DHIS2 version and build revision started
