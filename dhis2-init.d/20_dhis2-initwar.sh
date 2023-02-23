@@ -113,7 +113,7 @@ else
   catalina.sh start
 fi
 
-# Wait for Tomcat to start
+# Give Tomcat time to start up
 sleep 3
 
 # Assume DHIS2 is ready when the login page renders

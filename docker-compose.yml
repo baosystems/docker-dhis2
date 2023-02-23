@@ -32,7 +32,7 @@ services:
       "
 
   database:
-    image: "ghcr.io/baosystems/postgis:${POSTGIS_TAG:-14}"
+    image: ghcr.io/baosystems/postgis:${POSTGIS_TAG:-14}
     depends_on:
       pass_init:
         condition: service_completed_successfully
@@ -48,13 +48,11 @@ services:
         volume:
           nocopy: true
     environment:
-      POSTGRES_PASSWORD_FILE: /pass_pg_postgres/pass_pg_postgres.txt  # referenced by the postgres image
+      POSTGRES_PASSWORD_FILE: /pass_pg_postgres/pass_pg_postgres.txt
     shm_size: 256mb  # https://github.com/docker-library/postgres/issues/416
-    # Options "synchronous_commit" through "max_locks_per_transaction" are some of the DHIS2 recommendations (https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#install_postgresql_installation)
-    command: >
+    command: >  # Options "synchronous_commit" through "max_locks_per_transaction" are some of the DHIS2 recommendations (https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#install_postgresql_installation)
       postgres
         -c "listen_addresses=*"
-        -c "shared_preload_libraries=pg_stat_statements"
         -c "synchronous_commit=off"
         -c "checkpoint_completion_target=0.8"
         -c "wal_writer_delay=10000ms"
@@ -65,14 +63,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 5s
+      start_period: 2s
 
   dhis2_init:
-    # Using the same image as dhis2, but with a different command
-    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-latest}"
+    image: ghcr.io/baosystems/dhis2:${DHIS2_TAG:-latest}
     depends_on:
       - database
-    working_dir: /opt/dhis2/logs  # DHIS2 attempts to create an empty "{WORKDIR}/dhis.log" file on startup
     volumes:
       - type: volume
         source: dhis2_init_progress
@@ -93,20 +89,19 @@ services:
     environment:
       DHIS2_DATABASE_HOST: database  # Matches the name of the Compose service running PostgreSQL
       DHIS2_DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
-      DHIS2_INIT_SKIP: 20_dhis2-initwar.sh  # String like "item1.sh,item2.sh"; NOTE: Only skip "20_dhis2-initwar.sh" on stacks with a single Tomcat node
+      DHIS2_INIT_FORCE: "1"  # Run every time for simplicity
+      DHIS2_INIT_SKIP: 20_dhis2-initwar.sh  # String like "item1.sh,item2.sh"
       PGPASSWORD_FILE: /pass_pg_postgres/pass_pg_postgres.txt
       WAIT_HOSTS: "database:5432"  # Matches the name and port of the Compose service running PostgreSQL
     command:
-      - sh  # Override the image default
-      - -c
-      - "dhis2-init.sh && sleep infinity"
+      - dhis2-init.sh  # Override the image default
 
   dhis2:
-    image: "ghcr.io/baosystems/dhis2:${DHIS2_TAG:-latest}"
+    image: ghcr.io/baosystems/dhis2:${DHIS2_TAG:-latest}
     depends_on:
-      - dhis2_init
+      dhis2_init:
+        condition: service_completed_successfully
     restart: unless-stopped
-    working_dir: /opt/dhis2/logs
     volumes:
       - type: volume
         source: dhis2_init_progress
@@ -120,12 +115,11 @@ services:
         target: /pass_pg_dhis
         read_only: true
     environment:
-      DHIS2_DATABASE_HOST: database  # Matches the name of the Compose service running PostgreSQL
+      DHIS2_DATABASE_HOST: database
       DHIS2_DATABASE_PASSWORD_FILE: /pass_pg_dhis/pass_pg_dhis.txt
-      DHIS2_SERVER_BASEURL: "http://localhost:8080"  # It's best to always set the hostname, even if it's "localhost"; if using, the protocol is required
       WAIT_HOSTS: "database:5432"  # Matches the name and port of the Compose service running PostgreSQL
       WAIT_PATHS: /dhis2-init.progress/dhis2-init_status.txt  # Allow for dhis2_init to complete (necessary in some cases where dhis2_init may not run again)
-    healthcheck:  # NOTE: Compose will not re-create containers marked as unhealthy unless they exit.
+    healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/dhis-web-commons/security/login.action"]
       interval: 1m30s
       timeout: 30s
@@ -133,7 +127,10 @@ services:
       start_period: 60s
 
   reverse_proxy:
-    image: "docker.io/caddy:${CADDY_TAG:-latest}"
+    image: caddy:${CADDY_TAG:-latest}
+    depends_on:
+      dhis2:
+        condition: service_started
     restart: unless-stopped
     command:
       - "caddy"
