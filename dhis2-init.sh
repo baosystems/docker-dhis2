@@ -126,12 +126,12 @@ if [[ -z "${PGPASSWORD:-}" ]] && [[ -r "${PGPASSWORD_FILE:-}" ]]; then
   export PGPASSWORD="$(<"${PGPASSWORD_FILE}")"
 fi
 
-# If PGHOST is empty or null, set it to DHIS2_DATABASE_HOST if provided
+# If PGHOST is empty or null, set it to DHIS2_DATABASE_HOST
 if [[ -z "${PGHOST:-}" ]] && [[ -n "${DHIS2_DATABASE_HOST:-}" ]]; then
   export PGHOST="${DHIS2_DATABASE_HOST:-}"
 fi
 
-# If PGPORT is empty or null, set it to DHIS2_DATABASE_PORT if provided
+# If PGPORT is empty or null, set it to DHIS2_DATABASE_PORT
 if [[ -z "${PGPORT:-}" ]] && [[ -n "${DHIS2_DATABASE_PORT:-}" ]]; then
   export PGPORT="${DHIS2_DATABASE_PORT:-}"
 fi

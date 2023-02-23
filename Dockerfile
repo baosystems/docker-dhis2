@@ -267,7 +267,8 @@ curl -fsSL "$DHIS2_CONFIGKEY_URL" \
   -r \
   -e 's/"([^"]+)"/\1/g' `# remove quotation marks from non-empty quoted values` \
   -e 's/""$//g' `# drop empty quoted values` \
-| sed -e '/^cluster\.\(cache\.\(\|remote\.object\.\)port\|hostname\|members\)/d'  `# remove options that will be added with dhis-cluster.conf.tmpl` \
+| sed \
+  -e '/^cluster\.\(cache\.\(\|remote\.object\.\)port\|hostname\|members\)/d'  `# remove options that will be added with dhis-cluster.conf.tmpl` \
 | sort \
 | while IFS= read -r LINE ; do
   CONFIG_OPTION="$( awk -F',' '{print $1}' <<<"$LINE" )"
@@ -281,7 +282,7 @@ ${CONFIG_OPTION} = {{ getv("${TEMPLATE_OPTION}") }}
 {% endif %}
 EOS
 done
-# Add clustering settings (keep logic in remco for DNS lookups of SERVICE_NAME)
+# Add clustering settings (keep template logic in remco for DNS lookups of SERVICE_NAME)
 if curl -fsSL "$DHIS2_CONFIGKEY_URL" | grep -q 'CLUSTER_HOSTNAME( "cluster\.hostname",' ; then
   cat /etc/remco/templates/dhis2/dhis-cluster.conf.tmpl >> /tmp/.dhis.conf.tmpl
 fi
