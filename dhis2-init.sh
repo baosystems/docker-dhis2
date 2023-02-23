@@ -87,11 +87,6 @@ fi
 ################################################################################
 
 
-# If DHIS2_DATABASE_PASSWORD is empty or null, set it to the contents of DHIS2_DATABASE_PASSWORD_FILE
-if [[ -z "${DHIS2_DATABASE_PASSWORD:-}" ]] && [[ -r "${DHIS2_DATABASE_PASSWORD_FILE:-}" ]]; then
-  export DHIS2_DATABASE_PASSWORD="$(<"${DHIS2_DATABASE_PASSWORD_FILE}")"
-fi
-
 # If PGPASSWORD is empty or null, set it to the contents of PGPASSWORD_FILE
 if [[ -z "${PGPASSWORD:-}" ]] && [[ -r "${PGPASSWORD_FILE:-}" ]]; then
   export PGPASSWORD="$(<"${PGPASSWORD_FILE}")"
@@ -108,12 +103,6 @@ if [[ -z "${PGPORT:-}" ]] && [[ -n "${DHIS2_DATABASE_PORT:-}" ]]; then
 fi
 
 # Set default values if not provided in the environment
-if [[ -z "${DHIS2_DATABASE_USERNAME:-}" ]]; then
-  export DHIS2_DATABASE_USERNAME='dhis'
-fi
-if [[ -z "${DHIS2_DATABASE_NAME:-}" ]]; then
-  export DHIS2_DATABASE_NAME='dhis2'
-fi
 if [[ -z "${PGUSER:-}" ]]; then
   export PGUSER='postgres'
 fi
