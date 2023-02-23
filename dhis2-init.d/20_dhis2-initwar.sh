@@ -99,10 +99,14 @@ fi
 # Set CATALINA_PID to improve chances of a clean shutdown
 export CATALINA_PID="${CATALINA_HOME:-/usr/local/tomcat}/temp/catalina.pid"
 
-# Use remco to generate dhis.conf
-# Entrypoint will wait for the database server to be available and run remco as the tomcat user
-docker-entrypoint.sh \
+# Use remco to generate configuration file
+echo "[INFO] $SELF: Generate dhis.conf from template"
+if [ "$(id -u)" = '0' ]; then
+  gosu tomcat \
+    remco -config /etc/remco/dhis2-onetime.toml
+else
   remco -config /etc/remco/dhis2-onetime.toml
+fi
 
 # Start Tomcat in the background as the tomcat user
 echo "[INFO] $SELF: Start Tomcat in the background: CATALINA_PID=$CATALINA_PID catalina.sh start"

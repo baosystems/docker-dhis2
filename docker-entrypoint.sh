@@ -24,8 +24,9 @@ _main() {
   ########
 
   # Match first argument to this script.
-  # Example: "remco" for a full command like "docker-entrypoint.sh remco -config /etc/remco/config"
-  if [ "$1" = 'remco' ]; then
+  # Example: "remco" for a full command like "docker-entrypoint.sh remco -config /etc/remco/config",
+  # or "catalina.sh" for a full command of "docker-entrypoint.sh dhis2-init.sh"
+  if [ "$1" = 'remco' ] || [ "$1" = 'dhis2-init.sh' ]; then
 
     # Set DHIS2 build information (logic also used in 20_dhis2-initwar.sh):
 
@@ -423,7 +424,9 @@ _main() {
 
   # Match first argument to this script.
   # Example: "remco" for a full command of "docker-entrypoint.sh remco -config /etc/remco/config",
+  # or "catalina.sh" for a full command of "docker-entrypoint.sh dhis2-init.sh",
   # or "catalina.sh" for a full command of "docker-entrypoint.sh catalina.sh run -security"
+  if [ "$1" = 'remco' ] || [ "$1" = 'dhis2-init.sh' ] || [ "$1" = 'catalina.sh' ]; then
 
     # Steps to perform if the running user is root:
     if [ "$(id -u)" = '0' ]; then
@@ -444,6 +447,20 @@ _main() {
           rm --interactive=never "$TOMCAT_DIR/.writable"
         fi
       done
+
+    fi
+
+  fi
+
+  ########
+
+  # Match first argument to this script.
+  # Example: "remco" for a full command of "docker-entrypoint.sh remco -config /etc/remco/config",
+  # or "catalina.sh" for a full command of "docker-entrypoint.sh catalina.sh run -security"
+  if [ "$1" = 'remco' ] || [ "$1" = 'catalina.sh' ]; then
+
+    # Steps to perform if the running user is root:
+    if [ "$(id -u)" = '0' ]; then
 
       # Run the arguments of this script as a command as the tomcat user.
       # NOTE: The script will not continue beyond this point.
