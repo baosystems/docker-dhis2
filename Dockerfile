@@ -126,7 +126,7 @@ RUN <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
 apt-get update
-apt-get install --yes --no-install-recommends bind9-dnsutils curl gpg netcat-traditional python3 unzip wget zip
+apt-get install --yes --no-install-recommends bind9-dnsutils curl gpg python3 unzip wget zip
 echo "deb http://apt.postgresql.org/pub/repos/apt $( awk -F'=' '/^VERSION_CODENAME/ {print $NF}' /etc/os-release )-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 curl --silent https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg
 apt-get update

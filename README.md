@@ -198,11 +198,6 @@ command starts with _remco_ (the image default) or _catalina.sh_:
   for other hosts or file paths before proceeding. If none are provided, `wait` will exit with code 0
   immediately and the container will proceed.
 
-* If `FORCE_HEALTHCHECK_WAIT` is set to `1`, netcat will listen on port 8080 and respond to a single
-  http request with "200 OK" and an empty body. This is to allow an orchestrator to mark a new
-  container as healthy before proceeding to start Tomcat, to which subsequent health checks will
-  actually hit DHIS2.
-
 * If the detected user is the *root* user, paths _/opt/dhis2/files_, _/opt/dhis2/logs_, and
   _/usr/local/tomcat/logs_ will be owned by *tomcat* and the user will be given write access. This
   is to ensure the *tomcat* user always has the ability to write, even if those paths are volume
@@ -286,13 +281,6 @@ command begins with _remco_ (the image default):
 
 * `DISABLE_TOMCAT_TEMPLATES`: If set to "1", the templates for Tomcat configuration files will not
   be generated.
-
-The following **OPTIONAL** environment variables are used in `docker-entrypoint.sh` and container
-command begins with _remco_ (the image default) or _catalina.sh_:
-
-* `FORCE_HEALTHCHECK_WAIT`: if set to "1", `netcat` will listen on port 8080 and respond to a single
-  http request with "200 OK" to allow for an external health check to initialize before proceeding.
-  This might be helpful with certain orchestration platforms.
 
 ## Generating dhis.conf with Remco
 
