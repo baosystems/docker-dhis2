@@ -224,6 +224,7 @@ curl -fsSL "$DHIS2_CONFIGKEY_URL" \
   -e 's/""$//g' `# drop empty quoted values` \
 | sed \
   -e '/^cluster\.\(cache\.\(\|remote\.object\.\)port\|hostname\|members\)/d'  `# remove options that will be added with dhis-cluster.conf.tmpl` \
+  -e '/^active\.read\.replicas/d'  `# remove option not intended to be set` \
 | sort \
 | while IFS= read -r LINE ; do
   CONFIG_OPTION="$( awk -F',' '{print $1}' <<<"$LINE" )"
