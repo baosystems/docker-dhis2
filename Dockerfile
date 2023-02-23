@@ -171,11 +171,6 @@ done
 rm --verbose --recursive --force /tmp/hsperfdata_root /usr/local/tomcat/temp/safeToDelete.tmp
 EOF
 
-# Tomcat Lifecycle Listener to shutdown catalina on startup failures (https://github.com/ascheman/tomcat-lifecyclelistener)
-ADD --chmod=644 --chown=root:root https://repo.maven.apache.org/maven2/net/aschemann/tomcat/tomcat-lifecyclelistener/1.0.1/tomcat-lifecyclelistener-1.0.1.jar /usr/local/tomcat/lib/tomcat-lifecyclelistener.jar
-COPY --chmod=644 --chown=root:root ./tomcat/context.xml /usr/local/tomcat/conf/
-COPY --chmod=644 --chown=root:root ./tomcat/setenv.sh /usr/local/tomcat/bin/
-
 # Tomcat server configuration
 COPY --chmod=644 --chown=root:root ./tomcat/server.xml /usr/local/tomcat/conf/
 
