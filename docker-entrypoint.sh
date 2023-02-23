@@ -454,32 +454,6 @@ _main() {
 
     ########
 
-    # Ensure there are no trailing commas for WAIT_HOSTS or WAIT_PATHS if provided.
-    if [ -n "${WAIT_HOSTS:-}" ]; then
-      export WAIT_HOSTS="${WAIT_HOSTS%,}"
-      echo "[DEBUG] $SELF: environment WAIT_HOSTS=$WAIT_HOSTS" >&2
-    fi
-    if [ -n "${WAIT_PATHS:-}" ]; then
-      export WAIT_PATHS="${WAIT_PATHS%,}"
-      echo "[DEBUG] $SELF: environment WAIT_PATHS=$WAIT_PATHS" >&2
-
-      # If WAIT_TIMEOUT is not set, increase the timeout from the default value of 30 seconds to allow for dhis2_init to complete.
-      if [ -z "${WAIT_TIMEOUT:-}" ]; then
-        export WAIT_TIMEOUT='300'
-        echo "[DEBUG] $SELF: environment WAIT_TIMEOUT=$WAIT_TIMEOUT" >&2
-      fi
-    fi
-
-    # Wait for hosts specified in the environment variable WAIT_HOSTS and/or paths in WAIT_PATHS.
-    # If it times out before the hostss and/or paths are available, it will exit with a non-0
-    # signal, and this script will exit because of the bash options set at the top.
-    if [ -n "${WAIT_HOSTS:-}" ] || [ -n "${WAIT_PATHS:-}" ]; then
-      echo "[DEBUG] $SELF: running /usr/local/bin/wait" >&2
-      /usr/local/bin/wait 2> >( sed -r -e 's/^\[(DEBUG|INFO)\s+(wait)\]/[\1] \2:/g' >&2 )
-    fi
-
-    ########
-
     # Steps to perform if the running user is root:
     if [ "$(id -u)" = '0' ]; then
 

@@ -45,34 +45,6 @@ fi
 ################################################################################
 
 
-# Proceed only if wait is available
-if [[ -x /usr/local/bin/wait ]]; then
-
-  # Ensure there are no trailing commas for WAIT_HOSTS or WAIT_PATHS if provided
-  if [[ -n "${WAIT_HOSTS:-}" ]]; then
-    export WAIT_HOSTS="${WAIT_HOSTS%,}"
-  fi
-  if [[ -n "${WAIT_PATHS:-}" ]]; then
-    export WAIT_PATHS="${WAIT_PATHS%,}"
-  fi
-
-  if [[ -n "${WAIT_HOSTS:-}" ]] || [[ -n "${WAIT_PATHS:-}" ]]; then
-    # Disable wait delay as this script is designed to be run interactively
-    export WAIT_BEFORE='0'
-
-    # Wait for hosts specified in the environment variable WAIT_HOSTS (noop if not set).
-    # If it times out before the targets are available, it will exit with a non-0 code,
-    # and this script will quit because of the bash option "set -e" above.
-    # https://github.com/ufoscout/docker-compose-wait
-    /usr/local/bin/wait 2> >( sed -r -e 's/^\[(DEBUG|INFO)\s+(wait)\]/[\1] \2:/g' >&2 )
-  fi
-
-fi
-
-
-################################################################################
-
-
 # The following section requires the following environment variables set:
 # - DHIS2_DATABASE_NAME
 # - PGHOST
