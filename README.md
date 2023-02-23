@@ -161,10 +161,10 @@ EOF
 
 docker compose up --detach
 
-# Later, upgrade to 2.39.1:
+# Later, upgrade to 2.39.1.1:
 
 cat > .env <<'EOF'
-DHIS2_TAG=2.39.1
+DHIS2_TAG=2.39.1.1
 EOF
 
 docker compose rm --force --stop dhis2 dhis2_init
