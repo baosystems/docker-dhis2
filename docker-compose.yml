@@ -67,7 +67,8 @@ services:
   dhis2_init:
     image: ghcr.io/baosystems/dhis2:${DHIS2_TAG:-latest}
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     volumes:
       - type: volume
         source: dhis2_init_progress
@@ -97,6 +98,8 @@ services:
   dhis2:
     image: ghcr.io/baosystems/dhis2:${DHIS2_TAG:-latest}
     depends_on:
+      database:
+        condition: service_healthy
       dhis2_init:
         condition: service_completed_successfully
     restart: unless-stopped
