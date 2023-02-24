@@ -76,7 +76,7 @@ EOF
 
 
 # Tomcat with OpenJDK - https://hub.docker.com/_/tomcat (see "ARG BASE_IMAGE" above)
-FROM "$BASE_IMAGE" as dhis2
+FROM $BASE_IMAGE as dhis2
 
 # Install dependencies for dhis2-init.sh tasks, docker-entrypoint.sh, and other commands in this file
 RUN <<EOF
