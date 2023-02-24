@@ -64,8 +64,8 @@ jobs:
         id: tomcat_query
         run: |
           set -x
-          echo "java_major=$( sed --regexp-extended --expression='s/^([0-9]+)(\.|u).*$/\1/' <<< "$JAVA_VERSION" )" >> $GITHUB_OUTPUT
-          echo "java_version=$JAVA_VERSION" >> $GITHUB_OUTPUT
+          echo "java_major=$( sed --regexp-extended --expression='s/^(jdk|jre)-?//' --expression='s/^([0-9]+)(\.|u).*$/\1/' <<< "$JAVA_VERSION" )" >> $GITHUB_OUTPUT
+          echo "java_version=$( sed --regexp-extended --expression='s/^(jdk|jre)-?//' <<< "$JAVA_VERSION" )" >> $GITHUB_OUTPUT
           echo "tomcat_major=$TOMCAT_MAJOR" >> $GITHUB_OUTPUT
           echo "tomcat_version=$TOMCAT_VERSION" >> $GITHUB_OUTPUT
 

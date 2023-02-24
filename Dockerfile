@@ -8,7 +8,7 @@
 # ARG values can be overridden with command line arguments at build time.
 #
 # Default for dhis2 image.
-ARG BASE_IMAGE="docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye"
+ARG BASE_IMAGE="docker.io/library/tomcat:9-jre11-temurin-jammy"
 
 
 ################################################################################
@@ -82,12 +82,8 @@ FROM "$BASE_IMAGE" as dhis2
 RUN <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
-apt-get update
-apt-get install --yes --no-install-recommends bind9-dnsutils curl gpg python3 unzip wget zip
-echo "deb http://apt.postgresql.org/pub/repos/apt $( awk -F'=' '/^VERSION_CODENAME/ {print $NF}' /etc/os-release )-pgdg main" > /etc/apt/sources.list.d/pgdg.list
-curl --silent https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg
-apt-get update
-apt-get install --yes --no-install-recommends postgresql-client
+apt update
+apt install --yes --no-install-recommends ca-certificates curl postgresql-client python3 unzip zip
 rm --recursive --force /var/lib/apt/lists/*
 EOF
 
