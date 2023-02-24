@@ -509,42 +509,42 @@ jobs:
 
       ##########################################################################
 
-      - name: Upload npm logs
-        if: always()
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
-        with:
-          name: ${{ matrix.dhis2_version }}_npm
-          path: /home/runner/.npm/_logs/
-          retention-days: 8
-          if-no-files-found: ignore
+      # - name: Upload npm logs
+      #   if: always()
+      #   uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
+      #   with:
+      #     name: ${{ matrix.dhis2_version }}_npm
+      #     path: /home/runner/.npm/_logs/
+      #     retention-days: 8
+      #     if-no-files-found: ignore
 
-      - name: Upload wdio logs
-        if: always()
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
-        with:
-          name: ${{ matrix.dhis2_version }}_wdio
-          path: output/
-          retention-days: 8
-          if-no-files-found: ignore
+      # - name: Upload wdio logs
+      #   if: always()
+      #   uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
+      #   with:
+      #     name: ${{ matrix.dhis2_version }}_wdio
+      #     path: output/
+      #     retention-days: 8
+      #     if-no-files-found: ignore
 
-      # Archive files before uploading as an artifact because of the following warning without doing so:
-      # "There are over 10,000 files in this artifact, consider creating an archive before upload to improve the upload performance."
-      - name: Archive allure results
-        if: always()
-        run: |
-          if [[ -d reports/allure-results ]] ; then
-            cd reports/
-            zip -q -r allure-results.zip allure-results
-          fi
+      # # Archive files before uploading as an artifact because of the following warning without doing so:
+      # # "There are over 10,000 files in this artifact, consider creating an archive before upload to improve the upload performance."
+      # - name: Archive allure results
+      #   if: always()
+      #   run: |
+      #     if [[ -d reports/allure-results ]] ; then
+      #       cd reports/
+      #       zip -q -r allure-results.zip allure-results
+      #     fi
 
-      - name: Upload allure results
-        if: always()
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
-        with:
-          name: ${{ matrix.dhis2_version }}_allure
-          path: reports/allure-results.zip
-          retention-days: 8
-          if-no-files-found: ignore
+      # - name: Upload allure results
+      #   if: always()
+      #   uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
+      #   with:
+      #     name: ${{ matrix.dhis2_version }}_allure
+      #     path: reports/allure-results.zip
+      #     retention-days: 8
+      #     if-no-files-found: ignore
 
   check:
     name: Check if required jobs passed  # this job name is to be used as the single required status check in branch protection
