@@ -48,7 +48,7 @@ jobs:
         id: default_base_image
         run: |
           set -x
-          awk '/^ARG BASE_IMAGE=/ {print $NF}' Dockerfile | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
+          echo "base_image=$( awk '/^FROM .* as dhis2$/ {print $2}' Dockerfile )" >> $GITHUB_OUTPUT
 
     outputs:
       base_image: ${{ steps.default_base_image.outputs.base_image }}
