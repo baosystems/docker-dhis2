@@ -15,18 +15,19 @@ ARG BASE_IMAGE="docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye"
 
 
 # gosu for easy step-down from root - https://github.com/tianon/gosu/releases
-# Using rust:bullseye (same as remco-builder stage) to have gpg, unzip, and wget preinstalled.
-FROM docker.io/library/golang:1.18.0-bullseye as gosu-builder
+FROM docker.io/library/ubuntu:jammy-20230126 as gosu-builder
 ARG GOSU_VERSION=1.14
 WORKDIR /work
 RUN <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
 dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
-wget --no-verbose --output-document=gosu "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}"
-wget --no-verbose --output-document=gosu.asc "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}.asc"
-gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4
-gpg --batch --verify gosu.asc gosu
+apt update
+apt install --yes curl gpg
+curl --silent --location --output gosu "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}"
+curl --silent --location --output gosu.asc "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}.asc"
+gpg --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4
+gpg --verify gosu.asc gosu
 chmod --changes 0755 gosu
 ./gosu --version
 ./gosu nobody true
