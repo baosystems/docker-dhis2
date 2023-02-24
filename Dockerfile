@@ -36,7 +36,7 @@ EOF
 ################################################################################
 
 
-# remco for building configuration files from templates - https://github.com/HeavyHorst/remco
+# Remco for building configuration files from templates - https://github.com/HeavyHorst/remco
 # Using same verion of golang as shown in the output of `remco -version` from the released amd64 binary.
 # REMCO_VERSION_GIT_COMMIT_HASH is used when the "Git Commit Hash" value from `remco -version` is
 # different than the commit hash from the git tag for REMCO_VERSION.
@@ -77,7 +77,7 @@ EOF
 # Tomcat with OpenJDK - https://hub.docker.com/_/tomcat (see "ARG BASE_IMAGE" above)
 FROM "$BASE_IMAGE" as dhis2
 
-# Install dependencies for dhis2-init.sh tasks, docker-entrypoint.sh, and general debugging
+# Install dependencies for dhis2-init.sh tasks, docker-entrypoint.sh, and other commands in this file
 RUN <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
@@ -148,7 +148,7 @@ COPY --chmod=755 --chown=root:root ./helpers/db-empty.sh /usr/local/bin/
 COPY --chmod=755 --chown=root:root ./helpers/db-export.sh /usr/local/bin/
 COPY --chmod=755 --chown=root:root ./helpers/port-from-url.py /usr/local/bin/
 
-# remco configurations and templates
+# Remco configurations and templates
 COPY --chmod=644 --chown=root:root ./remco/config.toml /etc/remco/config
 COPY --chmod=644 --chown=root:root ./remco/dhis2-onetime.toml /etc/remco/
 COPY --chmod=644 --chown=root:root ./remco/tomcat.toml /etc/remco/
@@ -157,7 +157,7 @@ COPY --chmod=644 --chown=root:root ./remco/templates/dhis2/dhis-cluster.conf.tmp
 COPY --chmod=644 --chown=root:root ./remco/templates/dhis2/dhis-rr.conf.tmpl /etc/remco/templates/dhis2/
 COPY --chmod=644 --chown=root:root ./remco/templates/dhis2/dhis.conf.tmpl /etc/remco/templates/dhis2/
 COPY --chmod=644 --chown=root:root ./remco/templates/tomcat/server.xml.tmpl /etc/remco/templates/tomcat/
-# Initialize empty remco log file for the tomcat user (the "EOF" on the next line is not a typo)
+# Initialize empty Remco log file for the tomcat user (the "EOF" on the next line is not a typo)
 COPY --chmod=644 --chown=tomcat:tomcat <<EOF /var/log/remco.log
 EOF
 
@@ -190,7 +190,7 @@ for JAR in /usr/local/tomcat/webapps/**/log4j-core-2.*.jar ; do
 done
 EOF
 
-# Create remco template for dhis.conf based on the ConfigurationKey.java file in GitHub for the build version
+# Create Remco template for dhis.conf based on the ConfigurationKey.java file in GitHub for the build version
 RUN <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
@@ -206,7 +206,7 @@ if ! curl -o /dev/null -fsSL "$DHIS2_CONFIGKEY_URL" ; then
     DHIS2_CONFIGKEY_URL="https://github.com/dhis2/dhis2-core/raw/master/dhis-2/dhis-support/dhis-support-external/src/main/java/org/hisp/dhis/external/conf/ConfigurationKey.java"
   fi
 fi
-# Grab file on GitHub, sanitize, and create remco template with default values and comments
+# Grab file on GitHub, sanitize, and create Remco template with default values and comments
 curl -fsSL "$DHIS2_CONFIGKEY_URL" \
 | grep -E '^\s+[[:upper:]][[:upper:]]+[^\(]+\(' `# limit to lines beginning with whitespace, two or more uppercase letters, parameter name ending with (` \
 | sed -r 's/^\s+//g' `# remove leading spaces` \
@@ -238,7 +238,7 @@ ${CONFIG_OPTION} = {{ getv("${TEMPLATE_OPTION}") }}
 {% endif %}
 EOS
 done
-# Add clustering settings (keep template logic in remco for DNS lookups of SERVICE_NAME)
+# Add clustering settings (keep template logic in Remco for DNS lookups of SERVICE_NAME)
 if curl -fsSL "$DHIS2_CONFIGKEY_URL" | grep -q 'CLUSTER_HOSTNAME( "cluster\.hostname",' ; then
   cat /etc/remco/templates/dhis2/dhis-cluster.conf.tmpl >> /tmp/.dhis.conf.tmpl
 fi
