@@ -111,7 +111,7 @@ adduser \
   tomcat
 echo 'tomcat' >> /etc/cron.deny
 echo 'tomcat' >> /etc/at.deny
-rm --verbose --force '/etc/.pwd.lock' '/etc/group-' '/etc/gshadow-' '/etc/passwd-' '/etc/shadow-'
+rm --verbose --force '/etc/group-' '/etc/gshadow-' '/etc/passwd-' '/etc/shadow-'
 EOF
 
 # Set Tomcat permissions for tomcat user and group and clean up
