@@ -34,7 +34,7 @@ jobs:
   set_defaults:
     name: Set defaults
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
 
@@ -58,7 +58,7 @@ jobs:
 
     needs: set_defaults
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     container: ${{ needs.set_defaults.outputs.base_image }}  # NOTE: This cannot be ${{ env.EXAMPLE }} or ${{ matrix.example }}
 
@@ -81,7 +81,7 @@ jobs:
   generate_matrix:
     name: Generate matrix of DHIS2 stable versions
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
 
@@ -115,7 +115,7 @@ jobs:
       - baseimage_query
       - generate_matrix
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     services:
       registry:
@@ -556,7 +556,7 @@ jobs:
 
     needs: build
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
 

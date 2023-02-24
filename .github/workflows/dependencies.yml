@@ -29,7 +29,7 @@ jobs:
 
   file_dockerfile:
     name: Query versions in Dockerfile
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout this repository
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
@@ -49,7 +49,7 @@ jobs:
 
   file_envexample:
     name: Query versions in .env.example
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout this repository
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
@@ -69,7 +69,7 @@ jobs:
 
   github_tags:
     name: Query versions of projects using the GitHub API
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Query latest gosu tag
         id: gosu
@@ -87,7 +87,7 @@ jobs:
 
   image_latest:
     name: Query versions in the latest ghcr.io/baosystems/dhis2 image
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: ghcr.io/baosystems/dhis2:latest
     steps:
       - name: Query version of DHIS2
@@ -117,7 +117,7 @@ jobs:
       - file_dockerfile
       - github_tags
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
 
@@ -150,7 +150,7 @@ jobs:
       - file_envexample
       - image_latest
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
 
@@ -238,7 +238,7 @@ jobs:
       - notify
       - envexample
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
 
