@@ -43,6 +43,9 @@ jobs:
         run: |
           set -x
           echo "version=$( awk -F'=' '/^ARG REMCO_VERSION=/ {print $NF}' Dockerfile )" >> $GITHUB_OUTPUT
+    outputs:
+      gosu: ${{ steps.gosu.outputs.version }}
+      remco: ${{ steps.remco.outputs.version }}
 
   file_envexample:
     name: Query versions in .env.example
@@ -60,6 +63,9 @@ jobs:
         run: |
           set -x
           echo "version=$( grep --only-matching --extended-regexp 'tomcat[0-9]{1,2}\.[0-9.]+' .env.example | sed 's/^tomcat//' )" >> $GITHUB_OUTPUT
+    outputs:
+      dhis2: ${{ steps.dhis2.outputs.version }}
+      tomcat: ${{ steps.tomcat.outputs.version }}
 
   github_tags:
     name: Query versions of projects using the GitHub API
@@ -75,6 +81,9 @@ jobs:
         run: |
           set -x
           echo "version=$( curl -fsS https://api.github.com/repos/HeavyHorst/remco/tags | jq --raw-output '.[].name' | sed -r 's/^[v.]{1,2}//g' | sort --version-sort | tail -1 )" >> $GITHUB_OUTPUT
+    outputs:
+      gosu: ${{ steps.gosu.outputs.version }}
+      remco: ${{ steps.remco.outputs.version }}
 
   image_latest:
     name: Query versions in the latest ghcr.io/baosystems/dhis2 image
@@ -91,6 +100,9 @@ jobs:
         run: |
           set -x
           echo "version=$TOMCAT_VERSION" >> $GITHUB_OUTPUT
+    outputs:
+      dhis2: ${{ steps.dhis2.outputs.version }}
+      tomcat: ${{ steps.tomcat.outputs.version }}
 
   notify:
     name: Notify of dependencies that need to be updated
