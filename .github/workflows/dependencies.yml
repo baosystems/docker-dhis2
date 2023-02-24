@@ -110,7 +110,6 @@ jobs:
     if: |
       github.ref == 'refs/heads/main'
       && github.event_name != 'pull_request'
-      && !env.ACT
       && (needs.file_dockerfile.outputs.gosu != needs.github_tags.outputs.gosu
       || needs.file_dockerfile.outputs.remco != needs.github_tags.outputs.remco)
 
@@ -144,7 +143,6 @@ jobs:
     if: |
       github.ref == 'refs/heads/main'
       && github.event_name != 'pull_request'
-      && !env.ACT
       && (needs.file_envexample.outputs.dhis2 != needs.image_latest.outputs.dhis2
       || needs.file_envexample.outputs.tomcat != needs.image_latest.outputs.tomcat)
 
