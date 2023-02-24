@@ -38,6 +38,9 @@ jobs:
 
     steps:
 
+      - name: Checkout repo to current directory
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+
       # It is not currently possible to use a global env for jobs.baseimage_query.container.
       # Because we may want to support alternate versions of Tomcat and Java in the future,
       # we will set it a single time in this job and pass the value as an output.
@@ -45,7 +48,7 @@ jobs:
         id: default_base_image
         run: |
           set -x
-          echo "base_image=docker.io/library/tomcat:9-jre11-openjdk-slim-bullseye" >> $GITHUB_OUTPUT
+          awk '/^ARG BASE_IMAGE=/ {print $NF}' Dockerfile | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
 
     outputs:
       base_image: ${{ steps.default_base_image.outputs.base_image }}
