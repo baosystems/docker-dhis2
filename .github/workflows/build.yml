@@ -242,7 +242,7 @@ jobs:
             type=raw,value=${{ steps.versions_helper.outputs.dhis2_major }},enable=${{ matrix.latest_major }}
             type=raw,value=${{ matrix.dhis2_version }}
             type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs.baseimage_query.outputs.tomcat_major }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
-            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs.baseimage_query.outputs.tomcat_version }}-jre${{ needs.baseimage_query.outputs.java_major }}-openjdk,enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
+            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs.baseimage_query.outputs.tomcat_version }}-jre${{ needs.baseimage_query.outputs.java_major }}-temurin-jammy,enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
 
       - name: Set up QEMU for amd64 and arm64
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18
