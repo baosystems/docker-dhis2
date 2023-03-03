@@ -94,7 +94,7 @@ jobs:
         id: dhis2
         run: |
           set -x
-          echo "version=$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' /opt/dhis2/build.properties )" >> $GITHUB_OUTPUT
+          echo "version=$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' /build.properties )" >> $GITHUB_OUTPUT
       - name: Query version of Tomcat
         id: tomcat
         run: |

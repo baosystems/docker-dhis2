@@ -161,8 +161,9 @@ RUN --mount=type=bind,source=dhis.war,target=dhis.war <<EOF
 set -euxo pipefail
 # Extract the contents of dhis.war to webapps/ROOT/
 unzip -qq dhis.war -d /usr/local/tomcat/webapps/ROOT
-# Extract build.properties to /opt/dhis2/
-find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; | tee /opt/dhis2/build.properties
+# Extract build.properties to /
+find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; | tee /build.properties
+ln -sv /build.properties /opt/dhis2/build.properties
 # Remove vulnerable JndiLookup.class to mitigate Log4Shell
 shopt -s globstar nullglob  # bash 4 required (SC2044)
 for JAR in /usr/local/tomcat/webapps/**/log4j-core-2.*.jar ; do
@@ -182,7 +183,7 @@ RUN <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 # WAR version without suffix like "-SNAPSHOT" or "-rc1"
-DHIS2_VERSION_NOSUFFIX="$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' /opt/dhis2/build.properties | grep --only-matching --extended-regexp '^2\.[0-9\.]+' )"
+DHIS2_VERSION_NOSUFFIX="$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' /build.properties | grep --only-matching --extended-regexp '^2\.[0-9\.]+' )"
 # Determine major version, like "2.37" from "2.37.9"
 DHIS2_MAJOR="$( cut -c1-4 <<< "$DHIS2_VERSION_NOSUFFIX" )"
 # Attempt to find file from GitHub tag, then find the GitHub branch, and fallback to the master branch URL
