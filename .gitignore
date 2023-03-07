@@ -2,6 +2,7 @@
 .secrets
 docker-compose.override.yml
 *.backup
+*.jar
 *.sql.gz
 *.sql
 *.tar.gz
