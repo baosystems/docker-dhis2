@@ -104,10 +104,6 @@ services:
     restart: unless-stopped
     volumes:
       - type: volume
-        source: dhis2_init_progress
-        target: /dhis2-init.progress
-        read_only: true
-      - type: volume
         source: dhis2_files
         target: /opt/dhis2/files
       - type: volume
