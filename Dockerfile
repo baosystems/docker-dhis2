@@ -163,7 +163,6 @@ set -euxo pipefail
 unzip -qq dhis.war -d /usr/local/tomcat/webapps/ROOT
 # Extract build.properties to /
 find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; | tee /build.properties
-ln -sv /build.properties /opt/dhis2/build.properties
 # Remove vulnerable JndiLookup.class to mitigate Log4Shell
 shopt -s globstar nullglob  # bash 4 required (SC2044)
 for JAR in /usr/local/tomcat/webapps/**/log4j-core-2.*.jar ; do
