@@ -120,6 +120,9 @@ docker compose run --rm dhis2_init db-empty.sh
 # Import the database backup into the empty database
 gunzip -c dhis2-db-sierra-leone.sql.gz | docker compose exec -T database psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
 
+# Initialize the new database
+docker compose run --rm --env DHIS2_INIT_FORCE=1 dhis2_init dhis2-init.sh
+
 # Start Tomcat
 docker compose start dhis2
 ```
