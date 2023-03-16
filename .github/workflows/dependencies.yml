@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout this repository
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+        uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f
       - name: Query version of gosu
         id: gosu
         run: |
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout this repository
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+        uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f
       - name: Query version of DHIS2
         id: dhis2
         run: |
@@ -155,7 +155,7 @@ jobs:
     steps:
 
       - name: Checkout this repository
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+        uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f
 
       - name: Update version of DHIS2
         if: ${{ needs.file_envexample.outputs.dhis2 != needs.image_latest.outputs.dhis2 }}
