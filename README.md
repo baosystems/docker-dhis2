@@ -23,8 +23,11 @@ provides a single-node experience with DHIS2 on Tomcat and PostgreSQL with PostG
 architectures amd64 and arm64 are supported.
 
 The version of DHIS2 can be set in the _.env_ file; see
-[.env.example](https://github.com/baosystems/docker-dhis2/blob/main/.env.example) for an example.
-See [https://github.com/baosystems/docker-dhis2/pkgs/container/dhis2/versions](https://github.com/orgs/baosystems/packages/container/dhis2/versions?filters%5Bversion_type%5D=tagged) for available versions.
+_[.env.example](https://github.com/baosystems/docker-dhis2/blob/main/.env.example)_ for an example.
+
+See
+[https://github.com/baosystems/docker-dhis2/pkgs/container/dhis2/versions](https://github.com/orgs/baosystems/packages/container/dhis2/versions?filters%5Bversion_type%5D=tagged)
+for available versions of DHIS2.
 
 ## Quick
 
@@ -378,8 +381,8 @@ Redis and this method should no longer be used. See _redis.cache.invalidation.en
 
 * `DHIS2_CLUSTER_HOSTNAME`: Value of _cluster.hostname_. If not provided and both `SERVICE_NAME` and
   `SYSTEM_IP` are provided by the entry point, _cluster.hostname_ will be set as the value of
-  `SYSTEM_IP`. **NOTE:** If running DHIS2 2.37 or higher and any `DEBEZIUM_*` option is set, this
-  option will be ignored.
+  `SYSTEM_IP`. **NOTE:** If running any version of DHIS2 2.37 and any `DEBEZIUM_*` option is set,
+  this option should not be used.
 
 * `DHIS2_CLUSTER_CACHE_PORT`: Value of _cluster.cache.port_. **NOTE:** If running any version of
   DHIS2 2.37 and any `DEBEZIUM_*` option is set, this option should not be used.
@@ -406,7 +409,7 @@ Redis and this method should no longer be used. See _redis.cache.invalidation.en
 ### Debezium clustering
 
 Debezium was introduced in 2.37.0 for use with clusters of multiple Tomcat instances as an
-alternative to the _cluster._ options shown above. Redis is still required, however.
+alternative to the _cluster.*_ options shown above. Redis is still required, however.
 
 Versions 2.38.2, 2.39.0 and higher now support improved clustering exclusively with
 Redis and this method should no longer be used. See _redis.cache.invalidation.enabled_ above.
@@ -675,8 +678,6 @@ Added in 2.35.14, 2.36.11, 2.37.7:
 * `DHIS2_AUDIT_LOGGER_FILE_MAX_SIZE`: Value of _audit.logger.file.max_size_.
 
 Added in 2.36.0:
-
-* `DHIS2_ACTIVE_READ_REPLICAS`: Value of _active.read.replicas_.
 
 * `DHIS2_CONNECTION_POOL_TIMEOUT`: Value of _connection.pool.timeout_.
 
