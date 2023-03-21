@@ -4,6 +4,16 @@
 ################################################################################
 
 
+# Setting "ARG"s before the first "FROM" allows for the values to be used in any "FROM" value below.
+# ARG values can be overridden with command line arguments at build time.
+#
+# Default for dhis2 image.
+ARG BASE_IMAGE=docker.io/library/tomcat:9-jre11-temurin-jammy
+
+
+################################################################################
+
+
 # gosu for easy step-down from root - https://github.com/tianon/gosu/releases
 FROM docker.io/library/ubuntu:jammy-20230308 as gosu-builder
 ARG GOSU_VERSION=1.16
@@ -66,7 +76,7 @@ EOF
 
 
 # Tomcat with OpenJDK - https://hub.docker.com/_/tomcat (see "ARG BASE_IMAGE" above)
-FROM docker.io/library/tomcat:9-jre11-temurin-jammy as dhis2
+FROM $BASE_IMAGE as dhis2
 
 # Install dependencies for dhis2-init.sh tasks, docker-entrypoint.sh, and other commands in this file
 RUN <<EOF

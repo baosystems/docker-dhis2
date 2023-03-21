@@ -111,7 +111,7 @@ jobs:
       github.ref == 'refs/heads/main'
       && github.event_name != 'pull_request'
       && (needs.file_dockerfile.outputs.gosu != needs.github_tags.outputs.gosu
-      || needs.file_dockerfile.outputs.remco != needs.github_tags.outputs.remco)
+          || needs.file_dockerfile.outputs.remco != needs.github_tags.outputs.remco)
 
     needs:
       - file_dockerfile
@@ -144,7 +144,7 @@ jobs:
       github.ref == 'refs/heads/main'
       && github.event_name != 'pull_request'
       && (needs.file_envexample.outputs.dhis2 != needs.image_latest.outputs.dhis2
-      || needs.file_envexample.outputs.tomcat != needs.image_latest.outputs.tomcat)
+          || needs.file_envexample.outputs.tomcat != needs.image_latest.outputs.tomcat)
 
     needs:
       - file_envexample
