@@ -25,9 +25,21 @@ on:
   schedule:
     - cron: '28 3 * * *'
 
+# Cancel existing executions when new commits are pushed onto the same branch
+# (Source: https://ashishb.net/tech/common-pitfalls-of-github-actions/)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 defaults:
   run:
     shell: bash
+
+# Use "env" to set workflow-level variables.
+# NOTE: This can't be used by "jobs[*].container"; see "jobs.set_defaults" to use outputs as a workaround.
+env:
+  BASEIMAGE_11: docker.io/library/tomcat:9-jre11-temurin-jammy
+  BASEIMAGE_17: docker.io/library/tomcat:9-jre17-temurin-jammy
 
 jobs:
 
@@ -35,45 +47,67 @@ jobs:
     name: Set defaults
 
     runs-on: ubuntu-22.04
+    timeout-minutes: 3
 
     steps:
-
-      - name: Checkout repo to current directory
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab
 
       # It is not currently possible to use a global env for jobs.baseimage_query.container.
       # Because we may want to support alternate versions of Tomcat and Java in the future,
       # we will set it a single time in this job and pass the value as an output.
-      - name: Set default base image
-        id: default_base_image
+      - name: Set default base images
+        id: default_base_images
         run: |
           set -x
-          echo "base_image=$( awk '/^FROM .* as dhis2$/ {print $2}' Dockerfile )" >> $GITHUB_OUTPUT
-
+          echo "base_image_11=$BASEIMAGE_11" >> $GITHUB_OUTPUT
+          echo "base_image_17=$BASEIMAGE_17" >> $GITHUB_OUTPUT
     outputs:
-      base_image: ${{ steps.default_base_image.outputs.base_image }}
+      base_image_11: ${{ steps.default_base_images.outputs.base_image_11 }}
+      base_image_17: ${{ steps.default_base_images.outputs.base_image_17 }}
 
-  baseimage_query:
-    name: Query versions in base image
+  baseimage_11_query:
+    name: Versions in Java 11 base image
 
     needs: set_defaults
 
     runs-on: ubuntu-22.04
+    timeout-minutes: 3
 
-    container: ${{ needs.set_defaults.outputs.base_image }}  # NOTE: This cannot be ${{ env.EXAMPLE }} or ${{ matrix.example }}
+    container: ${{ needs.set_defaults.outputs.base_image_11 }}  # NOTE: This cannot be ${{ env.EXAMPLE }} or ${{ matrix.example }}
 
     steps:
-      - name: Query versions of Java and Tomcat in base image
+      - name: Query versions of Java and Tomcat in the Java 11 base image
         id: tomcat_query
         run: |
           set -x
-          echo "java_major=$( sed --regexp-extended --expression='s/^(jdk|jre)-?//' --expression='s/^([0-9]+)(\.|u).*$/\1/' <<< "$JAVA_VERSION" )" >> $GITHUB_OUTPUT
           echo "java_version=$( sed --regexp-extended --expression='s/^(jdk|jre)-?//' <<< "$JAVA_VERSION" )" >> $GITHUB_OUTPUT
           echo "tomcat_major=$TOMCAT_MAJOR" >> $GITHUB_OUTPUT
           echo "tomcat_version=$TOMCAT_VERSION" >> $GITHUB_OUTPUT
 
     outputs:
-      java_major: ${{ steps.tomcat_query.outputs.java_major }}
+      java_version: ${{ steps.tomcat_query.outputs.java_version }}
+      tomcat_major: ${{ steps.tomcat_query.outputs.tomcat_major }}
+      tomcat_version: ${{ steps.tomcat_query.outputs.tomcat_version }}
+
+  baseimage_17_query:
+    name: Versions in Java 17 base image
+
+    needs: set_defaults
+
+    runs-on: ubuntu-22.04
+    timeout-minutes: 3
+
+    container: ${{ needs.set_defaults.outputs.base_image_17 }}  # NOTE: This cannot be ${{ env.EXAMPLE }} or ${{ matrix.example }}
+
+    steps:
+      - name: Query versions of Java and Tomcat in the Java 17 base image
+        id: tomcat_query
+        run: |
+          set -x
+          echo "java_version=$( sed --regexp-extended --expression='s/^(jdk|jre)-?//' <<< "$JAVA_VERSION" )" >> $GITHUB_OUTPUT
+          echo "tomcat_major=$TOMCAT_MAJOR" >> $GITHUB_OUTPUT
+          echo "tomcat_version=$TOMCAT_VERSION" >> $GITHUB_OUTPUT
+
+    outputs:
       java_version: ${{ steps.tomcat_query.outputs.java_version }}
       tomcat_major: ${{ steps.tomcat_query.outputs.tomcat_major }}
       tomcat_version: ${{ steps.tomcat_query.outputs.tomcat_version }}
@@ -82,6 +116,7 @@ jobs:
     name: Generate matrix of DHIS2 stable versions
 
     runs-on: ubuntu-22.04
+    timeout-minutes: 3
 
     steps:
 
@@ -91,7 +126,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Install Python packages
         run: |
@@ -111,11 +146,12 @@ jobs:
     name: Build image
 
     needs:
-      - set_defaults
-      - baseimage_query
+      - baseimage_11_query
+      - baseimage_17_query
       - generate_matrix
 
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
 
     services:
       registry:
@@ -146,6 +182,8 @@ jobs:
             DHIS2_WAR_URL="https://releases.dhis2.org/$DHIS2_MAJOR/dhis.war"
           elif [[ "${{ matrix.dhis2_version }}" =~ ^2\.[0-9]{2}-dev$ ]]; then
             DHIS2_WAR_URL="https://releases.dhis2.org/$DHIS2_MAJOR/dev/dhis2-dev-${DHIS2_MAJOR}.war"
+          elif [[ "${{ matrix.dhis2_version }}" == "2.36.0" ]] || [[ "${{ matrix.dhis2_version }}" == "2.36.11" ]]; then
+            DHIS2_WAR_URL="https://dhis2-builds.s3.amazonaws.com/${{ matrix.dhis2_version }}/latest/dhis.war"
           else
             DHIS2_WAR_URL="https://releases.dhis2.org/$DHIS2_MAJOR/dhis2-stable-${{ matrix.dhis2_version }}.war"
           fi
@@ -200,7 +238,7 @@ jobs:
           else
             # The tag for a version may not exist in github.com/dhis2/e2e-tests, such as tag "2.37.0-rc"
             # for version "2.37.1" as of this writing. This logic will determine the appropriate version
-            # if there is not a direct match.
+            # if there is not an exact match.
             if git ls-remote --tags --refs --sort='version:refname' https://github.com/dhis2/e2e-tests.git | awk '/[[:blank:]]+refs\/tags\/[0-9.]+-rc$/ {gsub("refs/tags/",""); print $NF}' | grep -q "^${{ matrix.dhis2_version }}-rc$"
             then
               E2E_REMOTE_REF="${{ matrix.dhis2_version }}-rc"
@@ -223,7 +261,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/dhis2
           labels: |
-            org.opencontainers.image.base.name=${{ needs.set_defaults.outputs.base_image }}
+            org.opencontainers.image.base.name=${{ env[format('BASEIMAGE_{0}', matrix.java_major)] }}
             org.opencontainers.image.title=dhis2
             org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }}/pkgs/container/dhis2
             org.opencontainers.image.version=${{ matrix.dhis2_version }}
@@ -232,17 +270,18 @@ jobs:
             dhis2.build.revision=${{ steps.get_war.outputs.build_revision }}
             dhis2.build.time=${{ steps.get_war.outputs.build_time }}
             dhis2.build.date=${{ steps.get_war.outputs.build_date }}
-            java.major=${{ needs.baseimage_query.outputs.java_major }}
-            java.version=${{ needs.baseimage_query.outputs.java_version }}
-            tomcat.major=${{ needs.baseimage_query.outputs.tomcat_major }}
-            tomcat.version=${{ needs.baseimage_query.outputs.tomcat_version }}
+            java.major=${{ matrix.java_major }}
+            java.version=${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['java_version'] }}
+            tomcat.major=${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }}
+            tomcat.version=${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_version'] }}
           flavor: latest=false
           tags: |
             type=raw,value=latest,enable=${{ matrix.latest_overall }}
             type=raw,value=${{ steps.versions_helper.outputs.dhis2_major }},enable=${{ matrix.latest_major }}
             type=raw,value=${{ matrix.dhis2_version }}
-            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs.baseimage_query.outputs.tomcat_major }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
-            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs.baseimage_query.outputs.tomcat_version }}-jre${{ needs.baseimage_query.outputs.java_major }}-temurin-jammy,enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
+            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
+            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }}-jre${{ matrix.java_major }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
+            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_version'] }}-jre${{ matrix.java_major }}-temurin-jammy,enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
 
       - name: Set up QEMU for amd64 and arm64
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18
@@ -262,7 +301,7 @@ jobs:
           file: source/Dockerfile  # NOTE: A dhis.war file must be in the same directory as this file
           platforms: linux/amd64,linux/arm64
           build-args: |
-            BASE_IMAGE=${{ needs.set_defaults.outputs.base_image }}
+            BASE_IMAGE=${{ env[format('BASEIMAGE_{0}', matrix.java_major)] }}
           labels: ${{ steps.image_meta.outputs.labels }}
           tags: localhost:5000/dhis2:${{ matrix.dhis2_version }}-${{ github.sha }}  # The host:port in the tag determines the registry it's pushed to
           pull: true
@@ -449,8 +488,9 @@ jobs:
       #     set -x
       #     npm install --legacy-peer-deps
 
-      # - name: Fix tests for 2.36.1 and 2.36.2
+      # - name: Fix tests for 2.36.0 through 2.36.2
       #   if: |
+      #     matrix.dhis2_version == '2.36.0' ||
       #     matrix.dhis2_version == '2.36.1' ||
       #     matrix.dhis2_version == '2.36.2'
       #   run: |
@@ -557,6 +597,7 @@ jobs:
     needs: build
 
     runs-on: ubuntu-22.04
+    timeout-minutes: 3
 
     steps:
 

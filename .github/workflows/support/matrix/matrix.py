@@ -1,75 +1,57 @@
-import boto3
 import json
 from packaging.version import Version
-
-########
-
-# Configuration
-
-s3_bucket='releases.dhis2.org'
+import urllib3
 
 ########
 
 # Initialization
 
-# Initialize the full matrix dict; include "dev" manually as it is not added below
+# Initialize the full matrix dict
 full_matrix={
-    'dhis2_version': ['dev'],
+    'dhis2_version': [],
+    'java_major': ['11'],
     'latest_major': [False],
     'latest_overall': [False],
     'include': [],
 }
 
-# Use boto3 without credentials (https://stackoverflow.com/a/34866092)
-from botocore import UNSIGNED
-from botocore.client import Config
-s3 = boto3.client('s3', region_name='eu-west-1', config=Config(signature_version=UNSIGNED))
+# All released versions as dict of lists
+dhis2_versions = {}
 
 ########
 
-# List all top-level folders in S3 bucket (https://stackoverflow.com/a/54834746)
-# DHIS2 versions will start with "2."; capture versions greater than 2.34
+# Download DHIS2 releases information
 
-dhis2_majors=[]
+http = urllib3.PoolManager()
+stable_json_resp = http.request('GET', 'https://releases.dhis2.org/v1/versions/stable.json')
+stable_json = json.loads(stable_json_resp.data)
 
-s3_paginator = s3.get_paginator('list_objects')
+########
 
-pages = s3_paginator.paginate(Bucket=s3_bucket, Delimiter='/')
-
-for prefix in pages.search('CommonPrefixes'):
-
-    bucket_folder = prefix['Prefix'].strip("/")
-
-    # Dev versions go straight to the version matrix
-    if bucket_folder.startswith('2.') and Version(bucket_folder) > Version('2.34'):
-        full_matrix['dhis2_version'].append(f'{bucket_folder}-dev')
-
-    # Released versions
-    if bucket_folder.startswith('2.') and Version(bucket_folder) > Version('2.34'):
-        dhis2_majors.append(bucket_folder)
+# List of all major versions 2.35 and newer
+dhis2_majors=[
+    version['name']
+    for version in stable_json['versions']
+    if (
+        version['name'].startswith('2.')
+        and
+        Version(version['name']) >= Version('2.35')
+    )
+]
 
 # Sort list of major releases by semver
 dhis2_majors_sorted=sorted(dhis2_majors, key=lambda x: Version(x))
 
-# Store all versions as dict of lists
-dhis2_versions = {}
-
 for dhis2_major in dhis2_majors_sorted:
-    # Get all objects in bucket that start with "{dhis2_major}/dhis2-stable-"
-    s3_prefix=f'{dhis2_major}/dhis2-stable-'
 
     dhis2_major_versions = []
-    for page in s3_paginator.paginate(Bucket=s3_bucket):
-        for object in page['Contents']:
-            # Exclude objects that contain the "-eos/-latest/-rc" strings in the key name
-            if (
-                object['Key'].startswith(s3_prefix) and
-                not any(key in object['Key'] for key in ("-eos", "-hidden", "-latest", "-rc"))
-            ):
-                # With the key name, remove text from the beginning and end so it's only a version name
-                dhis2_version_semver = object['Key'].removeprefix(s3_prefix).removesuffix('.war').removesuffix('-EMBARGOED')
-                # Add the cleaned up version string to the list
-                dhis2_major_versions.append(dhis2_version_semver)
+
+    # List of all patch versions within a major release version
+    patch_versions = [i['patchVersions'] for i in stable_json['versions'] if i['name'] == dhis2_major][0]
+
+    # Add the "name" value at the full version
+    for patch_version in patch_versions:
+        dhis2_major_versions.append(patch_version['name'])
 
     # Remove duplicate entries from the list
     dhis2_major_versions_distinct = list(set(dhis2_major_versions))
@@ -77,41 +59,91 @@ for dhis2_major in dhis2_majors_sorted:
     # Sort the list by semantic version
     dhis2_major_versions_sorted = sorted(dhis2_major_versions_distinct, key=lambda x: Version(x))
 
-    # Add unique list to dhis2_versions dict
+    # Add unique and sorted list to dhis2_versions dict
     dhis2_versions[dhis2_major] = dhis2_major_versions_sorted
 
-# Remove major versions that have no stable releases (list of releases is empty)
-# Useful for when a version of DHIS2 is in development with no releases
-# (Using list() to allow editing dict while iterating; see https://stackoverflow.com/a/11941855)
-for key, values in list(dhis2_versions.items()):
-    if not values:
-        del dhis2_versions[key]
+    # Add dev version to list of default builds
+    full_matrix['dhis2_version'].append(f"{dhis2_major}-dev")
 
-for major, versions in dhis2_versions.items():
+    # 2.39-dev and 2.40-dev to include an additional non-default build on Java 17
+    if Version(dhis2_major) in (Version('2.39'), Version('2.40')):
+        full_matrix['include'].append({
+            'dhis2_version': f"{dhis2_major}-dev",
+            'java_major': '17',
+            'latest_major': False,
+            'latest_overall': False,
+        })
 
-    # Loop each unique version, from oldest to newest, sort above
-    for version in versions:
+    # Loop each release version, from oldest to newest
+    for version in dhis2_major_versions_sorted:
 
-        # If the version is the latest within the major release, build a dictionary with non-default properties
-        if version == dhis2_versions[major][-1]:
+        # Start item with the same properties as the default builds
+        matrix_item = {
+            'dhis2_version': version,
+            'java_major': '11',
+            'latest_major': False,
+            'latest_overall': False,
+        }
 
-            # Start item with the default properties but with latest_major set to True
-            matrix_item = {
-                'dhis2_version': version,
-                'latest_major': True,
-                'latest_overall': False,
-            }
+        # Major versions 2.41 and higher do not support Java 11
+        if Version(dhis2_major) >= Version('2.41'):
+            matrix_item['java_major'] = '17'
 
-            # Set as the latest overall version if also the latest within the latest major
-            if major == sorted(list(dhis2_versions.keys()), key=lambda x: Version(x))[-1]:
+        # If the version is the latest within the major release...
+        if version == dhis2_major_versions_sorted[-1]:
+
+            # Set as the latest version within the major
+            matrix_item['latest_major'] = True
+
+            # Set as the latest overall version if the latest within the latest major
+            if dhis2_major == dhis2_majors_sorted[-1]:
                 matrix_item['latest_overall'] = True
 
-            # Add the dictionary to the "include" list of non-default DHIS2 versions
+            # Add as a non-default build
             full_matrix['include'].append(matrix_item)
 
+        # If the version is not the latest within the major release...
         else:
-            # Add the DHIS2 version to the dhis2_version list with no non-default properties
-            full_matrix['dhis2_version'].append(version)
+
+            if Version(dhis2_major) >= Version('2.41'):
+                # Add a 2.41+ release to the list of non-default builds
+                full_matrix['include'].append(matrix_item)
+
+            else:
+                # Add the release to the list of default builds
+                full_matrix['dhis2_version'].append(version)
+
+        # 2.39 and 2.40 releases to include a non-default build on Java 17
+        if Version(dhis2_major) in (Version('2.39'), Version('2.40')):
+            full_matrix['include'].append({
+                'dhis2_version': version,
+                'java_major': '17',
+                'latest_major': False,
+                'latest_overall': False,
+            })
+
+# Include the dev release for the next major as a non-default build
+# NOTE: 2.39 and up are capable of running or required to run on Java 17
+dhis2_major_next = f"{Version(dhis2_majors_sorted[-1]).major}.{Version(dhis2_majors_sorted[-1]).minor+1}"
+full_matrix['include'].append({
+    'dhis2_version': f"{dhis2_major_next}-dev",
+    'java_major': '17',
+    'latest_major': False,
+    'latest_overall': False,
+})
+
+# 2.39-dev and 2.40-dev to include an additional default build on Java 11
+if Version(dhis2_major_next) in (Version('2.39'), Version('2.40')):
+    full_matrix['dhis2_version'].append(f"{dhis2_major_next}-dev")
+
+# Include a non-default build for "dev"
+# NOTE: 2.41 and up are required to run on Java 17
+full_matrix['include'].append({
+    'dhis2_version': 'dev',
+    'java_major': '17',
+    'latest_major': False,
+    'latest_overall': False,
+})
 
 # Send list to stdout as JSON
 print(json.dumps(full_matrix))
