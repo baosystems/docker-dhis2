@@ -39,7 +39,7 @@ jobs:
     steps:
 
       - name: Checkout repo to current directory
-        uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f
+        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3
 
       # It is not currently possible to use a global env for jobs.baseimage_query.container.
       # Because we may want to support alternate versions of Tomcat and Java in the future,
@@ -86,7 +86,7 @@ jobs:
     steps:
 
       - name: Checkout repo to current directory
-        uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f
+        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3
 
       - name: Setup Python
         uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435
@@ -130,7 +130,7 @@ jobs:
     steps:
 
       - name: Checkout this repository to source/ subdirectory
-        uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f
+        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3
         with:
           path: source
 
@@ -438,7 +438,7 @@ jobs:
       #     fi
 
       # - name: Checkout dhis2/e2e-tests to current directory
-      #   uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f
+      #   uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3
       #   with:
       #     repository: dhis2/e2e-tests
       #     ref: ${{ steps.versions_helper.outputs.e2e_remote_ref }}  # "master" for dev, "${{ matrix.dhis2_version }}-rc" for releases; see "versions_helper" for logic
