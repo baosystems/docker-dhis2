@@ -78,12 +78,13 @@ EOF
 # Tomcat with OpenJDK - https://hub.docker.com/_/tomcat (see "ARG BASE_IMAGE" above)
 FROM $BASE_IMAGE as dhis2
 
-# Install dependencies for dhis2-init.sh tasks, docker-entrypoint.sh, and other commands in this file
+# Update all packages, and install dependencies for dhis2-init.sh tasks, docker-entrypoint.sh, and other commands in this file
 RUN <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
 apt update
-apt install --yes --no-install-recommends ca-certificates curl postgresql-client python3 unzip zip
+env DEBIAN_FRONTEND="noninteractive" LANG="C.UTF-8" apt upgrade --yes
+env DEBIAN_FRONTEND="noninteractive" LANG="C.UTF-8" apt install --yes --no-install-recommends ca-certificates curl postgresql-client python3 unzip zip
 rm --recursive --force /var/lib/apt/lists/*
 EOF
 
