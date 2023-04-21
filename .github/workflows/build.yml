@@ -279,6 +279,7 @@ jobs:
             type=raw,value=latest,enable=${{ matrix.latest_overall }}
             type=raw,value=${{ steps.versions_helper.outputs.dhis2_major }},enable=${{ matrix.latest_major }}
             type=raw,value=${{ matrix.dhis2_version }}
+            type=raw,value=${{ matrix.dhis2_version }}-jre${{ matrix.java_major }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
             type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
             type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }}-jre${{ matrix.java_major }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
             type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_version'] }}-jre${{ matrix.java_major }}-temurin-jammy,enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
