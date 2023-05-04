@@ -1,2 +1,2 @@
 packaging==23.1
-urllib3==1.26.15
+urllib3==2.0.2
