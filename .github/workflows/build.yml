@@ -175,7 +175,11 @@ jobs:
         run: |
           set -x
           # Trims full version like "2.36.1" or "2.36-dev" to "2.36" from job matrix
-          DHIS2_MAJOR="$( cut -c1-4 <<< "${{ matrix.dhis2_version }}" )"
+          if grep --quiet --extended-regexp '^[0-9]{2}(\.|-)' <<< "${{ matrix.dhis2_version }}" ; then
+            DHIS2_MAJOR="$( cut -c1-2 <<< "${{ matrix.dhis2_version }}" )"
+          else
+            DHIS2_MAJOR="$( cut -c1-4 <<< "${{ matrix.dhis2_version }}" )"
+          fi
 
           if [[ "$DHIS2_MAJOR" == "dev" ]] \
           && [[ "${{ matrix.dhis2_version }}" == "dev" ]]; then
@@ -183,9 +187,9 @@ jobs:
           elif [[ "${{ matrix.dhis2_version }}" =~ ^2\.[0-9]{2}-dev$ ]]; then
             DHIS2_WAR_URL="https://releases.dhis2.org/$DHIS2_MAJOR/dev/dhis2-dev-${DHIS2_MAJOR}.war"
           elif [[ "${{ matrix.dhis2_version }}" == "2.36.0" ]] || [[ "${{ matrix.dhis2_version }}" == "2.36.11" ]]; then
-            DHIS2_WAR_URL="https://dhis2-builds.s3.amazonaws.com/${{ matrix.dhis2_version }}/latest/dhis.war"
+            DHIS2_WAR_URL="https://s3.amazonaws.com/dhis2-builds/${{ matrix.dhis2_version }}/latest/dhis.war"
           else
-            DHIS2_WAR_URL="https://releases.dhis2.org/$DHIS2_MAJOR/dhis2-stable-${{ matrix.dhis2_version }}.war"
+            DHIS2_WAR_URL="$( curl -s https://releases.dhis2.org/v1/versions/stable.json | jq -r '.versions[] | .patchVersions[] | select(.name=="${{ matrix.dhis2_version }}") | .url' )"
           fi
 
           wget \
@@ -195,7 +199,7 @@ jobs:
 
           # Expand to get the contents of build.properties
           unzip -qq source/dhis.war -d source/dhis
-          DHIS2_BUILD_PROPERTIES="$( find source/dhis/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; )"
+          DHIS2_BUILD_PROPERTIES="$( find source/dhis/WEB-INF/lib/ -name 'dhis-service-core-[0-9]*.jar' -exec unzip -p '{}' build.properties \; )"
           echo "build_version=$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )" >> $GITHUB_OUTPUT
           echo "build_revision=$( awk -F'=' '/^build\.revision/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )" >> $GITHUB_OUTPUT
           echo "build_time=$( awk -F'=' '/^build\.time/ {sub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )" >> $GITHUB_OUTPUT
@@ -206,8 +210,27 @@ jobs:
         run: |
           set -x
           # Trims full version like "2.36.1" or "2.36.7-SNAPSHOT" to "2.36" from war file build properties
-          DHIS2_MAJOR="$( cut -c1-4 <<< "${{ steps.get_war.outputs.build_version }}" )"
+          if grep --quiet --extended-regexp '^[0-9]{2}(\.|-)' <<< "${{ steps.get_war.outputs.build_version  }}" ; then
+            DHIS2_MAJOR="$( cut -c1-2 <<< "${{ steps.get_war.outputs.build_version  }}" )"
+          else
+            DHIS2_MAJOR="$( cut -c1-4 <<< "${{ steps.get_war.outputs.build_version  }}" )"
+          fi
           echo "dhis2_major=$DHIS2_MAJOR" >> $GITHUB_OUTPUT
+
+          # 2.40 is co-branded as version 40. Generate alternate image tag values for all 2.40 releases
+          # Other versions will return the same values; duplicate tags will be normalized in steps.image_meta
+          if [[ "${{ matrix.dhis2_version }}" == '2.40-dev' ]] ; then
+            DHIS2_MAJOR_ALT='40'
+            DHIS2_VERSION_ALT='40-dev'
+          elif [[ "$DHIS2_MAJOR" == '2.40' ]] ; then
+            DHIS2_MAJOR_ALT='40'
+            DHIS2_VERSION_ALT="$( curl -s https://releases.dhis2.org/v1/versions/stable.json | jq -r '.versions[] | .patchVersions[] | select(.name=="${{ matrix.dhis2_version }}") | .url' | sed -e 's,^.*/dhis2-stable-,,' -e 's/\.war$//' )"
+          else
+            DHIS2_MAJOR_ALT="$DHIS2_MAJOR"
+            DHIS2_VERSION_ALT='${{ matrix.dhis2_version }}'
+          fi
+          echo "dhis2_major_alt=$DHIS2_MAJOR_ALT" >> $GITHUB_OUTPUT
+          echo "dhis2_version_alt=$DHIS2_VERSION_ALT" >> $GITHUB_OUTPUT
 
           # Trims full version with a _hotfix_ value like "2.36.10.1" or "2.36.10.1-SNAPSHOT", to a _maintenance_ value like "2.36.10"
           # See https://dhis2-a3b1.kxcdn.com/uploads/default/original/3X/c/d/cd18b97ca7420000bd3c274c470cad01c63e24e5.jpeg
@@ -283,6 +306,13 @@ jobs:
             type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
             type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }}-jre${{ matrix.java_major }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
             type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_version'] }}-jre${{ matrix.java_major }}-temurin-jammy,enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
+
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_major_alt }},enable=${{ matrix.latest_major }}
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-jre${{ matrix.java_major }},enable=${{ !endsWith(steps.versions_helper.outputs.dhis2_version_alt, 'dev') }}
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }},enable=${{ !endsWith(steps.versions_helper.outputs.dhis2_version_alt, 'dev') }}
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }}-jre${{ matrix.java_major }},enable=${{ !endsWith(steps.versions_helper.outputs.dhis2_version_alt, 'dev') }}
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_version'] }}-jre${{ matrix.java_major }}-temurin-jammy,enable=${{ !endsWith(steps.versions_helper.outputs.dhis2_version_alt, 'dev') }}
 
       - name: Set up QEMU for amd64 and arm64
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18

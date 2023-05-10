@@ -173,7 +173,7 @@ set -euxo pipefail
 # Extract the contents of dhis.war to webapps/ROOT/
 unzip -qq dhis.war -d /usr/local/tomcat/webapps/ROOT
 # Extract build.properties to /
-find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/ -name 'dhis-service-core-2.*.jar' -exec unzip -p '{}' build.properties \; | tee /build.properties
+find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/ -name 'dhis-service-core-[0-9]*.jar' -exec unzip -p '{}' build.properties \; | tee /build.properties
 # Remove vulnerable JndiLookup.class to mitigate Log4Shell
 for JAR in /usr/local/tomcat/webapps/ROOT/WEB-INF/lib/log4j-core-2.*.jar ; do
   JAR_LOG4J_VERSION="$( unzip -p "$JAR" 'META-INF/maven/org.apache.logging.log4j/log4j-core/pom.properties' | awk -F'=' '/^version=/ {print $NF}' )"
