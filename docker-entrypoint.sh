@@ -30,7 +30,7 @@ _main() {
 
     # Set DHIS2 build information (logic also used in 20_dhis2-initwar.sh):
 
-    DHIS2_BUILD_PROPERTIES="$( unzip -q -p "$( find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib -maxdepth 1 -type f -name "dhis-service-core-2.*.jar" )" build.properties )"
+    DHIS2_BUILD_PROPERTIES="$( unzip -q -p "$( find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib -maxdepth 1 -type f -name 'dhis-service-core-[0-9]*.jar' )" build.properties )"
     export DHIS2_BUILD_VERSION="$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
     export DHIS2_BUILD_MAJOR="$( cut -c1-4 <<< "$DHIS2_BUILD_VERSION" )"
     export DHIS2_BUILD_REVISION="$( awk -F'=' '/^build\.revision/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
