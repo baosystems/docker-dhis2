@@ -219,7 +219,7 @@ jobs:
 
           # 2.40 is co-branded as version 40. Generate alternate image tag values for all 2.40 releases
           # Other versions will return the same values; duplicate tags will be normalized in steps.image_meta
-          if [[ "${{ matrix.dhis2_version }}" == '2.40-dev' ]] ; then
+          if [[ '${{ matrix.dhis2_version }}' == '2.40-dev' ]] ; then
             DHIS2_MAJOR_ALT='40'
             DHIS2_VERSION_ALT='40-dev'
           elif [[ "$DHIS2_MAJOR" == '2.40' ]] ; then
@@ -300,6 +300,7 @@ jobs:
           flavor: latest=false
           tags: |
             type=raw,value=latest,enable=${{ matrix.latest_overall }}
+
             type=raw,value=${{ steps.versions_helper.outputs.dhis2_major }},enable=${{ matrix.latest_major }}
             type=raw,value=${{ matrix.dhis2_version }}
             type=raw,value=${{ matrix.dhis2_version }}-jre${{ matrix.java_major }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
