@@ -232,6 +232,14 @@ jobs:
           echo "dhis2_major_alt=$DHIS2_MAJOR_ALT" >> $GITHUB_OUTPUT
           echo "dhis2_version_alt=$DHIS2_VERSION_ALT" >> $GITHUB_OUTPUT
 
+          # If a version has builds for multiple versions of Java, mark one as the primary. As of this writing, matrix.py
+          # provides builds for Java 11 and 17 on DHIS2 2.39 and 2.40, but certain tags should only be added for 11.
+          DHIS2_PRIMARY_JAVA='true'
+          if [[ "$DHIS2_MAJOR" =~ 2\.(39|40) ]] && [[ '${{ matrix.java_major }}' == '17' ]]; then
+              DHIS2_PRIMARY_JAVA='false'
+          fi
+          echo "dhis2_primary_java=$DHIS2_PRIMARY_JAVA" >> $GITHUB_OUTPUT
+
           # Trims full version with a _hotfix_ value like "2.36.10.1" or "2.36.10.1-SNAPSHOT", to a _maintenance_ value like "2.36.10"
           # See https://dhis2-a3b1.kxcdn.com/uploads/default/original/3X/c/d/cd18b97ca7420000bd3c274c470cad01c63e24e5.jpeg
           # or https://community.dhis2.org/t/hotfix-versioning-convention/47088 for details
@@ -302,16 +310,16 @@ jobs:
             type=raw,value=latest,enable=${{ matrix.latest_overall }}
 
             type=raw,value=${{ steps.versions_helper.outputs.dhis2_major }},enable=${{ matrix.latest_major }}
-            type=raw,value=${{ matrix.dhis2_version }}
+            type=raw,value=${{ matrix.dhis2_version }},enable=${{ steps.versions_helper.outputs.dhis2_primary_java }}
             type=raw,value=${{ matrix.dhis2_version }}-jre${{ matrix.java_major }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
-            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
+            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }},enable=${{ steps.versions_helper.outputs.dhis2_primary_java && !endsWith(matrix.dhis2_version, 'dev') }}
             type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }}-jre${{ matrix.java_major }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
             type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_version'] }}-jre${{ matrix.java_major }}-temurin-jammy,enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
 
             type=raw,value=${{ steps.versions_helper.outputs.dhis2_major_alt }},enable=${{ matrix.latest_major }}
-            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }},enable=${{ steps.versions_helper.outputs.dhis2_primary_java }}
             type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-jre${{ matrix.java_major }},enable=${{ !endsWith(steps.versions_helper.outputs.dhis2_version_alt, 'dev') }}
-            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }},enable=${{ !endsWith(steps.versions_helper.outputs.dhis2_version_alt, 'dev') }}
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }},enable=${{ steps.versions_helper.outputs.dhis2_primary_java && !endsWith(steps.versions_helper.outputs.dhis2_version_alt, 'dev') }}
             type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }}-jre${{ matrix.java_major }},enable=${{ !endsWith(steps.versions_helper.outputs.dhis2_version_alt, 'dev') }}
             type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_version'] }}-jre${{ matrix.java_major }}-temurin-jammy,enable=${{ !endsWith(steps.versions_helper.outputs.dhis2_version_alt, 'dev') }}
 
