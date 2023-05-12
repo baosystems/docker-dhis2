@@ -311,17 +311,17 @@ jobs:
 
             type=raw,value=${{ steps.versions_helper.outputs.dhis2_major }},enable=${{ matrix.latest_major }}
             type=raw,value=${{ matrix.dhis2_version }},enable=${{ steps.versions_helper.outputs.dhis2_primary_java }}
-            type=raw,value=${{ matrix.dhis2_version }}-jre${{ matrix.java_major }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
-            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }},enable=${{ steps.versions_helper.outputs.dhis2_primary_java && !endsWith(matrix.dhis2_version, 'dev') }}
-            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }}-jre${{ matrix.java_major }},enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
-            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_version'] }}-jre${{ matrix.java_major }}-temurin-jammy,enable=${{ !endsWith(matrix.dhis2_version, 'dev') }}
+            type=raw,value=${{ matrix.dhis2_version }}-jre${{ matrix.java_major }}
+            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }},enable=${{ steps.versions_helper.outputs.dhis2_primary_java }}
+            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }}-jre${{ matrix.java_major }}
+            type=raw,value=${{ matrix.dhis2_version }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_version'] }}-jre${{ matrix.java_major }}-temurin-jammy
 
             type=raw,value=${{ steps.versions_helper.outputs.dhis2_major_alt }},enable=${{ matrix.latest_major }}
             type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }},enable=${{ steps.versions_helper.outputs.dhis2_primary_java }}
-            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-jre${{ matrix.java_major }},enable=${{ !endsWith(steps.versions_helper.outputs.dhis2_version_alt, 'dev') }}
-            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }},enable=${{ steps.versions_helper.outputs.dhis2_primary_java && !endsWith(steps.versions_helper.outputs.dhis2_version_alt, 'dev') }}
-            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }}-jre${{ matrix.java_major }},enable=${{ !endsWith(steps.versions_helper.outputs.dhis2_version_alt, 'dev') }}
-            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_version'] }}-jre${{ matrix.java_major }}-temurin-jammy,enable=${{ !endsWith(steps.versions_helper.outputs.dhis2_version_alt, 'dev') }}
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-jre${{ matrix.java_major }}
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }},enable=${{ steps.versions_helper.outputs.dhis2_primary_java }}
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_major'] }}-jre${{ matrix.java_major }}
+            type=raw,value=${{ steps.versions_helper.outputs.dhis2_version_alt }}-tomcat${{ needs[format('baseimage_{0}_query', matrix.java_major)]['outputs']['tomcat_version'] }}-jre${{ matrix.java_major }}-temurin-jammy
 
       - name: Set up QEMU for amd64 and arm64
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18
