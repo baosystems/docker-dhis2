@@ -343,9 +343,9 @@ required.
 
 ### Server
 
-* `DHIS2_SERVER_BASEURL`: Value of _server.base.url_.
+* `DHIS2_SERVER_BASE_URL`: Value of _server.base.url_.
 
-* `DHIS2_SERVER_HTTPS`: Value of _server.https_. If this is not set and `DHIS2_SERVER_BASEURL`
+* `DHIS2_SERVER_HTTPS`: Value of _server.https_. If this is not set and `DHIS2_SERVER_BASE_URL`
   begins with "https://", this will be set to "on".
 
 ### Redis
@@ -808,11 +808,11 @@ The following environment variables can be used to create Tomcat's _server.xml_ 
 `remco` command.
 
 * `TOMCAT_CONNECTOR_PROXYPORT`: For the primary Connector, value of _proxyPort_. If not provided and
-  `DHIS2_SERVER_BASEURL` is set, the value will be derived from the URL port in
-  `DHIS2_SERVER_BASEURL`.
+  `DHIS2_SERVER_BASE_URL` is set, the value will be derived from the URL port in
+  `DHIS2_SERVER_BASE_URL`.
 
 * `TOMCAT_CONNECTOR_SCHEME`: For the primary Connector, value of _scheme_. If not provided and
-  `DHIS2_SERVER_BASEURL` begins with "https://", the value will be "https".
+  `DHIS2_SERVER_BASE_URL` begins with "https://", the value will be "https".
 
 * `TOMCAT_CONNECTOR_SECURE`: For the primary Connector, value of _secure_. If not provided and
   `DHIS2_SERVER_HTTPS` is "on", the value will be "true".

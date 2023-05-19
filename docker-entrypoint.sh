@@ -30,7 +30,7 @@ _main() {
 
     # Set DHIS2 build information (logic also used in 20_dhis2-initwar.sh):
 
-    DHIS2_BUILD_PROPERTIES="$( unzip -q -p "$( find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib -maxdepth 1 -type f -name "dhis-service-core-2.*.jar" )" build.properties )"
+    DHIS2_BUILD_PROPERTIES="$( unzip -q -p "$( find /usr/local/tomcat/webapps/ROOT/WEB-INF/lib -maxdepth 1 -type f -name 'dhis-service-core-[0-9]*.jar' )" build.properties )"
     export DHIS2_BUILD_VERSION="$( awk -F'=' '/^build\.version/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
     export DHIS2_BUILD_MAJOR="$( cut -c1-4 <<< "$DHIS2_BUILD_VERSION" )"
     export DHIS2_BUILD_REVISION="$( awk -F'=' '/^build\.revision/ {gsub(/ /, "", $NF); print $NF}' <<< "$DHIS2_BUILD_PROPERTIES" )"
@@ -57,20 +57,27 @@ _main() {
       echo "[DEBUG] $SELF: set SYSTEM_IP=$SYSTEM_IP" >&2
     fi
 
-    # Set DHIS2_SERVER_HTTPS to "on" if not set and DHIS2_SERVER_BASEURL begins with "https://"
-    if [ -z "${DHIS2_SERVER_HTTPS:-}" ] && [[ "${DHIS2_SERVER_BASEURL:-}" =~ ^https:// ]]; then
+    # Set DHIS2_SERVER_BASE_URL if not set to value of DHIS2_SERVER_BASEURL if set
+    # NOTE: DHIS2_SERVER_BASEURL and this block will be removed later
+    if [ -z "${DHIS2_SERVER_BASE_URL:-}" ] && [ -n "${DHIS2_SERVER_BASEURL:-}" ]; then
+      export DHIS2_SERVER_BASE_URL="$DHIS2_SERVER_BASEURL"
+      echo "[DEBUG] $SELF: set DHIS2_SERVER_BASE_URL=$DHIS2_SERVER_BASE_URL" >&2
+    fi
+
+    # Set DHIS2_SERVER_HTTPS to "on" if not set and DHIS2_SERVER_BASE_URL begins with "https://"
+    if [ -z "${DHIS2_SERVER_HTTPS:-}" ] && [[ "${DHIS2_SERVER_BASE_URL:-}" =~ ^https:// ]]; then
       export DHIS2_SERVER_HTTPS="on"
       echo "[DEBUG] $SELF: set DHIS2_SERVER_HTTPS=$DHIS2_SERVER_HTTPS" >&2
     fi
 
-    # Set TOMCAT_CONNECTOR_PROXYPORT if not set to value dervied from DHIS2_SERVER_BASEURL if set
-    if [ -z "${TOMCAT_CONNECTOR_PROXYPORT:-}" ] && [ -n "${DHIS2_SERVER_BASEURL:-}" ]; then
-      export TOMCAT_CONNECTOR_PROXYPORT="$( port-from-url.py "$DHIS2_SERVER_BASEURL" )"
+    # Set TOMCAT_CONNECTOR_PROXYPORT if not set to value dervied from DHIS2_SERVER_BASE_URL if set
+    if [ -z "${TOMCAT_CONNECTOR_PROXYPORT:-}" ] && [ -n "${DHIS2_SERVER_BASE_URL:-}" ]; then
+      export TOMCAT_CONNECTOR_PROXYPORT="$( port-from-url.py "$DHIS2_SERVER_BASE_URL" )"
       echo "[DEBUG] $SELF: set TOMCAT_CONNECTOR_PROXYPORT=$TOMCAT_CONNECTOR_PROXYPORT" >&2
     fi
 
-    # Set TOMCAT_CONNECTOR_SCHEME to "https" if not set and DHIS2_SERVER_BASEURL begins with "https://"
-    if [ -z "${TOMCAT_CONNECTOR_SCHEME:-}" ] && [[ "${DHIS2_SERVER_BASEURL:-}" =~ ^https:// ]]; then
+    # Set TOMCAT_CONNECTOR_SCHEME to "https" if not set and DHIS2_SERVER_BASE_URL begins with "https://"
+    if [ -z "${TOMCAT_CONNECTOR_SCHEME:-}" ] && [[ "${DHIS2_SERVER_BASE_URL:-}" =~ ^https:// ]]; then
       export TOMCAT_CONNECTOR_SCHEME="https"
       echo "[DEBUG] $SELF: set TOMCAT_CONNECTOR_SCHEME=$TOMCAT_CONNECTOR_SCHEME" >&2
     fi
