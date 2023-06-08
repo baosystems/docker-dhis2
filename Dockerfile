@@ -39,11 +39,8 @@ EOF
 
 # Remco for building configuration files from templates - https://github.com/HeavyHorst/remco
 # Using same verion of golang as shown in the output of `remco -version` from the released amd64 binary.
-# REMCO_VERSION_GIT_COMMIT_HASH is used when the "Git Commit Hash" value from `remco -version` is
-# different than the commit hash from the git tag for REMCO_VERSION.
-FROM docker.io/library/golang:1.18.0-bullseye as remco-builder
-ARG REMCO_VERSION=0.12.3
-ARG REMCO_VERSION_GIT_COMMIT_HASH=7187ac836b62dd2af5eb14909ed343d7021b3a17
+FROM docker.io/library/golang:1.20.5-bullseye as remco-builder
+ARG REMCO_VERSION=0.12.4
 WORKDIR /work
 RUN <<EOF
 #!/usr/bin/env bash
@@ -59,11 +56,7 @@ if [ "$dpkgArch" = "amd64" ]; then
 else
   git clone https://github.com/HeavyHorst/remco.git source
   cd source
-  if [ -n "${REMCO_VERSION_GIT_COMMIT_HASH:-}" ]; then
-    git checkout "$REMCO_VERSION_GIT_COMMIT_HASH"
-  else
-    git checkout "v${REMCO_VERSION}"
-  fi
+  git checkout "v${REMCO_VERSION}"
   make
   install --verbose --mode=0755 ./bin/remco ..
   cd ..
