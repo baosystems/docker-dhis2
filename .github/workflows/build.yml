@@ -355,6 +355,7 @@ jobs:
       ##########################################################################
 
       - name: Use image from local registry in Compose
+        continue-on-error: ${{ endsWith(matrix.dhis2_version, 'dev') }}  # don't block the remaining actions if it fails on dev versions
         run: |
           set -x
           sed \
@@ -364,6 +365,7 @@ jobs:
             source/docker-compose.yml
 
       - name: Pull Compose stack images
+        continue-on-error: ${{ endsWith(matrix.dhis2_version, 'dev') }}
         run: |
           set -x
           docker compose \
@@ -374,6 +376,7 @@ jobs:
             pull --quiet
 
       - name: Create Compose stack and start database service
+        continue-on-error: ${{ endsWith(matrix.dhis2_version, 'dev') }}
         run: |
           set -x
           docker compose \
@@ -384,6 +387,7 @@ jobs:
             up --detach database
 
       - name: Initialize the database
+        continue-on-error: ${{ endsWith(matrix.dhis2_version, 'dev') }}
         run: |
           set -x
           sleep 6
@@ -413,6 +417,7 @@ jobs:
               psql --echo-all --echo-hidden -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2' --command='CREATE EXTENSION postgis;'
 
       - name: Import sample data
+        continue-on-error: ${{ endsWith(matrix.dhis2_version, 'dev') }}
         run: |
           set -x
           if [[ "${{ matrix.dhis2_version }}" =~ ^2\.[0-9]{2}-dev$ ]]; then
@@ -436,6 +441,7 @@ jobs:
                 psql -q -v 'ON_ERROR_STOP=1' --username='postgres' --dbname='dhis2'
 
       - name: Start DHIS2
+        continue-on-error: ${{ endsWith(matrix.dhis2_version, 'dev') }}
         timeout-minutes: 15
         run: |
           set -x
@@ -455,7 +461,7 @@ jobs:
           done
 
       - name: Generate analytics
-        continue-on-error: ${{ endsWith(matrix.dhis2_version, 'dev') }}  # don't block the remaining actions if it fails on dev versions
+        continue-on-error: ${{ endsWith(matrix.dhis2_version, 'dev') }}
         timeout-minutes: 30
         run: |
           set -x
