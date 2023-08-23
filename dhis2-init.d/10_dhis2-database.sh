@@ -151,8 +151,7 @@ EOSQL
 
   psql --dbname "$DHIS2_DATABASE_NAME" --echo-all --echo-hidden -v ON_ERROR_STOP=1 <<- EOSQL
 -- Update PostGIS to the latest version available
-ALTER EXTENSION postgis UPDATE TO '${POSTGIS_VERSION}next';
-ALTER EXTENSION postgis UPDATE TO '${POSTGIS_VERSION}';
+SELECT postgis_extensions_upgrade();
 EOSQL
 fi
 
