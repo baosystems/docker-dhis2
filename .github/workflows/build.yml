@@ -121,7 +121,7 @@ jobs:
     steps:
 
       - name: Checkout repo to current directory
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
 
       - name: Setup Python
         uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
@@ -166,7 +166,7 @@ jobs:
     steps:
 
       - name: Checkout this repository to source/ subdirectory
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
         with:
           path: source
 
@@ -523,7 +523,7 @@ jobs:
       #     fi
 
       # - name: Checkout dhis2/e2e-tests to current directory
-      #   uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
+      #   uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
       #   with:
       #     repository: dhis2/e2e-tests
       #     ref: ${{ steps.versions_helper.outputs.e2e_remote_ref }}  # "master" for dev, "${{ matrix.dhis2_version }}-rc" for releases; see "versions_helper" for logic
