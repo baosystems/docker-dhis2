@@ -81,10 +81,6 @@ if [[ -f '/dhis2-init.progress/10_dhis2-database_status.txt' ]]; then
   echo "[INFO] $SELF: Delete the '10_dhis2-database_status.txt' progress file so that the database gets re-initialized:"
   rm --verbose --force '/dhis2-init.progress/10_dhis2-database_status.txt'
 fi
-if [[ -f '/dhis2-init.progress/15_pgstatstatements_status.txt' ]]; then
-  echo "[INFO] $SELF: Delete the '15_pgstatstatements_status.txt' progress file so that the database gets re-initialized:"
-  rm --verbose --force '/dhis2-init.progress/15_pgstatstatements_status.txt'
-fi
 
 
 ################################################################################
