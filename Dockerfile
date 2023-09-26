@@ -196,35 +196,20 @@ if ! curl -o /dev/null -fsSL "$DHIS2_CONFIGKEY_URL" ; then
     DHIS2_CONFIGKEY_URL="https://github.com/dhis2/dhis2-core/raw/master/dhis-2/dhis-support/dhis-support-external/src/main/java/org/hisp/dhis/external/conf/ConfigurationKey.java"
   fi
 fi
-# Grab file on GitHub, sanitize, and create Remco template with default values and comments
+# Grab file on GitHub and create Remco template with available options
 curl -fsSL "$DHIS2_CONFIGKEY_URL" \
 | grep -E '^\s+[[:upper:]][[:upper:]]+[^\(]+\(' `# limit to lines beginning with whitespace, two or more uppercase letters, parameter name ending with (` \
-| sed -r 's/^\s+//g' `# remove leading spaces` \
-| sed  `# convert to strings` \
-  -e 's/Constants\.OFF/off/g' \
-  -e 's/Constants\.ON/on/g' \
-  -e 's/Constants\.FALSE/false/g' \
-  -e 's/Constants\.TRUE/true/g' \
-  -e "s/CspUtils\.DEFAULT_HEADER_VALUE/script-src 'none';/g" \
-  -e 's/String\.valueOf( SECONDS.toMillis( \([0-9]\+\) ) )/\1000/g' \
-| awk -F'[ ,]' '{print $2","$4}' `# using [[:space:]] and comma as field separators, print fields separated commas for csv rows` \
-| sed \
-  -r \
-  -e 's/"([^"]+)"/\1/g' `# remove quotation marks from non-empty quoted values` \
-  -e 's/""$//g' `# drop empty quoted values` \
+| awk -F'"' '{print $2}' `# using quotation mark as field separator, grab config parameter key` \
 | sed \
   -e '/^cluster\.\(cache\.\(\|remote\.object\.\)port\|hostname\|members\)/d'  `# remove options that will be added with dhis-cluster.conf.tmpl` \
   -e '/^active\.read\.replicas/d'  `# remove option not intended to be set` \
 | sort \
 | while IFS= read -r LINE ; do
   CONFIG_OPTION="$( awk -F',' '{print $1}' <<<"$LINE" )"
-  CONFIG_DEFAULT="$( awk -F',' '{print $2}' <<<"$LINE" )"
   TEMPLATE_OPTION="$( sed -e 's,^,/dhis2/,' <<<"$CONFIG_OPTION" | tr '._' '/' )"
   cat >> /tmp/.dhis.conf.tmpl <<EOS
 {% if exists("${TEMPLATE_OPTION}") %}
 ${CONFIG_OPTION} = {{ getv("${TEMPLATE_OPTION}") }}
-{% else %}
-#${CONFIG_OPTION} = ${CONFIG_DEFAULT}
 {% endif %}
 EOS
 done
