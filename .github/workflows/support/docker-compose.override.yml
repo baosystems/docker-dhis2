@@ -34,3 +34,4 @@ services:
     environment:
       CATALINA_OPTS: "-Xms1536M -Xmx1536M"
       DHIS2_CONNECTION_POOL_MAXSIZE: 40
+      DHIS2_ANALYTICS_TABLE_UNLOGGED: "on"
