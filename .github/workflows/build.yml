@@ -165,6 +165,18 @@ jobs:
 
     steps:
 
+      - name: Maximize build space
+        run: |
+          set -x
+          echo "Available storage:"
+          df -h
+          echo "Removing unwanted software... "
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          echo "Available storage:"
+          df -h
+
       - name: Checkout this repository to source/ subdirectory
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608
         with:
