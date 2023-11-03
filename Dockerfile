@@ -16,7 +16,7 @@ ARG BASE_IMAGE=docker.io/library/tomcat:9-jre11-temurin-jammy
 
 # gosu for easy step-down from root - https://github.com/tianon/gosu/releases
 FROM docker.io/library/ubuntu:jammy-20231004 as gosu-builder
-ARG GOSU_VERSION=1.16
+ARG GOSU_VERSION=1.17
 WORKDIR /work
 RUN <<EOF
 #!/usr/bin/env bash
