@@ -22,8 +22,8 @@ RUN <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
 dpkgArch="$(dpkg --print-architecture | awk -F'-' '{print $NF}')"
-apt update
-apt install --yes curl gpg
+apt-get update
+apt-get install --yes curl gpg
 curl --silent --location --output gosu "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}"
 curl --silent --location --output gosu.asc "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-${dpkgArch}.asc"
 gpg --keyserver hkps://keys.openpgp.org --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4
@@ -75,9 +75,9 @@ FROM $BASE_IMAGE as dhis2
 RUN <<EOF
 #!/usr/bin/env bash
 set -euxo pipefail
-apt update
-env DEBIAN_FRONTEND="noninteractive" LANG="C.UTF-8" apt upgrade --yes
-env DEBIAN_FRONTEND="noninteractive" LANG="C.UTF-8" apt install --yes --no-install-recommends ca-certificates curl postgresql-client python3 unzip zip
+apt-get update
+env DEBIAN_FRONTEND="noninteractive" LANG="C.UTF-8" apt-get upgrade --yes
+env DEBIAN_FRONTEND="noninteractive" LANG="C.UTF-8" apt-get install --yes --no-install-recommends ca-certificates curl postgresql-client python3 unzip zip
 rm --recursive --force /var/lib/apt/lists/*
 EOF
 
