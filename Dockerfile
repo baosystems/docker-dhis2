@@ -214,7 +214,8 @@ ${CONFIG_OPTION} = {{ getv("${TEMPLATE_OPTION}") }}
 EOS
 done
 # Add clustering settings (keep template logic in Remco for DNS lookups of SERVICE_NAME)
-if curl -fsSL "$DHIS2_CONFIGKEY_URL" | grep -q 'CLUSTER_HOSTNAME(\s*"cluster\.hostname",' ; then
+# See https://stackoverflow.com/a/28879552
+if { curl -fsSL "$DHIS2_CONFIGKEY_URL" | tac | tac | grep -q 'CLUSTER_HOSTNAME(\s*"cluster\.hostname",' ; } ; then
   cat dhis-cluster.conf.tmpl >> /tmp/.dhis.conf.tmpl
 fi
 # Add read-replica settings
