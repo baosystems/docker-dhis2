@@ -13,8 +13,9 @@
 
   <Service name="Catalina">
 
-    <Connector protocol="org.apache.coyote.http11.Http11Nio2Protocol"
-               port="8080"
+    <Connector port="8080"
+               protocol="org.apache.coyote.http11.Http11Nio2Protocol"
+               URIEncoding="UTF-8"
                {% if getv("/tomcat/connector/proxyport", "8080") != "8080" %}
                proxyPort="{{ getv("/tomcat/connector/proxyport") }}"
                {% endif %}
@@ -24,8 +25,29 @@
                {% if exists("/tomcat/connector/secure") %}
                secure="{{ getv("/tomcat/connector/secure") }}"
                {% endif %}
-               URIEncoding="UTF-8"
+               {% if exists("/tomcat/connector/relaxedquerychars") %}
+               relaxedQueryChars="{{ getv("/tomcat/connector/relaxedquerychars") }}"
+               {% else %}
                relaxedQueryChars="\ { } | [ ]"
+               {% endif %}
+               {% if exists("/tomcat/connector/compression") %}
+               compression="{{ getv("/tomcat/connector/compression") }}"
+               {% endif %}
+               {% if exists("/tomcat/connector/compressionminsize") %}
+               compressionMinSize="{{ getv("/tomcat/connector/compressionminsize") }}"
+               {% endif %}
+               {% if exists("/tomcat/connector/compressiblemimetype") %}
+               compressibleMimeType="{{ getv("/tomcat/connector/compressiblemimetype") }}"
+               {% endif %}
+               {% if exists("/tomcat/connector/nocompressionstrongetag") %}
+               noCompressionStrongETag="{{ getv("/tomcat/connector/nocompressionstrongetag") }}"
+               {% endif %}
+               {% if exists("/tomcat/connector/maxhttpheadersize") %}
+               maxHttpHeaderSize="{{ getv("/tomcat/connector/maxhttpheadersize") }}"
+               {% endif %}
+               {% if exists("/tomcat/connector/maxthreads") %}
+               maxThreads="{{ getv("/tomcat/connector/maxthreads") }}"
+               {% endif %}
                />
 
     <Engine name="Catalina" defaultHost="localhost">
