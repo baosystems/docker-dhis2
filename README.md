@@ -485,3 +485,24 @@ The following environment variables can be used to create Tomcat's _server.xml_ 
 
 * `TOMCAT_CONNECTOR_SECURE`: For the primary Connector, value of _secure_. If not provided and
   `DHIS2_SERVER_HTTPS` is "on", the value will be "true".
+
+* `TOMCAT_CONNECTOR_RELAXEDQUERYCHARS`: For the primary Connector, value of _relaxedQueryChars_. If
+  not provided, the value will be `\ { } | [ ]`.
+
+* `TOMCAT_CONNECTOR_COMPRESSION`: For the primary Connector, value of _compression_. If not
+  provided, no value with be provided.
+
+* `TOMCAT_CONNECTOR_COMPRESSIONMINSIZE`: For the primary Connector, value of _compressionMinSize_.
+  If not provided, no value with be provided.
+
+* `TOMCAT_CONNECTOR_COMPRESSIBLEMIMETYPE`: For the primary Connector, value of
+  _compressibleMimeType_. If not provided, no value with be provided.
+
+* `TOMCAT_CONNECTOR_NOCOMPRESSIONSTRONGETAG`: For the primary Connector, value of
+  _noCompressionStrongETag_. If not provided, no value with be provided.
+
+* `TOMCAT_CONNECTOR_MAXHTTPHEADERSIZE`: For the primary Connector, value of _maxHttpHeaderSize_. If
+  not provided, no value with be provided.
+
+* `TOMCAT_CONNECTOR_MAXTHREADS`: For the primary Connector, value of _maxThreads_. If not provided,
+  no value with be provided.
