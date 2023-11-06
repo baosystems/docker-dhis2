@@ -195,12 +195,13 @@ if ! curl -o /dev/null -fsSL "$DHIS2_CONFIGKEY_URL" ; then
     DHIS2_CONFIGKEY_URL="https://github.com/dhis2/dhis2-core/raw/master/dhis-2/dhis-support/dhis-support-external/src/main/java/org/hisp/dhis/external/conf/ConfigurationKey.java"
   fi
 fi
-# Grab file on GitHub and create Remco template with available options
+# Grab file ConfigurationKey.java and create Remco template with available options
 curl -fsSL "$DHIS2_CONFIGKEY_URL" \
-| grep -E '^\s+[[:upper:]][[:upper:]]+[^\(]+\(' `# limit to lines beginning with whitespace, two or more uppercase letters, parameter name ending with (` \
+| awk '{if ($0 ~ /\($/) {getline a; print $0,a} else {print }}' `# If a line ends with (, combine it with the next line; for multi-line ConfigurationKeys` \
+| grep -E '^\s+[[:upper:]][[:upper:]]+[^\(]+\(' `# limit to lines beginning with whitespace, two or more uppercase letters, ConfigurationKey ending with (` \
 | awk -F'"' '{print $2}' `# using quotation mark as field separator, grab config parameter key` \
 | sed \
-  -e '/^cluster\.\(cache\.\(\|remote\.object\.\)port\|hostname\|members\)/d'  `# remove options that will be added with dhis-cluster.conf.tmpl` \
+  -e '/^cluster\.\(cache\.\(\|remote\.object\.\)port\|hostname\|members\)/d'  `# remove options that will be added with dhis-cluster.conf.tmpl below` \
   -e '/^active\.read\.replicas/d'  `# remove option not intended to be set` \
 | sort \
 | while IFS= read -r LINE ; do
