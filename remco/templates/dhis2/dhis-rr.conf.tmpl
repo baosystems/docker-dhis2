@@ -6,86 +6,56 @@
 
 {% if exists("/dhis2/read1/connection/password") %}
 read1.connection.password = {{ getv("/dhis2/read1/connection/password") }}
-{% else %}
-#read1.connection.password = 
 {% endif %}
 {% if exists("/dhis2/read1/connection/url") %}
 read1.connection.url = {{ getv("/dhis2/read1/connection/url") }}
-{% else %}
-#read1.connection.url = 
 {% endif %}
 {% if exists("/dhis2/read1/connection/username") %}
 read1.connection.username = {{ getv("/dhis2/read1/connection/username") }}
-{% else %}
-#read1.connection.username = 
 {% endif %}
 {% if gets("/dhis2/read2/connection/*") %}
 
 {% if exists("/dhis2/read2/connection/password") %}
 read2.connection.password = {{ getv("/dhis2/read2/connection/password") }}
-{% else %}
-#read2.connection.password = 
 {% endif %}
 {% if exists("/dhis2/read2/connection/url") %}
 read2.connection.url = {{ getv("/dhis2/read2/connection/url") }}
-{% else %}
-#read2.connection.url = 
 {% endif %}
 {% if exists("/dhis2/read2/connection/username") %}
 read2.connection.username = {{ getv("/dhis2/read2/connection/username") }}
-{% else %}
-#read2.connection.username = 
 {% endif %}
 {% if gets("/dhis2/read3/connection/*") %}
 
 {% if exists("/dhis2/read3/connection/password") %}
 read3.connection.password = {{ getv("/dhis2/read3/connection/password") }}
-{% else %}
-#read3.connection.password = 
 {% endif %}
 {% if exists("/dhis2/read3/connection/url") %}
 read3.connection.url = {{ getv("/dhis2/read3/connection/url") }}
-{% else %}
-#read3.connection.url = 
 {% endif %}
 {% if exists("/dhis2/read3/connection/username") %}
 read3.connection.username = {{ getv("/dhis2/read3/connection/username") }}
-{% else %}
-#read3.connection.username = 
 {% endif %}
 {% if gets("/dhis2/read4/connection/*") %}
 
 {% if exists("/dhis2/read4/connection/password") %}
 read4.connection.password = {{ getv("/dhis2/read4/connection/password") }}
-{% else %}
-#read4.connection.password = 
 {% endif %}
 {% if exists("/dhis2/read4/connection/url") %}
 read4.connection.url = {{ getv("/dhis2/read4/connection/url") }}
-{% else %}
-#read4.connection.url = 
 {% endif %}
 {% if exists("/dhis2/read4/connection/username") %}
 read4.connection.username = {{ getv("/dhis2/read4/connection/username") }}
-{% else %}
-#read4.connection.username = 
 {% endif %}
 {% if gets("/dhis2/read5/connection/*") %}
 
 {% if exists("/dhis2/read5/connection/password") %}
 read5.connection.password = {{ getv("/dhis2/read5/connection/password") }}
-{% else %}
-#read5.connection.password = 
 {% endif %}
 {% if exists("/dhis2/read5/connection/url") %}
 read5.connection.url = {{ getv("/dhis2/read5/connection/url") }}
-{% else %}
-#read5.connection.url = 
 {% endif %}
 {% if exists("/dhis2/read5/connection/username") %}
 read5.connection.username = {{ getv("/dhis2/read5/connection/username") }}
-{% else %}
-#read5.connection.username = 
 {% endif %}
 
 {% endif %}
