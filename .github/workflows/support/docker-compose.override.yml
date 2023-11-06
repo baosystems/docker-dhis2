@@ -5,7 +5,7 @@ services:
   database:
     # Options "synchronous_commit" through "max_locks_per_transaction" are some of the DHIS2 recommendations (https://docs.dhis2.org/en/manage/performing-system-administration/dhis-core-version-236/installation.html#install_postgresql_installation) (other values may be higher or different if from PGTune)
     # Options "shared_buffers" through "max_parallel_maintenance_workers" are PGTune with: version=14, os=linux, type=web, ram=4GB, cpus=2, conns=40, storage=ssd
-    # Options "fsync" through "full_page_writes" are to improve performance (https://github.community/t/how-do-i-properly-override-a-service-entrypoint/17435/8)
+    # Options "fsync" and "full_page_writes" are to improve performance (https://github.community/t/how-do-i-properly-override-a-service-entrypoint/17435/8)
     command: >
       postgres
         -c "listen_addresses=*"
@@ -34,4 +34,3 @@ services:
     environment:
       CATALINA_OPTS: "-Xms1536M -Xmx1536M"
       DHIS2_CONNECTION_POOL_MAXSIZE: 40
-      DHIS2_ANALYTICS_TABLE_UNLOGGED: "on"
