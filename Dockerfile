@@ -143,9 +143,6 @@ COPY --chmod=755 --chown=root:root ./helpers/port-from-url.py /usr/local/bin/
 COPY --chmod=644 --chown=root:root ./remco/config.toml /etc/remco/config
 COPY --chmod=644 --chown=root:root ./remco/dhis2-onetime.toml /etc/remco/
 COPY --chmod=644 --chown=root:root ./remco/tomcat.toml /etc/remco/
-COPY --chmod=644 --chown=root:root ./remco/templates/dhis2/dhis-azureoidc.conf.tmpl /etc/remco/templates/dhis2/
-COPY --chmod=644 --chown=root:root ./remco/templates/dhis2/dhis-cluster.conf.tmpl /etc/remco/templates/dhis2/
-COPY --chmod=644 --chown=root:root ./remco/templates/dhis2/dhis-rr.conf.tmpl /etc/remco/templates/dhis2/
 COPY --chmod=644 --chown=root:root ./remco/templates/dhis2/dhis.conf.tmpl /etc/remco/templates/dhis2/
 COPY --chmod=644 --chown=root:root ./remco/templates/tomcat/server.xml.tmpl /etc/remco/templates/tomcat/
 # Initialize empty Remco log file for the tomcat user (the "EOF" on the next line is not a typo)
@@ -181,7 +178,9 @@ done
 EOF
 
 # Create Remco template for dhis.conf based on the ConfigurationKey.java file in GitHub for the build version
-RUN <<EOF
+RUN --mount=type=bind,source=remco/templates/dhis2/dhis-azureoidc.conf.tmpl,target=dhis-azureoidc.conf.tmpl \
+    --mount=type=bind,source=remco/templates/dhis2/dhis-cluster.conf.tmpl,target=dhis-cluster.conf.tmpl \
+    --mount=type=bind,source=remco/templates/dhis2/dhis-rr.conf.tmpl,target=dhis-rr.conf.tmpl <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 # WAR version without suffix like "-SNAPSHOT" or "-rc1"
@@ -214,13 +213,13 @@ ${CONFIG_OPTION} = {{ getv("${TEMPLATE_OPTION}") }}
 EOS
 done
 # Add clustering settings (keep template logic in Remco for DNS lookups of SERVICE_NAME)
-if curl -fsSL "$DHIS2_CONFIGKEY_URL" | grep -q 'CLUSTER_HOSTNAME( "cluster\.hostname",' ; then
-  cat /etc/remco/templates/dhis2/dhis-cluster.conf.tmpl >> /tmp/.dhis.conf.tmpl
+if curl -fsSL "$DHIS2_CONFIGKEY_URL" | grep -q 'CLUSTER_HOSTNAME(\s*"cluster\.hostname",' ; then
+  cat dhis-cluster.conf.tmpl >> /tmp/.dhis.conf.tmpl
 fi
 # Add read-replica settings
-cat /etc/remco/templates/dhis2/dhis-rr.conf.tmpl >> /tmp/.dhis.conf.tmpl
+cat dhis-rr.conf.tmpl >> /tmp/.dhis.conf.tmpl
 # Add Azure OIDC settings
-cat /etc/remco/templates/dhis2/dhis-azureoidc.conf.tmpl >> /tmp/.dhis.conf.tmpl
+cat dhis-azureoidc.conf.tmpl >> /tmp/.dhis.conf.tmpl
 # Add comment at the top about how the file was generated
 sed -e "1i##\n## Template generated from $DHIS2_CONFIGKEY_URL\n##\n" -i /tmp/.dhis.conf.tmpl
 # Add template section at the end for unspecified values
