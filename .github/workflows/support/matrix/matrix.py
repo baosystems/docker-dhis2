@@ -108,15 +108,6 @@ for dhis2_major in dhis2_majors_sorted:
                 # Add the release to the list of default builds
                 full_matrix['dhis2_version'].append(version)
 
-        # All 2.39 and 2.40 stable releases to include a Java 17 build
-        if Version(dhis2_major) in (Version('2.39'), Version('2.40')):
-            full_matrix['include'].append({
-                'dhis2_version': version,
-                'java_major': '17',
-                'latest_major': False,
-                'latest_overall': False,
-            })
-
 # # Include the dev release for the next major version as a Java 17 build
 # # NOTE: Uncomment and/or edit logic once v41 builds are available
 # dhis2_major_next = f"{Version(dhis2_majors_sorted[-1]).major+1}"
