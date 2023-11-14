@@ -200,6 +200,8 @@ jobs:
             DHIS2_WAR_URL="https://releases.dhis2.org/$DHIS2_MAJOR/dev/dhis2-dev-${DHIS2_MAJOR}.war"
           elif [[ "${{ matrix.dhis2_version }}" == "2.36.0" ]] || [[ "${{ matrix.dhis2_version }}" == "2.36.11" ]]; then
             DHIS2_WAR_URL="https://s3.amazonaws.com/dhis2-builds/${{ matrix.dhis2_version }}/latest/dhis.war"
+          elif [[ "${{ matrix.dhis2_version }}" == "2.38.5" ]]; then  `# S3 does not have a "dhis2-stable-2.38.5.0.war" file as linked to in stable.json`
+            DHIS2_WAR_URL="https://releases.dhis2.org/$DHIS2_MAJOR/dhis2-stable-${{ matrix.dhis2_version }}.war"
           else
             DHIS2_WAR_URL="$( curl -s https://releases.dhis2.org/v1/versions/stable.json | jq -r '.versions[] | .patchVersions[] | select(.name=="${{ matrix.dhis2_version }}") | .url' )"
           fi
