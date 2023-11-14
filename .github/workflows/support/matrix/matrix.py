@@ -9,6 +9,9 @@ import urllib3
 # Default version of Java to use with builds unless specified
 default_jdk = 11
 
+# Default version of Java to use with builds v41 or higher
+default_jdk_41up = 17
+
 # Initialize the full matrix dict
 full_matrix={
     'dhis2_version': [],
@@ -115,20 +118,21 @@ for dhis2_major in dhis2_majors_sorted:
                 # Add newer Java release to the list of non-default builds
                 full_matrix['include'].append(matrix_item)
 
-# # Include the dev release for the next major version as a Java 17 build
-# # NOTE: Uncomment and/or edit logic once v41 builds are available
-# dhis2_major_next = f"{Version(dhis2_majors_sorted[-1]).major+1}"
-# full_matrix['include'].append({
-#     'dhis2_version': f"{dhis2_major_next}-dev",
-#     'java_major': '17',
-#     'latest_major': False,
-#     'latest_overall': False,
-# })
+# If dhis.war exists in releases.dhis2.org, include the dev release for the next major version
+dhis2_major_next = f"{Version(dhis2_majors_sorted[-1]).major}.{Version(dhis2_majors_sorted[-1]).minor+1}"
+dhis2_major_next_war_resp = http.request('HEAD', f'https://releases.dhis2.org/{dhis2_major_next}/dhis.war')
+if dhis2_major_next_war_resp.status == 200:
+    full_matrix['include'].append({
+        'dhis2_version': f"{dhis2_major_next}-dev",
+        'java_major': default_jdk_41up,
+        'latest_major': False,
+        'latest_overall': False,
+    })
 
-# Include a Java 17 build for "dev"
+# Include a build for "dev"
 full_matrix['include'].append({
     'dhis2_version': 'dev',
-    'java_major': '17',
+    'java_major': default_jdk_41up,
     'latest_major': False,
     'latest_overall': False,
 })
