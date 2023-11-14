@@ -42,8 +42,10 @@ for dhis2_major in dhis2_majors_sorted:
 
     dhis2_major_versions = []
 
+    major_details = [i for i in stable_json['versions'] if i['name'] == dhis2_major][0]
+
     # List of all patch versions within a major release version
-    patch_versions = [i['patchVersions'] for i in stable_json['versions'] if i['name'] == dhis2_major][0]
+    patch_versions = major_details['patchVersions']
 
     # Add the "name" value at the full version
     for patch_version in patch_versions:
