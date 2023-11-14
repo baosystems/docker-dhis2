@@ -6,10 +6,13 @@ import urllib3
 
 # Initialization
 
+# Default version of Java to use with builds unless specified
+default_jdk = 11
+
 # Initialize the full matrix dict
 full_matrix={
     'dhis2_version': [],
-    'java_major': ['11'],
+    'java_major': [str(default_jdk)],
     'latest_major': [False],
     'latest_overall': [False],
     'include': [],
@@ -44,6 +47,8 @@ for dhis2_major in dhis2_majors_sorted:
 
     major_details = [i for i in stable_json['versions'] if i['name'] == dhis2_major][0]
 
+    major_jdk = major_details.get('jdk', default_jdk)
+
     # List of all patch versions within a major release version
     patch_versions = major_details['patchVersions']
 
@@ -60,13 +65,13 @@ for dhis2_major in dhis2_majors_sorted:
     # Add unique and sorted list to dhis2_versions dict
     dhis2_versions[dhis2_major] = dhis2_major_versions_sorted
 
-    # Add dev version to list of builds; versions v41 and up require Java 17
+    # Add dev version to list of builds; versions v41 and up may require a newer version Java
     if Version(dhis2_major) < Version('41'):
         full_matrix['dhis2_version'].append(f"{dhis2_major}-dev")
     else:
         full_matrix['include'].append({
             'dhis2_version': f"{dhis2_major}-dev",
-            'java_major': '17',
+            'java_major': major_jdk,
             'latest_major': False,
             'latest_overall': False,
         })
@@ -77,14 +82,14 @@ for dhis2_major in dhis2_majors_sorted:
         # Start item with the same properties as the default builds
         matrix_item = {
             'dhis2_version': version,
-            'java_major': '11',
+            'java_major': str(default_jdk),
             'latest_major': False,
             'latest_overall': False,
         }
 
-        # Major versions v41 and up require Java 17
-        if Version(dhis2_major) >= Version('41'):
-            matrix_item['java_major'] = '17'
+        # Use the specified version of Java if greater than the default
+        if major_jdk > default_jdk:
+            matrix_item['java_major'] = str(major_jdk)
 
         # If the version is the latest within the major release...
         if version == dhis2_major_versions_sorted[-1]:
@@ -102,13 +107,13 @@ for dhis2_major in dhis2_majors_sorted:
         # If the version is not the latest within the major release...
         else:
 
-            if Version(dhis2_major) >= Version('41'):
-                # Add a v41+ release to the list of non-default builds
-                full_matrix['include'].append(matrix_item)
-
-            else:
+            if matrix_item['java_major'] == str(default_jdk):
                 # Add the release to the list of default builds
                 full_matrix['dhis2_version'].append(version)
+
+            else:
+                # Add newer Java release to the list of non-default builds
+                full_matrix['include'].append(matrix_item)
 
 # # Include the dev release for the next major version as a Java 17 build
 # # NOTE: Uncomment and/or edit logic once v41 builds are available
