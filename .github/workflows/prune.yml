@@ -1,0 +1,26 @@
+name: Prune
+
+on:
+  workflow_dispatch:
+
+jobs:
+  prune:
+    name: Prune
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Prune
+      uses: vlaurin/action-ghcr-prune@v0.5.0
+      with:
+        # Automatic token does not provide enough privileges (https://docs.github.com/en/actions/security-guides/automatic-token-authentication)
+        # Requires "read:packages", "delete:packages" from classic PAT (https://github.com/marketplace/actions/ghcr-pruning#permissions)
+        # "If package_type is container, you must also have admin permissions to the container you want to delete." (https://github.com/orgs/baosystems/packages/container/dhis2/settings)
+        token: ${{ secrets.PRUNE_PAT }}  # Added at https://github.com/baosystems/docker-dhis2/settings/secrets/actions
+
+        organization: baosystens
+        container: dhis2
+
+        dry-run: true # Dry-run first, then change to `false`
+
+        keep-younger-than: 7 # days
+        keep-last: 2
+        prune-untagged: true
