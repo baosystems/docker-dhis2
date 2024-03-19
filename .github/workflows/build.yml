@@ -349,7 +349,7 @@ jobs:
 
       - name: Multi-platform build and push to local registry
         id: image_build
-        uses: docker/build-push-action@af5a7ed5ba88268d5278f7203fb52cd833f66d6e
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0
         with:
           context: source  # The default is to refer to the github.com sha URL, but we need the context as a directory for the downloaded dhis.war
           file: source/Dockerfile  # NOTE: A dhis.war file must be in the same directory as this file
