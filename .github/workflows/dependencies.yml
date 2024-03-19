@@ -1,25 +1,25 @@
 name: dependencies
 
-on:
-  push:
-    branches-ignore:
-      - 'dependabot/**'
-      - 'manual-dependencies/**'
-    paths:
-      - '.env.example'
-      - '.github/workflows/dependencies.yml'
-      - 'docker-compose.yml'
-      - 'Dockerfile'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - '.env.example'
-      - '.github/workflows/dependencies.yml'
-      - 'docker-compose.yml'
-      - 'Dockerfile'
-  schedule:
-    - cron: '3 6 * * *'
+# on:
+#   push:
+#     branches-ignore:
+#       - 'dependabot/**'
+#       - 'manual-dependencies/**'
+#     paths:
+#       - '.env.example'
+#       - '.github/workflows/dependencies.yml'
+#       - 'docker-compose.yml'
+#       - 'Dockerfile'
+#   pull_request:
+#     branches:
+#       - main
+#     paths:
+#       - '.env.example'
+#       - '.github/workflows/dependencies.yml'
+#       - 'docker-compose.yml'
+#       - 'Dockerfile'
+#   schedule:
+#     - cron: '3 6 * * *'
 
 defaults:
   run:

@@ -1,29 +1,29 @@
 name: build images
 
-on:
-  push:
-    branches-ignore:
-      - 'dependabot/**'
-      - 'manual-dependencies/**'
-    paths-ignore:
-      - '.env.example'
-      - '.github/dependabot.yml'
-      - '.github/workflows/dependencies.yml'
-      - '.gitignore'
-      - 'LICENSE'
-      - 'README.md'
-  pull_request:
-    branches:
-      - main
-    paths-ignore:
-      - '.env.example'
-      - '.github/dependabot.yml'
-      - '.github/workflows/dependencies.yml'
-      - '.gitignore'
-      - 'LICENSE'
-      - 'README.md'
-  schedule:
-    - cron: '28 3 * * *'
+# on:
+#   push:
+#     branches-ignore:
+#       - 'dependabot/**'
+#       - 'manual-dependencies/**'
+#     paths-ignore:
+#       - '.env.example'
+#       - '.github/dependabot.yml'
+#       - '.github/workflows/dependencies.yml'
+#       - '.gitignore'
+#       - 'LICENSE'
+#       - 'README.md'
+#   pull_request:
+#     branches:
+#       - main
+#     paths-ignore:
+#       - '.env.example'
+#       - '.github/dependabot.yml'
+#       - '.github/workflows/dependencies.yml'
+#       - '.gitignore'
+#       - 'LICENSE'
+#       - 'README.md'
+#   schedule:
+#     - cron: '28 3 * * *'
 
 # Cancel existing executions when new commits are pushed onto the same branch
 # (Source: https://ashishb.net/tech/common-pitfalls-of-github-actions/)

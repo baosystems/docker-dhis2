@@ -3,21 +3,21 @@ version: 2
 updates:
   - package-ecosystem: "docker"
     directory: "/"
-    schedule:
-      interval: "daily"
+    # schedule:
+    #   interval: "daily"
     ignore:
       - dependency-name: "library/golang"  # Using a specific version for "remco_builder"
     labels:
       - "dependencies"
   - package-ecosystem: "pip"
     directory: "/.github/workflows/support/matrix"
-    schedule:
-      interval: "daily"
+    # schedule:
+    #   interval: "daily"
     labels:
       - "dependencies"
   - package-ecosystem: "github-actions"
     directory: "/"
-    schedule:
-      interval: "daily"
+    # schedule:
+    #   interval: "daily"
     labels:
       - "dependencies"
